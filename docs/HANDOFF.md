@@ -186,11 +186,12 @@ semantic CSS tokens, never raw hex. Direction is never colour alone.
 - **Bundle identifier** — assumed `com.brewterminal.app` in `tauri.conf.json`.
 - **Copyright holder** — `TRADEMARK.md` has a literal `[COPYRIGHT HOLDER]` placeholder. This
   matters more now that real logo artwork is committed.
-- **A git remote.** The repository exists locally with one commit on `main`; nothing has been
+- **A git remote.** The repository exists locally with four commits on `main`; nothing has been
   pushed. **CI has therefore still never run**, and the Windows and Linux matrix legs remain
-  unproven.
-- **Move the project off iCloud-synced storage.** See §5 — this has already broken the build
-  once and will again.
+  unproven. This is the only acceptance criterion in the whole plan that is not ticked.
+- **Code signing.** The app is unsigned, so a `.dmg` that is downloaded or AirDropped anywhere
+  is blocked by Gatekeeper. A locally built one opens fine because it carries no quarantine
+  flag. Distributing to anyone else needs an Apple Developer ID certificate plus notarization.
 
 ### Not verified, and honestly so
 
