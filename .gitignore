@@ -13,6 +13,9 @@ src-tauri/gen/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Local editor/agent scratch. Machine-specific, not part of the project.
+.claude/
 *.log
 coverage/
 
