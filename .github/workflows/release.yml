@@ -1,0 +1,120 @@
+name: Release
+
+# Tag-driven. Pushing `v0.1.0` builds installers on all three platforms and attaches them to a
+# GitHub Release. Nothing is published on an ordinary push — cutting a release is a deliberate
+# act, not a side effect of merging.
+on:
+  push:
+    tags:
+      - 'v*'
+  # Lets a release be re-run from the Actions tab without moving the tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build (e.g. v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS is built as a universal binary rather than per-architecture. The reference
+          # machine for this project is a 2016 Intel MacBook, and GitHub's macos-latest runner
+          # is Apple Silicon — building only there would produce something the project's own
+          # target hardware cannot run.
+          - os: macos-latest
+            label: macOS (universal)
+            args: '--target universal-apple-darwin'
+            rust_targets: 'x86_64-apple-darwin,aarch64-apple-darwin'
+
+          # 22.04 rather than latest: the AppImage links against the runner's glibc, so
+          # building on a newer distro silently raises the minimum glibc for every user.
+          - os: ubuntu-22.04
+            label: Linux (AppImage + deb)
+            args: ''
+            rust_targets: ''
+
+          - os: windows-latest
+            label: Windows (MSI + NSIS)
+            args: ''
+            rust_targets: ''
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Linux build dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            build-essential curl wget file libxdo-dev libssl-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.event.inputs.tag || github.ref_name }}
+          releaseName: 'Brew Terminal __VERSION__'
+          releaseBody: |
+            Local-first market research and learning terminal for crypto and stocks.
+            **Educational information only — not financial advice.**
+
+            ## Downloads
+
+            | Platform | File |
+            | -------- | ---- |
+            | macOS (Intel and Apple Silicon) | `.dmg` |
+            | Windows | `.msi` or `-setup.exe` |
+            | Linux | `.AppImage` or `.deb` |
+
+            ## Opening it the first time
+
+            The app is **not code-signed**, so both macOS and Windows will warn you.
+
+            - **macOS** — right-click the app and choose **Open**, then **Open** again. Double-clicking will not offer the option. Or allow it in System Settings → Privacy & Security.
+            - **Windows** — SmartScreen will show "Windows protected your PC". Click **More info** → **Run anyway**.
+            - **Linux** — `chmod +x` the AppImage before running it.
+
+            Signing needs a paid Apple Developer ID and a Windows code-signing certificate. Until
+            those exist, the warnings are expected and are not a sign that anything is wrong.
+
+            ## Known limits in this build
+
+            - No AI request has been made against a live endpoint. The Model Desk's request path is covered by tests and a browser harness, not by a real answer from a real model.
+            - No live community provider is wired in — only a fixture source ships.
+            - Crypto data is live via CoinGecko. Equities need your own free Finnhub key.
+            - Guardrails reduce advice-shaped output; they do not eliminate it. You choose the model, and your model may ignore its instructions.
+
+            Full detail: [`docs/PRODUCT_SCOPE_V0_1.md`](docs/PRODUCT_SCOPE_V0_1.md) and
+            [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+          # Marked pre-release deliberately: v0.1.0 is feature-complete and tested, but it has
+          # never been *run* on Windows or Linux by anyone. That is what pre-release means.
+          # Flip it in the GitHub UI once someone has actually used it on those platforms.
+          prerelease: true
+          releaseDraft: false
+          args: ${{ matrix.args }}

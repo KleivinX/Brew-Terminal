@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="assets/brand/logo-lockup.png" alt="Brew Terminal" width="620">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.png">
+  <img src="assets/brand/logo-light.png" alt="Brew Terminal" width="560">
+</picture>
 
 **Markets, minus the gatekeeping.**
 
@@ -23,14 +26,14 @@ Brew Terminal is a research and literacy tool that happens to look like a termin
 market data easier to read and financial language easier to learn, without pretending to be a
 trading platform.
 
-- 🔒 **Local-first and account-free.** No sign-up, no server, no cloud sync. Your watchlists, notes and preferences live in a SQLite file on your computer.
-- 📡 **No telemetry.** The app makes no request you did not cause.
-- 🏷️ **Honest about its data.** Every number shows which provider it came from and how old it is.
-- 🤖 **Optional AI, off by default.** Bring a local model or your own API key, or use none at all.
-- 👀 **You see what leaves.** Before anything is sent to a model you get an itemised list of exactly what goes with it, and every send is recorded in a local log you can read and clear.
-- 📚 **Learn works offline.** A 50-term glossary and five learning paths ship with the app; no request is made to read any of it.
-- 🔑 **Your data is portable.** An encrypted `.brewprofile` moves your watchlists, notes, progress and settings to another machine. It contains no API keys.
-- 🖥️ **Cross-platform.** macOS, Windows and Linux, built to stay responsive on a 2016 Intel MacBook.
+- **Local-first and account-free.** No sign-up, no server, no cloud sync. Your watchlists, notes and preferences live in a SQLite file on your computer.
+- **No telemetry.** The app makes no request you did not cause.
+- **Honest about its data.** Every number shows which provider it came from and how old it is.
+- **Optional AI, off by default.** Bring a local model or your own API key, or use none at all.
+- **You see what leaves.** Before anything is sent to a model you get an itemised list of exactly what goes with it, and every send is recorded in a local log you can read and clear.
+- **Learn works offline.** A 50-term glossary and five learning paths ship with the app; no request is made to read any of it.
+- **Your data is portable.** An encrypted `.brewprofile` moves your watchlists, notes, progress and settings to another machine. It contains no API keys.
+- **Cross-platform.** macOS, Windows and Linux, built to stay responsive on a 2016 Intel MacBook.
 
 ## 🚫 What this is not
 
@@ -43,20 +46,35 @@ There is no sentiment score, no "trending", no scam score and no legitimacy verd
 the app. Anything that aggregates opinion into a number is a judgement, and this project has no
 basis for one.
 
-## 🧭 Status
+## Status
 
 **v0.1.0 — feature-complete, not yet released.** Everything described here is built and covered
 by tests. What that does not mean is "proven in the wild":
 
-- ⚠️ **No AI request has been made against a live endpoint.** The request path is covered by unit tests, a guardrail suite and a browser harness — not by a real answer from a real model.
-- ⚠️ **No live community provider is wired in.** The pipeline is complete and opt-in, but the only adapter that ships is a fixture one, because no discussion platform's terms have been read.
-- ⚠️ **The app is unsigned.** A locally built `.dmg` opens fine; a downloaded one is blocked by Gatekeeper until you right-click → Open.
-- ⚠️ **Guardrails reduce risk; they do not eliminate it.** You choose the model, and your model may ignore its instructions. The app shows its answers unedited and flags advice-shaped language so you can see when that happens, rather than claiming it cannot.
+- **No AI request has been made against a live endpoint.** The request path is covered by unit tests, a guardrail suite and a browser harness — not by a real answer from a real model.
+- **No live community provider is wired in.** The pipeline is complete and opt-in, but the only adapter that ships is a fixture one, because no discussion platform's terms have been read.
+- **The app is unsigned.** A locally built `.dmg` opens fine; a downloaded one is blocked by Gatekeeper until you right-click → Open.
+- **Guardrails reduce risk; they do not eliminate it.** You choose the model, and your model may ignore its instructions. The app shows its answers unedited and flags advice-shaped language so you can see when that happens, rather than claiming it cannot.
 
 Crypto prices and history come from **CoinGecko** and are real. Equities need a free **Finnhub**
 key, added in Settings → Data providers; until then the Stocks tab says so rather than showing
 anything. Development builds also enable a fixture provider so the UI can be worked on offline —
 anything it serves is labelled "Mock data" in the panel and in the status bar.
+
+## ⬇️ Download
+
+Installers for all three platforms are attached to each
+[release](https://github.com/KleivinX/Brew-Terminal/releases): a universal `.dmg` for macOS
+(Intel and Apple Silicon), `.msi` or `.exe` for Windows, and `.AppImage` or `.deb` for Linux.
+
+The app is **not code-signed**, so the first launch needs one extra step:
+
+- **macOS** — right-click the app and choose **Open**, then **Open** again. Double-clicking will not offer the option.
+- **Windows** — SmartScreen shows "Windows protected your PC". Click **More info** → **Run anyway**.
+- **Linux** — `chmod +x` the AppImage before running it.
+
+That warning is expected. Signing needs a paid Apple Developer ID and a Windows code-signing
+certificate; until those exist, every unsigned build behaves this way.
 
 ## 🚀 Getting started
 
@@ -87,7 +105,7 @@ Build a release bundle (`.dmg`, `.msi`, `.AppImage` depending on your platform):
 npm run tauri:build
 ```
 
-### ✅ Checks
+### Checks
 
 ```bash
 npm run check
@@ -100,7 +118,7 @@ cd src-tauri && cargo test
 cd src-tauri && cargo clippy --all-targets -- -D warnings
 ```
 
-## ⌨️ Keyboard
+## Keyboard
 
 | Keys                         | Action                                       |
 | ---------------------------- | -------------------------------------------- |
@@ -133,7 +151,7 @@ cd src-tauri && cargo clippy --all-targets -- -D warnings
 | [DEPENDENCIES.md](docs/DEPENDENCIES.md)             | Every dependency, with a reason                        |
 | [PERFORMANCE.md](docs/PERFORMANCE.md)               | Measured startup, bundle and memory figures            |
 
-## ⚖️ Licence and name
+## Licence and name
 
 The code is licensed under **AGPL-3.0-or-later** — see [LICENSE](LICENSE).
 
@@ -141,7 +159,7 @@ The **Brew Terminal name, logo and artwork are not covered by that licence**. Yo
 code, but a fork must use a different name and must not present itself as official. See
 [TRADEMARK.md](TRADEMARK.md).
 
-## 🤝 Contributing
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
 
