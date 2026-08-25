@@ -17,7 +17,7 @@ behind it, and that only means something if it stays accurate.
 - The distinctive combination of brand colours and typography as used in official materials
 - Any claim, direct or implied, that something is official, endorsed, or affiliated
 
-Copyright in the code: **[COPYRIGHT HOLDER — to be supplied by the project owner]**.
+Copyright in the code: **Kleivin Gjuzi**.
 
 ## Forks
 

@@ -184,8 +184,6 @@ semantic CSS tokens, never raw hex. Direction is never colour alone.
 ### Needs the owner
 
 - **Bundle identifier** — assumed `com.brewterminal.app` in `tauri.conf.json`.
-- **Copyright holder** — `TRADEMARK.md` has a literal `[COPYRIGHT HOLDER]` placeholder. This
-  matters more now that real logo artwork is committed.
 - **A git remote.** The repository exists locally with four commits on `main`; nothing has been
   pushed. **CI has therefore still never run**, and the Windows and Linux matrix legs remain
   unproven. This is the only acceptance criterion in the whole plan that is not ticked.
