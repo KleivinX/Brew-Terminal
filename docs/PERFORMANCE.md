@@ -73,6 +73,12 @@ Measured 2026-08-25 on the reference machine (2016 dual-core Intel MacBook, macO
 the release bundle produced by `npm run tauri:build` — `opt-level = "s"`, LTO, `strip`,
 `panic = "abort"`. That build took **17m 48s**.
 
+Two small changes landed after the build started and are therefore not in the measured binary: a
+WAL-checkpoint guard that only runs during a profile import, and one line of copy in a lazily
+loaded panel. Neither is in the startup path or affects bundle size by more than a few hundred
+bytes, but the binary that produced these numbers is not byte-identical to the commit that
+records them, and it is cheaper to say so than to have someone wonder.
+
 | Metric                                  | Budget   | Measured                               | Verdict   |
 | --------------------------------------- | -------- | -------------------------------------- | --------- |
 | Installer size (`.dmg`)                 | ≤ 15 MB  | **5.0 MB**                             | ✅        |
