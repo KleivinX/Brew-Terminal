@@ -1,9 +1,9 @@
 # Brew Terminal — session handoff
 
-**Written for a fresh Claude Code session picking this project up mid-build.** Read this first;
-it is the fastest path to being useful without re-deriving decisions that are already made.
+**Written for a fresh Claude Code session picking this project up.** Read this first; it is the
+fastest path to being useful without re-deriving decisions that are already made.
 
-_Last updated: end of Phase 4 plus logo integration, 2026-08-23._
+_Last updated: end of Phase 7, 2026-08-25._
 
 ---
 
@@ -13,37 +13,47 @@ Brew Terminal is a local-first, open-source desktop app (Tauri 2 + Rust + React/
 research and financial literacy. It is **not** a trading platform, a portfolio tracker, or an
 adviser, and refusing to become one is a design constraint rather than a missing feature. The
 owner supplied a detailed brief (`~/Desktop/brew-terminal-claude-megaprompt.md`) specifying a
-seven-phase build. Phases 0–4 are done. **Phase 5 (Model Desk) is next.**
+seven-phase build. **All seven phases are implemented.** What remains is verification that can
+only happen outside this machine — see §8.
 
 Reference hardware is a 2016 Intel MacBook — which is also the development machine, so every
 performance number in the docs was measured on the target.
 
 ## 2. Where things stand
 
-| Phase | Scope                                                        | State    |
-| ----- | ------------------------------------------------------------ | -------- |
-| 0     | Architecture, scope, threat model, data model                | Done     |
-| 1     | App shell, 3 themes, command palette, SQLite, mock providers | Done     |
-| 2     | Pulse, watchlists, live providers, OS keychain               | Done     |
-| 3     | Research Lab, charts, notes, risk checklist                  | Done     |
-| 4     | Learn — 50-term glossary, 5 paths, 17 lessons                | Done     |
-| 5     | **Model Desk — local and cloud AI**                          | **Next** |
-| 6     | Community temperature, encrypted `.brewprofile` export       | Planned  |
-| 7     | Release readiness                                            | Planned  |
+| Phase | Scope                                                        | State |
+| ----- | ------------------------------------------------------------ | ----- |
+| 0     | Architecture, scope, threat model, data model                | Done  |
+| 1     | App shell, 3 themes, command palette, SQLite, mock providers | Done  |
+| 2     | Pulse, watchlists, live providers, OS keychain               | Done  |
+| 3     | Research Lab, charts, notes, risk checklist                  | Done  |
+| 4     | Learn — 50-term glossary, 5 paths, 17 lessons                | Done  |
+| 5     | Model Desk — local and hosted AI                             | Done  |
+| 6     | Community temperature, encrypted `.brewprofile`              | Done  |
+| 7     | Release readiness                                            | Done  |
 
-**434 tests passing** — 236 frontend (vitest), 198 Rust. Clippy clean at `-D warnings`, both
-formatters clean, app binary links, initial bundle 97.3 KB gzipped against a 200 KB budget.
+**620 tests passing** — 327 frontend (vitest), 293 Rust. Clippy clean at `-D warnings`, both
+formatters clean, entry bundle 94.5 KB gzipped against a 200 KB budget, `npm audit` clean.
+
+**The performance budget is measured, not estimated.** A packaged release build was produced
+(17m 48s) and exercised: installer 5.0 MB against 15 MB, idle RSS 115.5 MB against 300 MB, idle
+CPU 0.0 %. Two cells in `docs/PERFORMANCE.md` §3 are still blank — start-to-interactive needs a
+first-paint mark that does not exist, and the doc says so rather than substituting
+launch-to-idle.
+
+**A git repository now exists** with one commit on `main`. There is no remote and nothing has
+been pushed — that is the owner's call.
 
 ## 3. Read these, in this order
 
 Everything important is documented in the repo. Do not re-derive it.
 
-1. `docs/PRODUCT_SCOPE_V0_1.md` — features, **non-goals**, per-phase acceptance criteria with checkboxes showing what is done
-2. `docs/DECISIONS.md` — **28 ADRs**. The highest-value file in the repo; each records what was chosen, what was rejected, and why
+1. `docs/PRODUCT_SCOPE_V0_1.md` — features, **non-goals**, per-phase acceptance criteria with checkboxes, including honest notes on what each criterion does _not_ cover
+2. `docs/DECISIONS.md` — **36 ADRs**. The highest-value file in the repo; each records what was chosen, what was rejected, and why
 3. `docs/ARCHITECTURE.md` — process model, IPC, service layer, provider routing, caching, performance budget
-4. `docs/PROVIDERS.md` — verified terms, rate limits and API quirks for every provider
+4. `docs/PROVIDERS.md` — verified terms, rate limits and API quirks for every provider, plus a "Not verified" section that matters
 5. `docs/THREAT_MODEL.md` — what is protected, what explicitly is not
-6. `docs/AI_POLICY.md` — **read before touching Phase 5.** Contains the guardrail system prompt
+6. `docs/AI_POLICY.md` — the guardrail system prompt and the privacy boundary
 7. `docs/DATA_MODEL.md`, `docs/UI_MAP.md`, `docs/DEPENDENCIES.md`, `docs/PERFORMANCE.md`
 
 ## 4. The safety stance — the thing most easily eroded
@@ -53,15 +63,21 @@ Every one of these is enforced by a test, a lint rule, or the type system.
 
 - **No number renders without its provider and its age.** The IPC `Envelope<T>` carries `providerId`, `providerName`, `fetchedAt`, `source`, `stale` and `degraded`. The frontend cannot obtain data without provenance.
 - **No causal claims about price moves.** The brief asked for a "What moved this?" panel; it is titled **"Published around this time"** and its body says explicitly that adjacency in time is not causation (ADR-021).
-- **No verdicts.** The crypto risk checklist has no checkboxes and no score — anything that adds up is a legitimacy judgement (ADR-022).
-- **No advice-shaped language.** A custom ESLint rule (`eslint-rules/local.js`) bans a phrase list in source; `tests/safety/copy.test.ts` sweeps source and fixtures; the Learn content validator sweeps the content bundle.
+- **No verdicts.** The crypto risk checklist has no checkboxes and no score. The community panel has no sentiment, no ranking and no "trending" — anything that adds up is a legitimacy judgement (ADR-022, ADR-035).
+- **No advice-shaped language.** A custom ESLint rule (`eslint-rules/local.js`) bans a phrase list in source; `tests/safety/copy.test.ts` sweeps source and fixtures; the Learn content validator sweeps the content bundle; and the same list scans model output at runtime, with a test asserting the two lists cannot drift apart.
 - **Fixtures are never the default in a release.** The mock provider is seeded enabled only under `debug_assertions` (ADR-018).
-- **API keys never travel outward over IPC.** They go into the OS keychain; the IPC surface returns a boolean and a masked hint. Asserted by tests at both layers.
-- **Nothing leaves the device without an explicit user action.**
+- **API keys never travel outward over IPC.** They go into the OS keychain; the IPC surface returns a boolean and a masked hint. Asserted by tests at both layers, and `has_credential` is forced to `false` on profile import.
+- **Nothing leaves the device without an explicit user action.** For the Model Desk this is enforced in Rust, not just the UI: `bootstrap_configures_nothing_and_sends_nothing` asserts startup sends nothing, and every send is written to `ai_outbound_log` before the request goes out.
+- **"Local · offline" is earned.** It appears only when the configured host actually resolves to a loopback address, and resolution failure fails closed (ADR-029).
 
 If a change would weaken any of these, that is a conversation with the owner, not a refactor.
 
 ## 5. Hard-won facts you would otherwise rediscover the slow way
+
+### Environment
+
+- **This project lives in an iCloud-synced folder, and iCloud evicts native binaries out of `node_modules`.** Mid-session, three `.node` binaries (rolldown, lightningcss, `@tauri-apps/cli`) were replaced by `.icloud` placeholders and the whole test suite died with "Cannot find native binding". `brctl download` did not bring them back; `rm -rf` the affected package directories and `npm install` did. **This will happen again.** The real fix is to move the project out of `~/Desktop`, or exclude it from iCloud.
+- Diagnose it with `find node_modules -name "*.icloud"`.
 
 ### Provider quirks (all verified against live APIs, recorded in `docs/PROVIDERS.md`)
 
@@ -90,7 +106,10 @@ If a change would weaken any of these, that is a conversation with the owner, no
 - **An inline-arrow `onClose` prop makes a focus effect thrash.** In `Modal` this restored focus to the trigger on every keystroke; typing a space then closed the dialog. Fixed with a ref.
 - **`Panel` fills its parent only with `fill`** — `flex: 1` by default squashed every panel in a scrolling column (ADR-024).
 - **jsdom reports every element as 0×0**, so `@tanstack/react-virtual` renders no rows. `vitest.setup.ts` patches element dimensions.
-- **Test timeout is 15s, not the 5s default** — the longer interaction flows time out on a loaded dual-core machine. Verified stable while a Rust build runs concurrently.
+- **Test timeout is 15s, not the 5s default** — the longer interaction flows time out on a loaded dual-core machine.
+- **The React Compiler lint rule bans `setState` inside an effect.** Both places that tripped it were better written as derived state anyway — see `AiPanel`'s `endpointEdit ?? status?.endpoint ?? ''` pattern.
+- **Prettier reformats `content/ai/system-prompt.md`,** inserting blank lines around its plain-text headings and changing the bytes sent to a model. `content/ai/` is in `.prettierignore` for that reason.
+- **The harness writes `ai_outbound_log` before the request resolves** (by design — the log records attempts). A test that waits on the log races the mutation; wait on the assistant message instead.
 
 ## 6. Architecture in brief
 
@@ -104,16 +123,21 @@ Rust core (Tauri 2)
    providers/  registry routes BY ASSET TYPE, merges results (ADR-017)
      ├ live/coingecko.rs   crypto, enabled by default, keyless
      ├ live/finnhub.rs     equities, disabled until keyed
-     ├ mock/               fixtures, debug builds only
+     ├ mock/               fixtures, seeded enabled in debug builds only
+     ├ ai.rs               OpenAI-compatible chat; its OWN http client (ADR-029)
      ├ governor.rs         rate limits, backoff — pure logic, fully tested
      └ http.rs             HTTPS-only, 15s timeout, 2MB cap, URL redaction
    db/         rusqlite bundled, WAL, forward-only migrations
-   security/   keychain + log redaction
+   security/   keychain, log redaction, .brewprofile envelope
 ```
 
 **Key invariant:** all network I/O is in Rust. The webview's CSP sets `connect-src` to IPC only,
 and an ESLint rule bans `fetch`. This is what keeps API keys out of the process that renders
 untrusted provider strings (ADR-002).
+
+**One deliberate exception:** `providers/ai.rs` builds its own HTTP client and permits plain
+HTTP when — and only when — the host resolves to loopback. Every local model server serves plain
+HTTP on `127.0.0.1` and ships no certificate. ADR-029 and THREAT_MODEL.md §7 record it.
 
 **Canonical asset ids** (`crypto:cg:bitcoin`, `stock:us:AAPL`) are how provider routing works
 and why user data survives a provider swap. User data never references a provider id.
@@ -131,32 +155,39 @@ cd src-tauri && cargo test --test live_network -- --ignored   # real network, op
 ```
 
 **Verification habit that has repeatedly paid off:** run the app in the browser preview and
-actually look at it. Four real bugs this session were found by looking, not by tests — collapsed
-panels, stale chart theming, clipped table columns, and a palette that navigated to Microsoft
-when asked for the Soft theme.
+actually look at it. Bugs found by looking rather than by tests, across sessions: collapsed
+panels, stale chart theming, clipped table columns, a palette that navigated to Microsoft when
+asked for the Soft theme.
 
 **Conventions:** feature slices may not import each other (enforced by lint — shared code moves
-into `lib/` or `components/`). Optional props need `| undefined` (`exactOptionalPropertyTypes`).
-Components reference semantic CSS tokens, never raw hex. Direction is never colour alone.
+into `lib/` or `components/`; cross-feature handover uses router state, as Learn → Model Desk
+does). Optional props need `| undefined` (`exactOptionalPropertyTypes`). Components reference
+semantic CSS tokens, never raw hex. Direction is never colour alone.
 
 ## 8. Outstanding — carry these forward
 
-### Blocking-ish, needs the owner
+### Needs the owner
 
 - **Bundle identifier** — assumed `com.brewterminal.app` in `tauri.conf.json`.
-- **Copyright holder** — `TRADEMARK.md` has a literal `[COPYRIGHT HOLDER]` placeholder.
+- **Copyright holder** — `TRADEMARK.md` has a literal `[COPYRIGHT HOLDER]` placeholder. This
+  matters more now that real logo artwork is committed.
+- **A git remote.** The repository exists locally with one commit on `main`; nothing has been
+  pushed. **CI has therefore still never run**, and the Windows and Linux matrix legs remain
+  unproven.
+- **Move the project off iCloud-synced storage.** See §5 — this has already broken the build
+  once and will again.
 
-### Measurement debt (outstanding since Phase 1)
+### Not verified, and honestly so
 
-**Cold start, warm start, idle memory, idle CPU, installer size, and scroll frame rate are all
-unmeasured.** `docs/PERFORMANCE.md` §3 deliberately leaves them blank with the method rather
-than plausible-looking numbers. They need a packaged release build (`npm run tauri:build`),
-which is slow on this machine and belongs in a dedicated pass.
-
-### Never run
-
-**CI has never executed** — there is no git repository and no remote. Windows and Linux are in
-the matrix but unproven. `git init` has not been run.
+- **No AI request has been made against a live endpoint**, local or hosted. The path is covered
+  by unit tests, the guardrail suite and the browser harness. Wiring a real Ollama instance and
+  sending one message is the single highest-value next check.
+- **No live community provider is wired in.** The pipeline is complete and opt-in; only a
+  fixture adapter ships, because no discussion platform's terms have been read (ADR-035).
+- **Start-to-interactive is still unmeasured.** Everything else in the performance budget now
+  has a real number. Closing this needs a `performance.mark` on the first paint of the Pulse
+  table, reported through IPC so it reaches the Rust log and can be read from a packaged build.
+  `docs/PERFORMANCE.md` §3 explains why launch-to-idle is not a substitute.
 
 ### Smaller gaps
 
@@ -164,39 +195,16 @@ the matrix but unproven. `git init` has not been run.
 - Notes render as plain text; a Markdown renderer would add an injection surface.
 - Charts are crypto-only (Finnhub candles are premium; its capabilities correctly advertise none).
 - No cross-linking from market data into the glossary yet.
-- Logo artwork is in and the icon set is generated, but the highest-resolution copy of the
-  mark in the supplied sheet is 485 px, so the 1024 px icon source is a ~2.1x upscale. A
-  larger export would sharpen it; `src-tauri/icons/README.md` records the method.
-- `ts-rs` type generation (ADR-010) is committed to but not wired up; `src/types/domain.ts` is currently hand-maintained and says so.
+- `ts-rs` type generation (ADR-010) is committed to but not wired up; `src/types/domain.ts` is currently hand-maintained and says so. It has now grown large enough that the drift risk is real.
+- The community panel is not asset-filtered — `CommunityFilter.assetId` is plumbed through and ignored by the fixture adapter.
+- AI conversations are excluded from `.brewprofile` in v0.1, as DATA_MODEL.md §6 specifies. Including them would need a separate opt-in.
 
-## 9. Phase 5 — start here
-
-Acceptance criteria are in `docs/PRODUCT_SCOPE_V0_1.md` §5. **Read `docs/AI_POLICY.md` first** —
-it contains the guardrail system prompt and the privacy boundary, both already written.
-
-**Recommended first slice: the local model path only.** An OpenAI-compatible endpoint on
-loopback, the system prompt applied, and `ai_outbound_log` recording every send. Local-first is
-the honest starting point — no credential, nothing leaves the machine, and it exercises the
-whole chain (provider config → system prompt → pre-send consent → outbound log). Cloud providers
-then reuse that path with a key and a stronger warning, rather than being built alongside it.
-
-Already in place for this:
-
-- `ai_conversations`, `ai_messages`, `ai_outbound_log` tables (migration `0001_init.sql`)
-- `content/ai/system-prompt.md` — **does not exist yet.** `content/ai/` is an empty directory. The prompt text is already written in `docs/AI_POLICY.md` §4; extract it to that file so the Rust side can `include_str!` it and a test can assert it is applied unmodified to every request.
-- `ExplainWithModel` in `src/features/learn/` — the consent-dialog pattern to reuse (ADR-028)
-- `ModelDeskRoute` — currently the correct not-configured state
-- `secrets.rs` — keychain storage, already used by Finnhub
-
-**The label rule:** "Local · offline" may only be shown when the configured host resolves to a
-loopback address. Anything else reads "Local endpoint · network".
-
-## 10. Tone
+## 9. Tone
 
 The owner asked for work that is honest about its limits. That has meant, repeatedly:
 
 - Saying "not measured" rather than estimating
-- Recording what could **not** be verified (`docs/PROVIDERS.md` has a "Not verified" section)
+- Recording what could **not** be verified (`docs/PROVIDERS.md` has a "Not verified" section, and so does the README)
 - Deviating from the brief where following it would mislead — and flagging it, with reasoning, rather than doing it silently
 - Fixing the code when a test caught a real bug, and fixing the test when the test was wrong
 

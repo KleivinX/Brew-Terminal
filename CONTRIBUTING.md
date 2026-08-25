@@ -95,6 +95,27 @@ contribution is clear if that day comes.
 4. Add tests using recorded fixtures, not live calls.
 5. Never commit a key. Credentials belong in the OS keychain.
 
+## Two areas that need extra care
+
+**The Model Desk.** `docs/AI_POLICY.md` is the specification, and §7 maps every requirement to
+the test that enforces it. Three things in particular are load-bearing:
+
+- The system prompt in `content/ai/system-prompt.md` is compiled in with `include_str!` and a
+  test asserts it matches AI_POLICY.md §4 byte for byte. `content/ai/` is prettier-ignored
+  because reformatting it changes what is transmitted.
+- `assemble_messages` is the only thing that decides what a request contains. The pre-send
+  preview and the send both call it, which is what makes the character count shown to the user
+  true. Do not add a second path.
+- Plain HTTP is permitted only for a host that resolves to loopback (ADR-029). If you find
+  yourself relaxing that, stop and open an issue.
+
+**The `.brewprofile` envelope.** `src-tauri/src/security/profile.rs` implements the construction
+in THREAT_MODEL.md §6.1. No cryptography is written by hand here and none should be — these are
+RustCrypto primitives used as intended. Changes that affect the file format need a `format_ver`
+bump and a test that an old file still opens. Changes that affect the _order_ of operations in
+`services/profile.rs` need care too: authenticate, validate, back up, write, in that order, so a
+bad file costs the user nothing.
+
 ## Reporting bugs
 
 Include your OS and version, the app version, what you expected, what happened, and steps to

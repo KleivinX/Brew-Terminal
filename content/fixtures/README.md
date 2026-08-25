@@ -7,6 +7,10 @@ for development. Real company and asset names appear so the UI can be exercised 
 string lengths; the numbers attached to them are meaningless and the article URLs point at
 `example.org`.
 
+`community.json` deserves its own note: the posts, authors and engagement counts are all
+invented, and the URLs point at `example.invalid` — a domain reserved by RFC 2606 precisely so
+it can never resolve. Nobody wrote these posts, and no real discussion is being quoted.
+
 The app never presents this data as real. Fixtures are served by the mock provider, whose
 display name is "Mock provider (fixtures)", and every panel showing them renders a
 `source: 'mock'` badge. The status bar shows mock mode for the whole session.
@@ -20,6 +24,7 @@ display name is "Mock provider (fixtures)", and every panel showing them renders
 | `search_index.json`  | `Asset[]`                       | Universal search, command palette    |
 | `chart_series.json`  | `Record<assetId, ChartPoint[]>` | Research Lab charts (Phase 3)        |
 | `news.json`          | `NewsArticle[]`                 | News feed                            |
+| `community.json`     | `CommunityPost[]`               | Community temperature                |
 
 ## Determinism
 

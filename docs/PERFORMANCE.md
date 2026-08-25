@@ -15,36 +15,42 @@ _Last updated: end of Phase 1 (2026-08-22)._
 
 Budget: initial chunk ≤ 200 KB gzipped, any lazy chunk ≤ 120 KB gzipped.
 
-| Asset                            | Raw      | Gzipped      |
-| -------------------------------- | -------- | ------------ |
-| `index.js` (initial)             | 347.1 KB | **108.5 KB** |
-| `index.css` (initial)            | 20.8 KB  | **4.9 KB**   |
-| **Initial payload total**        | 367.9 KB | **110.7 KB** |
-| `EmptyState` (shared lazy chunk) | 13.8 KB  | 5.5 KB       |
-| `SettingsRoute`                  | 11.3 KB  | 4.0 KB       |
-| `ResearchRoute`                  | 3.0 KB   | 1.3 KB       |
-| `ModelDeskRoute`                 | 2.2 KB   | 1.0 KB       |
-| `LearnRoute`                     | 1.7 KB   | 0.8 KB       |
+Measured after Phase 7, on the release build (`npm run build`):
 
-**97.3 KB against a 200 KB budget — 49% used.**
+| Asset                             | Gzipped     | Loaded when               |
+| --------------------------------- | ----------- | ------------------------- |
+| `index.js` (initial)              | **94.5 KB** | always                    |
+| `index.css` (initial)             | **5.3 KB**  | always                    |
+| **Initial payload total**         | **99.8 KB** | always                    |
+| `AssetChart` + css                | 53.8 KB     | a price chart is opened   |
+| `ipc.browser` (dev harness)       | 38.5 KB     | never, outside Tauri only |
+| `LearnRoute` + css                | 39.7 KB     | Learn is opened           |
+| `Button` (shared component chunk) | 14.3 KB     | first route that uses it  |
+| `SettingsRoute` + css             | 13.6 KB     | Settings is opened        |
+| `ModelDeskRoute` + css            | 8.1 KB      | Model Desk is opened      |
+| `ResearchRoute` + css             | 7.0 KB      | Research Lab is opened    |
 
-Phase 4 added 50 glossary entries, 17 lessons and a validation schema, and the entry chunk went
-_down_ again. All of that content sits in the lazily-loaded `LearnRoute` chunk (39.6 KB
-gzipped), which is fetched only when someone opens Learn.
+**99.8 KB against a 200 KB budget — 49% used.** CI fails the build above 204800 bytes.
 
-Phase 3 added charts, notes, and three new panels, and the initial chunk still came out
-_smaller_ than Phase 2's 113.5 KB. Two things account for that:
+Phases 5 and 6 added the Model Desk, the community panel, the encrypted profile flow and the
+password meter, and the entry chunk grew by **0.4 KB**. Everything new sits in lazily-loaded
+route chunks: `ModelDeskRoute` is 8.1 KB and `SettingsRoute` — which now carries the AI panel,
+the profile panel and the strength meter — is 13.6 KB. Neither is fetched until the route is
+opened.
 
-- **The chart library never enters the entry chunk.** `lightweight-charts` is 53.2 KB gzipped — half the entry chunk again — and lives in its own lazily-imported `AssetChart` chunk, fetched only when someone opens a price chart.
-- **A leak was found and closed.** `src/lib/ipc.browser.ts` statically imported every development fixture, and `chart_series.json` alone is 30 KB gzipped. That put ~35 KB of fixtures in the entry chunk of the shipped desktop app — which never runs the harness at all. It had been leaking since Phase 1 and only became obvious when the chart fixture made it large. It is now a dynamic import.
+Two things account for the entry chunk staying flat across four phases:
 
-The second one is worth remembering as a class of bug: a dev-only module reachable through a
-static import is not dev-only in the bundle. CI fails the build if the entry chunk exceeds
-204800 bytes gzipped.
+- **The chart library never enters the entry chunk.** `lightweight-charts` is 53 KB gzipped —
+  more than half the entry chunk again — and lives in its own lazily-imported chunk.
+- **A leak was found and closed in Phase 3.** `src/lib/ipc.browser.ts` statically imported every
+  development fixture, and `chart_series.json` alone is 30 KB gzipped. That put ~35 KB of
+  fixtures in the entry chunk of the shipped desktop app, which never runs the harness at all.
+  It had been leaking since Phase 1. It is now a dynamic import (ADR-023).
 
-The headroom matters: Phase 3 adds `lightweight-charts` (~48 KB gzipped), but it loads inside
-the Research Lab chunk, not the initial one. Route-level `React.lazy` is what keeps the
-dashboard from paying for features the user has not opened.
+The second is worth remembering as a class of bug: **a dev-only module reachable through a
+static import is not dev-only in the bundle.** The harness chunk has since grown to 38.5 KB as
+the fixtures grew, which would have been a 38.5 KB regression on every start had it not been
+caught.
 
 ## 2. Build and test times — measured
 
@@ -61,36 +67,65 @@ The cold Rust build is the one genuinely slow step on this hardware. It is a one
 clean checkout; the incremental loop is 11 s. This is why `npm run dev` exists as a separate
 path — UI iteration runs against the browser harness with no Rust rebuild at all.
 
-## 3. Runtime — partially measured
+## 3. Runtime — measured on the packaged release build
 
-| Metric                                  | Budget   | Status                                                 |
-| --------------------------------------- | -------- | ------------------------------------------------------ |
-| Cold start to interactive shell         | ≤ 2.0 s  | **Not yet measured**                                   |
-| Warm start                              | ≤ 1.2 s  | **Not yet measured**                                   |
-| Idle RSS, Pulse open                    | ≤ 300 MB | **Not yet measured**                                   |
-| Idle CPU, focused, no refresh in flight | < 1 %    | **Not yet measured**                                   |
-| Route switch (cached data)              | ≤ 150 ms | Feels instant in the browser harness; not instrumented |
-| Installer size                          | ≤ 15 MB  | **Not yet measured**                                   |
+Measured 2026-08-25 on the reference machine (2016 dual-core Intel MacBook, macOS 13.6), against
+the release bundle produced by `npm run tauri:build` — `opt-level = "s"`, LTO, `strip`,
+`panic = "abort"`. That build took **17m 48s**.
 
-These are deliberately left blank rather than filled with plausible-looking numbers.
+| Metric                                  | Budget   | Measured                               | Verdict   |
+| --------------------------------------- | -------- | -------------------------------------- | --------- |
+| Installer size (`.dmg`)                 | ≤ 15 MB  | **5.0 MB**                             | ✅        |
+| Application bundle (`.app`)             | —        | 9.6 MB                                 | —         |
+| Stripped binary                         | —        | 9.2 MB (debug build: 67.6 MB)          | —         |
+| Idle RSS, Pulse open, 60 s after launch | ≤ 300 MB | **115.5 MB** across 3 processes        | ✅        |
+| Idle CPU, focused, no refresh in flight | < 1 %    | **0.0 %** on all 3 processes           | ✅        |
+| Launch → process alive, cold            | —        | 0.62 s                                 | —         |
+| Launch → process alive, warm            | —        | 0.28 s (median of 3)                   | —         |
+| Launch → CPU settled, cold              | —        | 5.59 s                                 | see below |
+| Launch → CPU settled, warm              | —        | 2.66 s (median of 3: 2.68, 2.64, 2.66) | see below |
+| Cold start to **interactive shell**     | ≤ 2.0 s  | **still not measured**                 | —         |
+| Warm start to **interactive shell**     | ≤ 1.2 s  | **still not measured**                 | —         |
+| Route switch (cached data)              | ≤ 150 ms | Feels instant; not instrumented        | —         |
 
-**Why not yet:** meaningful startup and memory figures need a packaged release build
-(`opt-level = "s"`, LTO, `strip`, `panic = "abort"`), and a release build on this machine takes
-long enough that it belongs in a dedicated measurement pass rather than mid-implementation. The
-debug binary currently weighs 43.9 MB, which says nothing useful about the release artifact.
+### The two numbers that are still blank, and why
 
-**How they will be measured**, at the start of Phase 2:
+"Launch → CPU settled" is **not** the same thing as "start to interactive shell", and reporting
+it as though it were would be exactly the kind of plausible-looking number this document exists
+to avoid. It is measured from `open` until total process CPU drops below 8 % twice in a row —
+which happens _after_ the first CoinGecko request completes, because a release build has the
+mock provider disabled and Pulse fetches real crypto data on open. The shell is interactive well
+before that, with skeleton rows on screen, but "well before" is not a measurement.
+
+Getting the real number needs a `performance.mark` on the first paint of the Pulse table,
+reported back through IPC so it lands in the Rust log where it can be read from a packaged
+build. That instrumentation does not exist, so the two cells stay blank.
+
+What the settled numbers _do_ establish: nothing pathological happens at startup, the figure is
+stable across runs to within 40 ms, and warm start is less than half of cold.
+
+### Memory, in detail
+
+macOS splits a Tauri app across three processes, and all three count:
+
+| Process                     | RSS          |
+| --------------------------- | ------------ |
+| `brew-terminal` (Rust core) | 45.3 MB      |
+| `WebKit.WebContent`         | 62.6 MB      |
+| `WebKit.Networking`         | 7.7 MB       |
+| **Total**                   | **115.5 MB** |
+
+Note that the WebKit XPC services are reparented to `launchd`, so they cannot be found by walking
+the process tree from the app — they were identified by start time instead. A naive
+`pgrep -f "Brew Terminal"` finds only the Rust process and would under-report memory by 61 %.
+
+### How to reproduce
 
 ```bash
-# 1. Produce the release build
 npm run tauri:build
-
-# 2. Cold start — measured five times, median reported, with the page emitting a
-#    performance mark on first paint of the Pulse table.
-# 3. Idle RSS — after 60s idle with Pulse open and a 25-row watchlist:
-ps -o rss= -p "$(pgrep -f 'Brew Terminal')"
-# Both the app process and its WebKit content process count toward the budget.
-# 4. Idle CPU — sampled over 60s with the window focused and no refresh in flight.
+open -a "src-tauri/target/release/bundle/macos/Brew Terminal.app"
+# 60s later, summing the Rust process and both WebKit XPC services:
+ps -eo pid,rss,%cpu,comm | grep -E "brew-terminal|WebKit"
 ```
 
 ## 4. Design decisions that carry the budget

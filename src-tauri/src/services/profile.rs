@@ -146,10 +146,34 @@ async fn decrypt_and_validate(
 /// everything written since the last checkpoint, which would make the backup quietly useless at
 /// exactly the moment it is needed.
 fn backup_database(conn: &rusqlite::Connection, db_path: &Path) -> AppResult<PathBuf> {
-    let _: String = conn
-        .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |row| row.get(2))
-        .or_else(|_| -> rusqlite::Result<String> { Ok(String::new()) })
-        .unwrap_or_default();
+    /*
+     * `wal_checkpoint(TRUNCATE)` returns (busy, log, checkpointed). A non-zero `busy` means
+     * another connection held a read lock and the checkpoint did *not* complete — in which case
+     * the main database file is missing everything written since the last one, and copying it
+     * would produce a backup that looks fine and is not.
+     *
+     * So a busy checkpoint aborts the import. Refusing to proceed is the only honest option:
+     * the alternative is telling someone their data is backed up when it is not, immediately
+     * before overwriting it.
+     */
+    let busy: i64 = conn
+        .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |row| row.get(0))
+        .map_err(|error| {
+            tracing::warn!(?error, "could not checkpoint the WAL before backing up");
+            AppError::Storage(
+                "Your current data could not be prepared for backup, so nothing was imported."
+                    .into(),
+            )
+        })?;
+
+    if busy != 0 {
+        tracing::warn!("WAL checkpoint was blocked; refusing to write a partial backup");
+        return Err(AppError::Storage(
+            "Your current data is in use and could not be backed up completely, so nothing was \
+             imported. Close any other Brew Terminal window and try again."
+                .into(),
+        ));
+    }
 
     let stamp = chrono::Utc::now().format("%Y%m%d-%H%M%S");
     let backup = db_path.with_extension(format!("pre-import-{stamp}.bak"));
@@ -352,6 +376,48 @@ mod tests {
         .await;
 
         assert!(matches!(result, Err(AppError::ProfileAuthFailed)));
+    }
+
+    /// The backup is only worth writing if it can actually be restored from. This opens the
+    /// copy and checks the row that the import was about to destroy is in it.
+    #[tokio::test]
+    async fn the_backup_contains_the_data_the_import_replaced() {
+        let (source, dir) = state();
+        seed(&source).await;
+        let file = dir.path().join("mine.brewprofile");
+        export(&source, file.display().to_string(), PASSWORD.to_string())
+            .await
+            .unwrap();
+
+        let (target, _target_dir) = state();
+        with_db(target.pool.clone(), |conn| {
+            conn.execute(
+                "INSERT INTO notes (id, title, body_md, created_at, updated_at)
+                 VALUES ('doomed','Doomed','about to be replaced',1,1)",
+                [],
+            )?;
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+        let result = import(
+            &target,
+            file.display().to_string(),
+            PASSWORD.to_string(),
+            ImportMode::Replace,
+        )
+        .await
+        .unwrap();
+
+        // Open the backup directly and confirm the destroyed row survives in it.
+        let backup = rusqlite::Connection::open(&result.backup_path).unwrap();
+        let body: String = backup
+            .query_row("SELECT body_md FROM notes WHERE id = 'doomed'", [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(body, "about to be replaced");
     }
 
     #[tokio::test]

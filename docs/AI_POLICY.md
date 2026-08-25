@@ -155,9 +155,22 @@ asks for. A dialog on every one-line question trains people to dismiss it.
 
 ## 7. Testing
 
-- A fixture suite of advice-shaped prompts asserts the pre-send reframing path fires.
-- A test asserts the system prompt is present and unmodified on every outbound request, in both modes.
-- A test asserts no request is issued without an explicit user action.
-- A test asserts no API key appears in any IPC payload, log line, error, or export.
-- A test asserts the disclaimer renders on the Model Desk and on every AI-output surface.
-- An injection fixture (context containing "ignore previous instructions") verifies delimiters and stripping; the model's behaviour itself is observed and documented, not asserted.
+Each item below names the test that satisfies it, so a deletion is visible rather than silent.
+
+| Requirement                                                      | Where it is asserted                                                                                                                            |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Advice-shaped prompts fire the reframing path                    | `tests/features/modelDesk.test.tsx` → `advice-shaped prompt detection` (7 shapes flagged, 5 educational questions left alone)                   |
+| The system prompt is present and unmodified on every request     | `src-tauri/tests/ai_guardrails.rs` → `every_assembled_request_leads_with_the_unmodified_prompt`                                                 |
+| The shipped prompt matches this document                         | `src-tauri/tests/ai_guardrails.rs` → `the_shipped_prompt_is_the_documented_prompt` (byte-for-byte against §4)                                   |
+| No request without an explicit user action                       | `src-tauri/src/services/ai.rs` → `bootstrap_configures_nothing_and_sends_nothing`; `modelDesk.test.tsx` → `sends nothing until the user asks`   |
+| No API key in any IPC payload or error                           | `modelDesk.test.tsx` → `never returns the API key to the frontend`; `ai_guardrails.rs` → `ai_errors_reach_the_frontend_with_nothing_in_them`    |
+| No credential material in an export                              | `src-tauri/src/db/repo_profile.rs` → `no_credential_material_is_gathered`; `services/profile.rs` → `the_file_on_disk_reveals_nothing`           |
+| The disclaimer renders on the desk and beside every model answer | `tests/a11y/routes.a11y.test.tsx` → `disclaimer coverage`; `modelDesk.test.tsx` → `attaches the disclaimer to every model answer`               |
+| Injection fixture verifies delimiters and stripping              | `ai_guardrails.rs` → `hostile_context_cannot_forge_its_way_out_of_the_wrapper`                                                                  |
+| Model output is rendered as text, never as markup                | `modelDesk.test.tsx` → `renders model output as text, never as markup`                                                                          |
+| "Local · offline" is only ever claimed for loopback              | `src-tauri/src/models/ai.rs` → `offline_is_only_ever_claimed_for_loopback`; `providers/ai.rs` → `ip_literals_are_classified_without_resolution` |
+
+**Deliberately not asserted:** whether a model _obeys_ the guardrails. The injection fixture
+proves the delimiter cannot be forged from inside quoted text; it says nothing about what any
+given model does next, and §5 is explicit that these layers reduce risk rather than removing it.
+A test claiming otherwise would be the most misleading thing in the suite.

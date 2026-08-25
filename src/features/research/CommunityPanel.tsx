@@ -6,6 +6,7 @@ import { ProviderBadge } from '@/components/status/ProviderBadge';
 import { EmptyState } from '@/components/status/EmptyState';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { StatusPill } from '@/components/status/StatusPill';
+import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { RelativeTime } from '@/components/status/RelativeTime';
 import { ipc, IpcError } from '@/lib/ipc';
 import { usePreferences, useSetPreference } from '@/lib/preferences';
@@ -115,6 +116,11 @@ export function CommunityPanel() {
                 ))}
               </ul>
             )}
+
+            <DisclaimerNote
+              variant="block"
+              context="Community posts are other people's opinions, unverified."
+            />
 
             <div className={styles.footer}>
               <Button

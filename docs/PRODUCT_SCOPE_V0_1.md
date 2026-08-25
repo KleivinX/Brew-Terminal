@@ -213,10 +213,27 @@ Each phase is done when every box is checked and CI is green on all three platfo
 
 ### Phase 7 — Release readiness
 
-- `README.md` (setup, privacy model, attribution, limitations, disclaimer), `CONTRIBUTING.md`, `TRADEMARK.md`, `SECURITY.md`, `LICENSE`, issue/PR templates.
-- CI: fmt, clippy, eslint, tsc strict, Rust tests, frontend tests, build verification on all three platforms.
-- Accessibility audit recorded; performance budget table filled with measured numbers.
-- No banned-phrase violations; disclaimer present on every surface that shows prices, news, community content or AI output.
+- [x] `README.md` (setup, privacy model, attribution, limitations, disclaimer), `CONTRIBUTING.md`,
+      `TRADEMARK.md`, `SECURITY.md`, `LICENSE`, issue/PR templates. The README carries a
+      "What has not been verified" section, because a status page listing only successes is not
+      a status page.
+- [~] CI: fmt, clippy, eslint, tsc strict, Rust tests, frontend tests, bundle-size budget,
+  dependency audits and an app build on all three platforms. **The workflow covers all of it
+  and has still never executed** — a git repository now exists with one commit on `main`, but
+  there is no remote, so Windows and Linux remain unproven. This is the one criterion that
+  cannot be closed from this machine.
+- [x] Accessibility audit recorded: `axe-core` reports no violations on any route or panel,
+      including the Model Desk in use, the community panel switched on, and the hosted-AI
+      settings form. Contrast verified numerically across all three themes.
+- [x] Performance budget filled with **measured** numbers from a packaged release build — see
+      `docs/PERFORMANCE.md` §3. Installer 5.0 MB against 15 MB; idle RSS 115.5 MB against
+      300 MB; idle CPU 0.0 % against 1 %. Two cells stay blank: start-to-interactive needs a
+      first-paint mark that does not exist, and §3 says so rather than reporting launch-to-idle
+      in its place.
+- [x] No banned-phrase violations, enforced by a lint rule and two sweeps. Disclaimer present on
+      every surface showing prices, news, community content or AI output — asserted in
+      `tests/a11y/routes.a11y.test.tsx` → `disclaimer coverage`, which is what caught its
+      absence from the community panel.
 
 ---
 
