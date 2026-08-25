@@ -12,7 +12,8 @@ _Last updated: end of Phase 7, 2026-08-25._
 Brew Terminal is a local-first, open-source desktop app (Tauri 2 + Rust + React/TS) for market
 research and financial literacy. It is **not** a trading platform, a portfolio tracker, or an
 adviser, and refusing to become one is a design constraint rather than a missing feature. The
-owner supplied a detailed brief (`~/Desktop/brew-terminal-claude-megaprompt.md`) specifying a
+owner supplied a detailed brief (`~/Desktop/brew-terminal-claude-megaprompt.md` — still on the
+Desktop, not in the repo) specifying a
 seven-phase build. **All seven phases are implemented.** What remains is verification that can
 only happen outside this machine — see §8.
 
@@ -76,8 +77,22 @@ If a change would weaken any of these, that is a conversation with the owner, no
 
 ### Environment
 
-- **This project lives in an iCloud-synced folder, and iCloud evicts native binaries out of `node_modules`.** Mid-session, three `.node` binaries (rolldown, lightningcss, `@tauri-apps/cli`) were replaced by `.icloud` placeholders and the whole test suite died with "Cannot find native binding". `brctl download` did not bring them back; `rm -rf` the affected package directories and `npm install` did. **This will happen again.** The real fix is to move the project out of `~/Desktop`, or exclude it from iCloud.
-- Diagnose it with `find node_modules -name "*.icloud"`.
+- **The project lives at `~/Developer/Brew Terminal`. Keep it out of `~/Desktop` and `~/Documents`** — both are iCloud-synced on this machine, and iCloud was actively corrupting the build.
+
+  What it did, while the project was on the Desktop: evicted three `.node` native bindings
+  (rolldown, lightningcss, `@tauri-apps/cli`) and replaced them with `.icloud` placeholder
+  stubs, which killed the whole test suite with "Cannot find native binding". `brctl download`
+  would not bring them back — `rm -rf` on the affected package directories plus `npm install`
+  did. It had also evicted 196 files out of `target/debug/deps` and left _conflict copies_
+  (`index 2.html`) in `dist/`.
+
+  It was also syncing **10 GB of cargo build cache** to iCloud, on a disk that was 88% full.
+  Moving the project and deleting `src-tauri/target` took it to 79%.
+
+- Diagnose a recurrence with `find node_modules -name "*.icloud"`. If anything shows up, the
+  project has ended up somewhere synced again.
+- The four sibling projects under `~/Desktop/Kleivin/Coding projects/` are still on iCloud and
+  have the same exposure.
 
 ### Provider quirks (all verified against live APIs, recorded in `docs/PROVIDERS.md`)
 
