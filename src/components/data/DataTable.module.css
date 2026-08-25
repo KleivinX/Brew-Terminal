@@ -1,0 +1,98 @@
+.table {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.table:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  align-items: center;
+  height: 32px;
+  min-width: min-content;
+  padding: 0 var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.headCell {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
+.sortButton {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.sortButton:hover {
+  color: var(--text-primary);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  /* Both axes: the header is sticky inside this container, so a horizontal scroll moves the
+     header and the rows together instead of sliding the body out from under a fixed header. */
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-width: min-content;
+  padding: 0 var(--space-5);
+  cursor: default;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.row:hover {
+  background: var(--bg-hover);
+}
+
+.selected {
+  background: var(--accent-muted);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.selected:hover {
+  background: var(--accent-muted);
+}
+
+.cell {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.right {
+  justify-content: flex-end;
+  text-align: right;
+}

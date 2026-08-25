@@ -1,0 +1,110 @@
+[
+  {
+    "id": "mock-001",
+    "title": "Central bank holds rates steady, signals data-dependent path",
+    "url": "https://example.org/mock/rates-hold",
+    "summary": "Policymakers left the benchmark rate unchanged and repeated that future moves depend on incoming inflation and employment data.",
+    "sourceName": "Mock Wire",
+    "category": "macro",
+    "publishedAt": 1755813600
+  },
+  {
+    "id": "mock-002",
+    "title": "Spot bitcoin funds record third straight week of net inflows",
+    "url": "https://example.org/mock/btc-flows",
+    "summary": "Aggregate weekly flows into listed bitcoin products remained positive, according to fund disclosures.",
+    "sourceName": "Mock Crypto Desk",
+    "category": "crypto",
+    "publishedAt": 1755802800
+  },
+  {
+    "id": "mock-003",
+    "title": "Chipmaker beats revenue estimates, guides above consensus",
+    "url": "https://example.org/mock/chip-earnings",
+    "summary": "Quarterly revenue came in ahead of analyst estimates, with management guiding next quarter above the consensus range.",
+    "sourceName": "Mock Markets",
+    "category": "stocks",
+    "publishedAt": 1755788400
+  },
+  {
+    "id": "mock-004",
+    "title": "Ethereum client release schedules next network upgrade",
+    "url": "https://example.org/mock/eth-upgrade",
+    "summary": "Core developers published a target block for the next scheduled upgrade and asked node operators to update.",
+    "sourceName": "Mock Crypto Desk",
+    "category": "crypto",
+    "publishedAt": 1755770400
+  },
+  {
+    "id": "mock-005",
+    "title": "Retail sales rise less than forecast in latest monthly print",
+    "url": "https://example.org/mock/retail-sales",
+    "summary": "Headline retail sales grew month over month but came in below the median forecast.",
+    "sourceName": "Mock Wire",
+    "category": "macro",
+    "publishedAt": 1755748800
+  },
+  {
+    "id": "mock-006",
+    "title": "Index provider announces quarterly rebalance constituents",
+    "url": "https://example.org/mock/rebalance",
+    "summary": "The provider published additions and deletions effective after the close on the rebalance date.",
+    "sourceName": "Mock Markets",
+    "category": "stocks",
+    "publishedAt": 1755727200
+  },
+  {
+    "id": "mock-007",
+    "title": "Exchange publishes proof-of-reserves attestation",
+    "url": "https://example.org/mock/por",
+    "summary": "The venue released an updated attestation prepared by a third-party firm covering customer balances.",
+    "sourceName": "Mock Crypto Desk",
+    "category": "crypto",
+    "publishedAt": 1755709200
+  },
+  {
+    "id": "mock-008",
+    "title": "Automaker announces production target revision",
+    "url": "https://example.org/mock/auto-production",
+    "summary": "The company revised its annual production target and cited supply timing in its statement.",
+    "sourceName": "Mock Markets",
+    "category": "stocks",
+    "publishedAt": 1755684000
+  },
+  {
+    "id": "mock-009",
+    "title": "Regulator opens consultation on digital asset custody rules",
+    "url": "https://example.org/mock/custody-consult",
+    "summary": "A public consultation period was opened on proposed custody requirements for digital asset service providers.",
+    "sourceName": "Mock Wire",
+    "category": "crypto",
+    "publishedAt": 1755655200
+  },
+  {
+    "id": "mock-010",
+    "title": "Long-dated government yields ease after auction",
+    "url": "https://example.org/mock/yields",
+    "summary": "Yields on longer maturities declined following a well-covered auction.",
+    "sourceName": "Mock Wire",
+    "category": "macro",
+    "publishedAt": 1755633600
+  },
+  {
+    "id": "mock-011",
+    "title": "Payments network reports transaction volume growth",
+    "url": "https://example.org/mock/payments",
+    "summary": "The company reported year-over-year growth in processed transaction volume in its quarterly filing.",
+    "sourceName": "Mock Markets",
+    "category": "stocks",
+    "publishedAt": 1755604800
+  },
+  {
+    "id": "mock-012",
+    "title": "Layer-one network reports validator count milestone",
+    "url": "https://example.org/mock/validators",
+    "summary": "The project's public dashboard showed the active validator set passing a round number.",
+    "sourceName": "Mock Crypto Desk",
+    "category": "crypto",
+    "publishedAt": 1755568800
+  }
+]

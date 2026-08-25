@@ -1,0 +1,199 @@
+[
+  {
+    "assetId": "stock:us:AAPL",
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "assetType": "stock",
+    "price": 214.29,
+    "currency": "USD",
+    "changePct24h": 0.8,
+    "changePct7d": 2.1,
+    "marketCap": 3290000000000,
+    "volume24h": 54200000,
+    "sparkline": [
+      212.96, 211.2, 211.23, 212.9, 211.48, 211.37, 211.87, 211.97, 213.23, 211.19, 209.24, 208.59,
+      207.33, 205.75, 201.15, 202.08, 200.54, 199.48, 196.48, 198.55, 196.31, 195.86, 193.5, 193.8
+    ]
+  },
+  {
+    "assetId": "stock:us:MSFT",
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation",
+    "assetType": "stock",
+    "price": 441.58,
+    "currency": "USD",
+    "changePct24h": -0.4,
+    "changePct7d": 1.3,
+    "marketCap": 3280000000000,
+    "volume24h": 19800000,
+    "sparkline": [
+      437.12, 438.73, 443.47, 446.75, 444.04, 442.53, 442.52, 439.98, 435.24, 437.79, 435.18,
+      434.77, 433.44, 430.03, 434.22, 433.72, 434.15, 429.81, 429.34, 435.17, 430.95, 426.76,
+      429.95, 429.14
+    ]
+  },
+  {
+    "assetId": "stock:us:NVDA",
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation",
+    "assetType": "stock",
+    "price": 126.09,
+    "currency": "USD",
+    "changePct24h": 2.9,
+    "changePct7d": 7.8,
+    "marketCap": 3100000000000,
+    "volume24h": 312000000,
+    "sparkline": [
+      130.48, 128.48, 130.74, 130.36, 129.25, 128.13, 125.95, 124.79, 124.43, 123.25, 120.63,
+      118.53, 120.88, 118.47, 115.87, 116.03, 118.43, 114.57, 112.99, 112.7, 111.23, 113.78, 111.47,
+      110.8
+    ]
+  },
+  {
+    "assetId": "stock:us:GOOGL",
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc. Class A",
+    "assetType": "stock",
+    "price": 178.35,
+    "currency": "USD",
+    "changePct24h": 0.2,
+    "changePct7d": -1.4,
+    "marketCap": 2190000000000,
+    "volume24h": 23100000,
+    "sparkline": [
+      180.5, 182.1, 183.48, 182.01, 183.96, 185.42, 182.95, 183.47, 184.88, 185.05, 183.25, 184.73,
+      185.63, 185.43, 185.45, 185.95, 185.41, 187.93, 184.32, 185.17, 183.86, 186.46, 188.62, 187.98
+    ]
+  },
+  {
+    "assetId": "stock:us:AMZN",
+    "symbol": "AMZN",
+    "name": "Amazon.com, Inc.",
+    "assetType": "stock",
+    "price": 186.42,
+    "currency": "USD",
+    "changePct24h": 1.4,
+    "changePct7d": 3.0,
+    "marketCap": 1940000000000,
+    "volume24h": 38600000,
+    "sparkline": [
+      183.4, 185.27, 187.31, 185.61, 187.62, 185.13, 185.69, 184.9, 182.26, 182.48, 184.64, 183.44,
+      182.15, 185.75, 185.93, 186.3, 187.39, 190.29, 193.25, 194.41, 193.56, 191.79, 190.48, 188.83
+    ]
+  },
+  {
+    "assetId": "stock:us:META",
+    "symbol": "META",
+    "name": "Meta Platforms, Inc.",
+    "assetType": "stock",
+    "price": 504.11,
+    "currency": "USD",
+    "changePct24h": -1.2,
+    "changePct7d": 0.6,
+    "marketCap": 1280000000000,
+    "volume24h": 14300000,
+    "sparkline": [
+      512.61, 519.63, 525.16, 523.09, 531.89, 528.71, 526.64, 532.59, 532.16, 536.15, 541.25,
+      541.72, 531.51, 534.04, 534.3, 537.32, 526.69, 526.56, 525.17, 529.14, 519.96, 523.11, 515.43,
+      521.48
+    ]
+  },
+  {
+    "assetId": "stock:us:TSLA",
+    "symbol": "TSLA",
+    "name": "Tesla, Inc.",
+    "assetType": "stock",
+    "price": 219.8,
+    "currency": "USD",
+    "changePct24h": 4.1,
+    "changePct7d": -2.7,
+    "marketCap": 701000000000,
+    "volume24h": 98400000,
+    "sparkline": [
+      216.87, 220.22, 214.3, 215.54, 217.39, 217.97, 214.77, 217.19, 216.85, 217.78, 215.63, 215.48,
+      214.05, 213.43, 209.89, 204.71, 209.73, 211.03, 205.69, 203.9, 201.59, 197.14, 198.86, 200.64
+    ]
+  },
+  {
+    "assetId": "stock:us:JPM",
+    "symbol": "JPM",
+    "name": "JPMorgan Chase & Co.",
+    "assetType": "stock",
+    "price": 204.63,
+    "currency": "USD",
+    "changePct24h": 0.5,
+    "changePct7d": 1.1,
+    "marketCap": 587000000000,
+    "volume24h": 8900000,
+    "sparkline": [
+      204.89, 205.48, 205.91, 206.49, 202.76, 201.15, 199.63, 199.71, 199.42, 200.64, 200.74,
+      200.63, 199.43, 198.36, 199.53, 197.98, 197.78, 197.68, 199.57, 197.54, 198.66, 196.76,
+      197.46, 197.38
+    ]
+  },
+  {
+    "assetId": "stock:us:V",
+    "symbol": "V",
+    "name": "Visa Inc.",
+    "assetType": "stock",
+    "price": 271.44,
+    "currency": "USD",
+    "changePct24h": -0.1,
+    "changePct7d": 0.9,
+    "marketCap": 546000000000,
+    "volume24h": 6200000,
+    "sparkline": [
+      272.71, 273.36, 271.54, 271.36, 270.71, 274.58, 276.28, 276.26, 275.29, 272.85, 272.88,
+      274.84, 277.86, 278.56, 279.89, 280.64, 280.86, 282.27, 280.41, 280.65, 282.16, 283.62,
+      282.09, 283.36
+    ]
+  },
+  {
+    "assetId": "stock:us:KO",
+    "symbol": "KO",
+    "name": "The Coca-Cola Company",
+    "assetType": "stock",
+    "price": 63.18,
+    "currency": "USD",
+    "changePct24h": 0.3,
+    "changePct7d": 0.4,
+    "marketCap": 272000000000,
+    "volume24h": 12100000,
+    "sparkline": [
+      63.19, 62.49, 62.24, 61.93, 61.8, 61.99, 61.91, 61.51, 61.38, 61.37, 61.62, 61.85, 61.36,
+      61.19, 61.11, 61.09, 61.15, 61.06, 61.05, 61.16, 61.26, 61.7, 61.37, 61.51
+    ]
+  },
+  {
+    "assetId": "etf:us:VOO",
+    "symbol": "VOO",
+    "name": "Vanguard S&P 500 ETF",
+    "assetType": "etf",
+    "price": 508.22,
+    "currency": "USD",
+    "changePct24h": 0.4,
+    "changePct7d": 1.2,
+    "marketCap": null,
+    "volume24h": 4800000,
+    "sparkline": [
+      513.55, 510.8, 510.96, 513.24, 512.42, 513.23, 510.76, 506.14, 507.12, 508.53, 511.87, 511.68,
+      505.75, 508.7, 511.58, 514.35, 510.11, 511.57, 514.35, 515.78, 519.0, 518.11, 517.75, 516.15
+    ]
+  },
+  {
+    "assetId": "etf:us:QQQ",
+    "symbol": "QQQ",
+    "name": "Invesco QQQ Trust",
+    "assetType": "etf",
+    "price": 479.63,
+    "currency": "USD",
+    "changePct24h": 0.9,
+    "changePct7d": 2.4,
+    "marketCap": null,
+    "volume24h": 31200000,
+    "sparkline": [
+      475.57, 475.94, 475.0, 482.41, 481.22, 478.95, 473.38, 466.55, 458.26, 460.46, 462.18, 462.25,
+      464.18, 467.99, 471.3, 464.38, 465.19, 470.07, 468.94, 468.31, 470.09, 470.28, 476.75, 482.79
+    ]
+  }
+]

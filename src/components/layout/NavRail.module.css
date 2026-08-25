@@ -1,0 +1,113 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  width: var(--nav-rail-width);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  transition: width var(--motion-base) var(--motion-ease);
+}
+
+.expanded {
+  width: var(--nav-rail-width-expanded);
+}
+
+.brand {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/*
+ * Placeholder wordmark. The supplied logo PNG is not used until the project owner adds it to
+ * src-tauri/icons/ — see TRADEMARK.md and PRODUCT_SCOPE_V0_1.md §12.
+ */
+.mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--accent-contrast-text);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.wordmark {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.wordmarkAccent {
+  margin-left: var(--space-2);
+  font-weight: var(--weight-normal);
+  color: var(--accent);
+}
+
+.list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  margin: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  height: 38px;
+  padding: 0 var(--space-3);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
+}
+
+.rail:not(.expanded) .link {
+  justify-content: center;
+}
+
+.link:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.active {
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.active:hover {
+  color: var(--accent);
+}
+
+.linkText {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.linkHint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}

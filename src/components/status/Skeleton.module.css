@@ -1,0 +1,44 @@
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-shine) 50%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Reduced motion: keep the placeholder, drop the animation. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    background: var(--skeleton-base);
+    animation: none;
+  }
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}

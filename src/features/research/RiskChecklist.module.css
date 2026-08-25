@@ -1,0 +1,58 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+
+.intro,
+.closing {
+  max-width: 80ch;
+  color: var(--text-secondary);
+}
+
+.closing {
+  padding-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.marker {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.question {
+  max-width: 80ch;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.why {
+  max-width: 80ch;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

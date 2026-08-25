@@ -1,0 +1,54 @@
+.asset {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.symbol {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watched {
+  color: var(--accent);
+}
+
+.unwatched {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.unwatched:hover {
+  opacity: 1;
+}
+
+/*
+ * Side by side rather than stacked. Two stacked buttons inside a 40px row can be at most 20px
+ * tall each, which is under the 24x24 minimum target size in WCAG 2.2 (2.5.8, AA). Laid out
+ * horizontally they get the full 24x24 and still fit the row.
+ */
+.reorder {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.reorder button {
+  width: 24px;
+  height: 24px;
+}
+
+/* One chevron asset, rotated for "up" — no second icon path to keep in sync. */
+.moveUp svg {
+  transform: rotate(180deg);
+}

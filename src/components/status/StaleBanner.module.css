@@ -1,0 +1,24 @@
+.banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.stale {
+  color: var(--status-stale);
+  background: color-mix(in srgb, var(--status-stale) 8%, transparent);
+}
+
+.limited {
+  color: var(--status-stale);
+  background: color-mix(in srgb, var(--status-stale) 8%, transparent);
+}
+
+.age {
+  margin-left: auto;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

@@ -1,0 +1,47 @@
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 2.2fr) minmax(380px, 1fr);
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/*
+ * Below 1320px the news column stacks under the market table. The breakpoint is set by the
+ * market table's own column widths: keeping two columns any narrower leaves the table too
+ * cramped to show all its columns, and it would scroll horizontally for no good reason.
+ * No mobile layout — this is about narrow desktop windows on a 13" screen.
+ */
+@media (width <= 1320px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.6fr) minmax(0, 1fr);
+    overflow-y: auto;
+  }
+}
+
+.markets {
+  min-height: 0;
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tableToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.filter {
+  max-width: 260px;
+}

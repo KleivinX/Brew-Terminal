@@ -1,0 +1,28 @@
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-7) var(--space-6);
+  text-align: center;
+}
+
+.icon {
+  color: var(--status-error);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+
+.detail {
+  max-width: 52ch;
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}

@@ -1,0 +1,218 @@
+[
+  {
+    "id": "crypto:cg:bitcoin",
+    "assetType": "crypto",
+    "symbol": "BTC",
+    "name": "Bitcoin",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:ethereum",
+    "assetType": "crypto",
+    "symbol": "ETH",
+    "name": "Ethereum",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:solana",
+    "assetType": "crypto",
+    "symbol": "SOL",
+    "name": "Solana",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:cardano",
+    "assetType": "crypto",
+    "symbol": "ADA",
+    "name": "Cardano",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:ripple",
+    "assetType": "crypto",
+    "symbol": "XRP",
+    "name": "XRP",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:dogecoin",
+    "assetType": "crypto",
+    "symbol": "DOGE",
+    "name": "Dogecoin",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:polkadot",
+    "assetType": "crypto",
+    "symbol": "DOT",
+    "name": "Polkadot",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:chainlink",
+    "assetType": "crypto",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:litecoin",
+    "assetType": "crypto",
+    "symbol": "LTC",
+    "name": "Litecoin",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:avalanche-2",
+    "assetType": "crypto",
+    "symbol": "AVAX",
+    "name": "Avalanche",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:tether",
+    "assetType": "crypto",
+    "symbol": "USDT",
+    "name": "Tether",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "crypto:cg:usd-coin",
+    "assetType": "crypto",
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "currency": "USD",
+    "exchange": null,
+    "region": "global"
+  },
+  {
+    "id": "stock:us:AAPL",
+    "assetType": "stock",
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:MSFT",
+    "assetType": "stock",
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:NVDA",
+    "assetType": "stock",
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:GOOGL",
+    "assetType": "stock",
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc. Class A",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:AMZN",
+    "assetType": "stock",
+    "symbol": "AMZN",
+    "name": "Amazon.com, Inc.",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:META",
+    "assetType": "stock",
+    "symbol": "META",
+    "name": "Meta Platforms, Inc.",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:TSLA",
+    "assetType": "stock",
+    "symbol": "TSLA",
+    "name": "Tesla, Inc.",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:JPM",
+    "assetType": "stock",
+    "symbol": "JPM",
+    "name": "JPMorgan Chase & Co.",
+    "currency": "USD",
+    "exchange": "NYSE",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:V",
+    "assetType": "stock",
+    "symbol": "V",
+    "name": "Visa Inc.",
+    "currency": "USD",
+    "exchange": "NYSE",
+    "region": "us"
+  },
+  {
+    "id": "stock:us:KO",
+    "assetType": "stock",
+    "symbol": "KO",
+    "name": "The Coca-Cola Company",
+    "currency": "USD",
+    "exchange": "NYSE",
+    "region": "us"
+  },
+  {
+    "id": "etf:us:VOO",
+    "assetType": "etf",
+    "symbol": "VOO",
+    "name": "Vanguard S&P 500 ETF",
+    "currency": "USD",
+    "exchange": "NYSEARCA",
+    "region": "us"
+  },
+  {
+    "id": "etf:us:QQQ",
+    "assetType": "etf",
+    "symbol": "QQQ",
+    "name": "Invesco QQQ Trust",
+    "currency": "USD",
+    "exchange": "NASDAQ",
+    "region": "us"
+  }
+]

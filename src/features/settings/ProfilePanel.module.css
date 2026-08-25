@@ -1,0 +1,134 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  color: var(--text-secondary);
+}
+
+.intro {
+  max-width: 74ch;
+  color: var(--text-secondary);
+}
+
+.warning {
+  max-width: 74ch;
+  padding: var(--space-4);
+  background: var(--accent-muted);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 32rem;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.help {
+  max-width: 74ch;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.meter {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.meterBar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full, 999px);
+}
+
+/* Never colour alone: the label beside the meter always says the same thing in words. */
+.meter_weak {
+  background: var(--status-error);
+}
+
+.meter_fair {
+  background: var(--accent);
+}
+
+.meter_strong {
+  background: var(--status-live);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--status-error);
+}
+
+.ok {
+  max-width: 74ch;
+  font-size: var(--text-sm);
+  color: var(--status-live);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.summaryTitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.counts dt {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.counts dd {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.choose {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "cm-1",
+    "title": "How does an index fund actually track its index?",
+    "url": "https://example.invalid/threads/index-tracking",
+    "author": "quiet_reader",
+    "community": "r/investing",
+    "score": 412,
+    "commentCount": 88,
+    "postedAt": 1755820800,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-2",
+    "title": "Explain like I'm five: what is a market maker and why do they quote both sides?",
+    "url": "https://example.invalid/threads/market-makers",
+    "author": "learning_slowly",
+    "community": "r/investing",
+    "score": 231,
+    "commentCount": 54,
+    "postedAt": 1755807000,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-3",
+    "title": "Where do exchanges publish their proof-of-reserves reports, and what do they actually cover?",
+    "url": "https://example.invalid/threads/proof-of-reserves",
+    "author": "checks_sources",
+    "community": "r/CryptoCurrency",
+    "score": 1180,
+    "commentCount": 302,
+    "postedAt": 1755793200,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-4",
+    "title": "Gas fees spiked overnight — what determines them on a technical level?",
+    "url": "https://example.invalid/threads/gas-fees",
+    "author": "node_runner",
+    "community": "r/ethereum",
+    "score": 76,
+    "commentCount": 19,
+    "postedAt": 1755779000,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-5",
+    "title": "Reading a 10-K for the first time: which sections are worth the effort?",
+    "url": "https://example.invalid/threads/reading-10k",
+    "author": "annual_report_fan",
+    "community": "r/SecurityAnalysis",
+    "score": 508,
+    "commentCount": 121,
+    "postedAt": 1755764600,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-6",
+    "title": "What is the difference between a stop order and a stop-limit order?",
+    "url": "https://example.invalid/threads/stop-orders",
+    "author": "order_types",
+    "community": "r/investing",
+    "score": 94,
+    "commentCount": 27,
+    "postedAt": 1755750200,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-7",
+    "title": "Anyone else find the fee disclosures on brokerage statements hard to parse?",
+    "url": "https://example.invalid/threads/fee-disclosures",
+    "author": "fine_print",
+    "community": "r/personalfinance",
+    "score": 355,
+    "commentCount": 143,
+    "postedAt": 1755735800,
+    "sourceName": "Example forum (fixture)"
+  },
+  {
+    "id": "cm-8",
+    "title": "A walkthrough of how custody works at a regulated exchange",
+    "url": "https://example.invalid/threads/custody-walkthrough",
+    "author": "compliance_curious",
+    "community": "r/CryptoCurrency",
+    "score": 622,
+    "commentCount": 97,
+    "postedAt": 1755721400,
+    "sourceName": "Example forum (fixture)"
+  }
+]

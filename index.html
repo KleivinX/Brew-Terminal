@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brew Terminal</title>
+    <script>
+      // Paint the correct theme on the first frame. SQLite is the source of truth,
+      // but waiting for IPC would flash the wrong background on a slow machine.
+      (function () {
+        try {
+          var t = localStorage.getItem('brew.theme');
+          if (t === 'dark' || t === 'light' || t === 'soft') {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+        } catch (e) {
+          /* localStorage unavailable — the dark default in the markup stands. */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

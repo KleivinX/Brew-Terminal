@@ -1,0 +1,99 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.theme {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-align: left;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.theme:hover {
+  border-color: var(--border-strong);
+}
+
+.themeSelected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.swatchRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+/* Literal values are correct here: these swatches must preview a theme that is NOT active,
+   so they cannot reference the live token values. This is the one sanctioned exception. */
+.swatch_dark_bg {
+  background: #0b0d10;
+}
+
+.swatch_dark_surface {
+  background: #15191f;
+}
+
+.swatch_dark_accent {
+  background: #f97316;
+}
+
+.swatch_light_bg {
+  background: #f8f6f1;
+}
+
+.swatch_light_surface {
+  background: #fff;
+}
+
+.swatch_light_accent {
+  background: #c2410c;
+}
+
+.swatch_soft_bg {
+  background: #1a1d21;
+}
+
+.swatch_soft_surface {
+  background: #22262b;
+}
+
+.swatch_soft_accent {
+  background: #e8a24a;
+}
+
+.themeName {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.themeDescription {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.settings {
+  padding: var(--space-2) var(--space-5) var(--space-4);
+}

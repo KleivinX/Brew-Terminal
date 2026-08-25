@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Least-privilege capability set. The frontend gets this app's own commands, a narrowly scoped opener for external links, and the file dialog used by profile export/import. No filesystem plugin, no shell plugin, no HTTP plugin — all network I/O happens in Rust (ADR-002).",
+  "windows": ["main"],
+  "permissions": ["core:default", "opener:default", "dialog:default"]
+}

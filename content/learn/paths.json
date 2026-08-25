@@ -1,0 +1,241 @@
+[
+  {
+    "id": "stocks-basics",
+    "title": "Stocks Basics",
+    "description": "What a share actually is, where it trades, and what the numbers next to it mean.",
+    "lessons": [
+      {
+        "id": "what-a-share-is",
+        "title": "What you own when you own a share",
+        "summary": "A share is a slice of a company. What that entitles you to, and what it does not.",
+        "keyTerms": ["stock", "dividend", "market-cap"],
+        "body": [
+          "A share is a unit of ownership in a company. If a company has issued a hundred million shares and you hold a hundred, you own a hundred-millionth of it — a genuinely small piece of a genuinely large thing.",
+          "That ownership entitles you to your proportional share of anything distributed to owners, and usually to a vote on certain decisions. It does not entitle you to walk into the building, direct what the company does, or claim a piece of its equipment.",
+          "The price of a share is what someone was most recently willing to pay for one. It is not an official valuation and not a measure of how well the company is run. It is the outcome of a continuous disagreement between buyers and sellers about what the future holds.",
+          "Multiply the price by the number of shares and you get market capitalisation — the market's current price for the whole company. It is the fastest way to compare the size of two businesses, and it is worth remembering it is a price rather than an appraisal."
+        ]
+      },
+      {
+        "id": "where-shares-trade",
+        "title": "Where shares trade and how a price forms",
+        "summary": "Exchanges, order books, and why there are always two prices rather than one.",
+        "keyTerms": ["exchange", "order-book", "bid-ask", "spread", "liquidity"],
+        "body": [
+          "Shares change hands on an exchange, a regulated venue with rules about who may trade and what must be disclosed. Most people reach it through a broker rather than directly.",
+          "At any moment there is a highest price someone will pay and a lowest price someone will accept. These are the bid and the ask, and they are never the same number. The gap between them is the spread, and it is a real cost — you buy at the higher one and sell at the lower one.",
+          "Behind those two numbers sits the order book: the full list of what people want to buy and sell at every price. When someone trades in size, the order does not glide through the book, it steps through whatever is actually there.",
+          "This is why liquidity matters. In a heavily traded share the spread is narrow and a normal order barely moves the price. In a thinly traded one, the quoted price may not be a price you could actually get."
+        ]
+      },
+      {
+        "id": "reading-the-numbers",
+        "title": "Reading the numbers beside a share",
+        "summary": "Earnings, P/E, dividends and volume — what each one measures and what it cannot tell you.",
+        "keyTerms": ["earnings", "p-e-ratio", "dividend", "volume", "expense-ratio"],
+        "body": [
+          "Earnings are a company's profit over a period. Public companies report them on a schedule, and prices often move on the gap between the figure and what was collectively expected rather than on the figure itself.",
+          "The P/E ratio divides the share price by earnings per share. A P/E of 20 means paying twenty times annual profit per share. A high number can mean the market expects growth, or that the price has run ahead of the business — the ratio raises the question, it does not settle it. Comparing P/E across different industries is usually meaningless.",
+          "A dividend is a payment out of profits. Dividend yield expresses it as a percentage of the price, which means a falling price mechanically raises the yield — a high yield sometimes reflects a payment the market expects to be cut.",
+          "Volume is how much changed hands. It says nothing about direction; a heavily traded fall and a heavily traded rise look identical. It is context for how much weight a price deserves."
+        ]
+      },
+      {
+        "id": "funds-and-baskets",
+        "title": "Funds: buying a basket instead of a company",
+        "summary": "What an ETF is, what an index measures, and what the fee does over time.",
+        "keyTerms": ["etf", "index", "index-fund", "diversification", "expense-ratio"],
+        "body": [
+          "An index is a measurement of a defined group of assets — a temperature reading for a slice of the market. You cannot buy one. What you can buy is a fund built to follow it.",
+          "An exchange-traded fund holds a basket of assets and its own shares trade like a stock. One purchase gives proportional exposure to everything the fund holds, which may be several hundred companies.",
+          "The name describes the wrapper, not the contents. An ETF can hold shares, bonds, commodities or a narrow slice of one industry, and can use borrowing internally. Two things both called ETFs can behave nothing alike, so what a fund actually holds is the thing to check.",
+          "Funds charge an annual percentage called the expense ratio, deducted from the fund rather than billed to you. It applies every year to the whole balance, so small differences compound into large ones over long periods."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crypto-basics",
+    "title": "Crypto Basics",
+    "description": "Blockchains, keys, tokens and custody — the mechanics underneath the vocabulary.",
+    "lessons": [
+      {
+        "id": "what-a-blockchain-is",
+        "title": "What a blockchain actually does",
+        "summary": "A shared ledger with no single owner — and what that does and does not guarantee.",
+        "keyTerms": ["blockchain", "token", "gas-fee"],
+        "body": [
+          "A blockchain is a ledger copied across many computers that agree on its contents by following a common rule. Entries are grouped into blocks, each referencing the one before, so changing an old entry means redoing everything after it on a majority of machines.",
+          "What that provides is a record no single participant controls and that is hard to quietly rewrite. It is a genuine and unusual property.",
+          "What it does not provide is truth. A blockchain records that a transaction happened. It does not establish that the parties were honest, that the thing being transferred is worth anything, or that whatever a token claims to represent exists. \"On the blockchain\" is a statement about storage, not about quality.",
+          "Capacity is limited, so users bid for it. That bid is the gas fee, paid in the chain's own coin. When demand rises, fees rise, and a failed transaction can still cost its fee."
+        ]
+      },
+      {
+        "id": "keys-and-wallets",
+        "title": "Keys, wallets, and irreversibility",
+        "summary": "Why a wallet holds no coins, and why losing a key is different from losing a password.",
+        "keyTerms": ["wallet", "private-key", "cold-storage", "phishing"],
+        "body": [
+          "A wallet does not contain coins. The coins are entries on the blockchain. The wallet holds the private key — the secret that produces the signatures authorising those entries to change.",
+          "Control of the key is control of the funds. There is no separate ownership record behind it, no account recovery, and no authority to appeal to. This is what people mean by irreversible, and it cuts in every direction: mistaken transfers, forgotten phrases and stolen keys are all equally final.",
+          "A wallet shows a recovery phrase when created. Anyone with that phrase has complete control. No legitimate service ever needs it, and being asked for it is the clearest possible signal that something is wrong.",
+          "Keeping a key on a device that never connects to the internet protects it from malware on that device. It does not remove risk — it exchanges one set for another, where physical loss and the security of the phrase become what matters."
+        ]
+      },
+      {
+        "id": "tokens-and-supply",
+        "title": "Tokens, stablecoins and supply",
+        "summary": "Anyone can create a token. What distinguishes one, and what supply figures mean.",
+        "keyTerms": ["token", "stablecoin", "circulating-supply", "smart-contract"],
+        "body": [
+          "Creating a token requires no permission. Anyone can deploy a contract using any name and symbol they like, including one already in use by a well-known project. The contract address, not the name, identifies a specific token — which is why getting that address from the project's own channels matters.",
+          "A token confers whatever rights its issuer chose to grant, which is frequently none at all. It is not automatically a share of anything, and it does not automatically entitle the holder to any part of a project's revenue.",
+          "A stablecoin is designed to hold a steady value, usually one dollar. The peg is a design goal rather than a property — it holds while the mechanism behind it holds. The useful questions are what backs it, who verifies that independently, and whether redemption works under stress.",
+          "Circulating supply is what is currently in general circulation, and it is what market cap is calculated from. Total and maximum supply are different numbers. A small circulating supply with a large scheduled unlock has future selling built into it, disclosed by some projects and not others."
+        ]
+      },
+      {
+        "id": "custody-and-venues",
+        "title": "Where it is held, and who fails if something goes wrong",
+        "summary": "Self-custody and exchange balances are different risks, not different amounts of safety.",
+        "keyTerms": ["custody", "defi", "yield", "staking"],
+        "body": [
+          "Holding assets yourself means carrying the risk of losing access. Leaving them with an exchange means carrying the risk of that company failing, being hacked, or halting withdrawals. Neither is simply safer; they are different failure modes.",
+          "An exchange balance is a claim on a company, not direct control of an asset. In some jurisdictions a regulated broker must segregate customer assets and carries insurance. At many crypto venues no equivalent exists, and this has repeatedly mattered.",
+          "Decentralised finance replaces the company with code. That removes the intermediary's costs and its protections at the same time — typically no complaints process, no deposit protection, and no way to reverse a mistake.",
+          "Yields quoted anywhere have to be produced by something: interest from a borrower, fees from users, or new issuance. Where a rate substantially exceeds comparable arrangements, the difference is being paid for by risk somewhere, and locating it is the entire exercise."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "reading-financial-news",
+    "title": "Reading Financial News",
+    "description": "How market stories are built, whose incentives shape them, and what a headline can support.",
+    "lessons": [
+      {
+        "id": "why-not-because",
+        "title": "\"Why\" headlines and the causation problem",
+        "summary": "Markets move for reasons nobody can enumerate. Headlines supply one anyway.",
+        "keyTerms": ["volatility", "volume"],
+        "body": [
+          "A price is the outcome of an enormous number of decisions, most of them invisible and many of them unrelated to any news. When a price moves, no one can list the reasons.",
+          "Financial coverage still needs a story, so a plausible candidate gets attached: an announcement, a data release, a statement. The headline reads \"shares fell on X\", and the reader learns a cause that was never established.",
+          "The tell is that the same event often coincides with opposite moves on different days, and that explanations appear after the move rather than before it. If the reasoning genuinely predicted the direction, it would have been published beforehand.",
+          "This is why Brew Terminal shows stories published near a price move under a heading saying exactly that, and states plainly that adjacency in time is not causation. It is a smaller claim, and it is one the app can actually support."
+        ]
+      },
+      {
+        "id": "who-is-talking",
+        "title": "Whose incentive is behind the words",
+        "summary": "Sources have positions, publications have business models, and both shape what you read.",
+        "keyTerms": ["due-diligence", "past-performance"],
+        "body": [
+          "Someone quoted about an asset frequently holds it, has sold it short, or manages a fund whose performance depends on it. That does not make them wrong. It does mean their view arrives with a reason to be stated.",
+          "Publications have incentives too. Attention rewards drama, urgency and round numbers. A calm quarter is not a story, so coverage skews towards movement — which makes markets feel more eventful than they usually are.",
+          "Promotional content in crypto often does not identify itself as promotional. Paid placements, undisclosed holdings and coordinated posting are common enough that anonymous enthusiasm should be read as marketing until shown otherwise.",
+          "Three questions cover most of it: who benefits if I believe this, what would have to be true for it to be wrong, and where is the primary source."
+        ]
+      },
+      {
+        "id": "numbers-in-headlines",
+        "title": "Numbers, percentages and missing denominators",
+        "summary": "The same fact can be framed several ways. Most of the work is in what is left out.",
+        "keyTerms": ["market-cap", "volume", "drawdown", "survivorship-bias"],
+        "body": [
+          "\"Wiped billions off its value\" is market cap multiplied out, and it describes a price change rather than money going anywhere. Nobody lost that sum; the last shares to trade changed price and the arithmetic followed.",
+          "Percentages need a starting point, and the starting point is a choice. A chart beginning at a low makes a rise look dramatic; beginning it a year earlier can make the same rise look like a partial recovery.",
+          "Falls and gains are not symmetrical. A 50% fall requires a 100% rise to return to where it started, so large drawdowns matter more than an average suggests.",
+          "Records of past performance usually exclude what failed. Funds that closed and projects that collapsed leave the sample, which makes what remains look better than the experience was. The corrective question is what happened to everything not shown."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "risk-and-scams",
+    "title": "Risk and Scams",
+    "description": "Common failure patterns, and how to check a claim rather than trust a feeling.",
+    "lessons": [
+      {
+        "id": "what-risk-means",
+        "title": "What risk actually means here",
+        "summary": "Not just the chance of loss, but the range of outcomes and how you behave inside it.",
+        "keyTerms": ["risk-tolerance", "volatility", "drawdown", "diversification"],
+        "body": [
+          "Volatility measures how much a price moves, in either direction. It is calculated from what has already happened, so a calm reading describes the recent past rather than forecasting the next period.",
+          "Drawdown describes the experience instead: the fall from a peak to the low that followed. It tends to be the more useful number, because a percentage on a page and watching a balance fall by that percentage are different things.",
+          "Risk tolerance has a financial half — what a loss would actually do to your circumstances — and a personal half, which is how you behave when the number is falling. The second is difficult to know in advance, and the common failure is not the fall but selling into it.",
+          "Diversification narrows the range of outcomes rather than improving the average. It reduces the chance of an unusually bad result from one holding and equally the chance of an unusually good one. Its effect depends on whether the holdings genuinely behave differently, and things that look varied often move together during a crisis."
+        ]
+      },
+      {
+        "id": "failure-patterns",
+        "title": "Patterns that recur",
+        "summary": "Common structures behind losses, described as patterns rather than accusations.",
+        "keyTerms": ["rug-pull", "phishing", "yield", "circulating-supply"],
+        "body": [
+          "One recurring structure: heavy promotion, a rapid rise, then the people behind a project selling their holdings or withdrawing pooled funds, leaving holders with something unsellable. Signs associated with it include anonymous teams, a large share of supply held by few addresses, contracts granting administrators unusual powers, and manufactured urgency.",
+          "Another: a yield well above comparable arrangements, paid from new deposits rather than any activity. The rate is the advertisement, and it works until inflows stop.",
+          "A third: a convincing copy of a real site, or a message pretending to be support, leading to a transaction that grants an attacker permission to move funds. No legitimate service ever asks for a recovery phrase, and an approval you did not deliberately seek out should be treated as hostile.",
+          "None of these signs is proof, and their absence is not proof of safety. They are reasons to look harder. Brew Terminal does not label assets as scams — it has no basis to, and a tool that guessed would be wrong often enough to be dangerous."
+        ]
+      },
+      {
+        "id": "checking-claims",
+        "title": "Checking a claim",
+        "summary": "Where the primary sources are, and what \"audited\" and \"verified\" actually mean.",
+        "keyTerms": ["due-diligence", "smart-contract", "survivorship-bias", "custody"],
+        "body": [
+          "Due diligence mostly consists of reading primary sources rather than summaries. For a listed company that means the annual and quarterly reports. For a crypto project it means the contract address obtained from the project's own channels, the audit document, who holds the supply, and what unlocks when.",
+          "\"Audited\" is a claim until you read the report. A real audit is by a named firm, covers a specific version of specific code, and lists findings. It goes stale the moment the code changes, and a badge on a website is not the document.",
+          "The phrase \"do your own research\" is often used to deflect scrutiny rather than invite it. Actual research is the opposite: it means being able to say what would change your mind and going to look.",
+          "Time pressure is the common thread across almost all of this. Nothing legitimate stops being available because you took a day to read about it."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "how-markets-work",
+    "title": "How Markets Work",
+    "description": "Orders, spreads, liquidity and settlement — the machinery under a quoted price.",
+    "lessons": [
+      {
+        "id": "orders",
+        "title": "The two basic instructions",
+        "summary": "Market orders trade now at whatever is available; limit orders trade only at your price.",
+        "keyTerms": ["market-order", "limit-order", "order-book", "slippage"],
+        "body": [
+          "A market order says trade immediately at whatever is available. It prioritises certainty of execution over price, and it will fill.",
+          "A limit order says trade only at this price or better. It prioritises price over certainty — set a limit to buy at 100 and you will not pay 101, but if the price never returns to 100, nothing happens.",
+          "Every resting order in a book is somebody's unfilled limit order. That is what an order book is: the accumulated list of prices people are willing to trade at but have not yet.",
+          "Slippage is the gap between the price you expected and the price you got. It grows with order size, with how thinly the asset trades, and with how fast the market is moving — worst, in other words, in exactly the conditions where people trade most urgently."
+        ]
+      },
+      {
+        "id": "liquidity-and-spread",
+        "title": "Liquidity, spreads and the cost of trading",
+        "summary": "Why there are two prices, who quotes them, and what happens when they widen.",
+        "keyTerms": ["spread", "liquidity", "bid-ask", "market-maker", "volume"],
+        "body": [
+          "The spread is the gap between the best bid and the best ask. Buy immediately and you pay the higher; sell immediately and you receive the lower. It is a cost paid on the way in and again on the way out, and it is easy to overlook because it is never itemised.",
+          "Market makers quote both sides continuously and earn that gap, taking on the risk of holding whatever they are left with. Their presence is much of why liquid markets stay liquid.",
+          "Liquidity is not a fixed property of an asset. It can be ample on a calm day and thin in a panic — which is precisely when people most want to sell. When market makers step back, spreads widen and the book empties.",
+          "A wide spread, low volume and a price that jumps between trades rather than moving smoothly are the practical signs that a quoted price may not be one you could actually transact at."
+        ]
+      },
+      {
+        "id": "after-the-trade",
+        "title": "What happens after you press the button",
+        "summary": "Settlement, brokers and custody — the plumbing that decides who holds what.",
+        "keyTerms": ["settlement", "brokerage", "custody", "exchange"],
+        "body": [
+          "Agreeing a trade and completing it are separate events. Equity markets typically settle a day or two later, and until settlement the transfer is a promise. Most of a market's machinery exists to make sure those promises are kept.",
+          "Most people cannot trade directly on an exchange, so a broker acts as intermediary. Brokers differ in cost, in what they let you trade, and in how they hold what you buy.",
+          "How holdings are registered — in your name, or pooled in the broker's — determines what happens if the broker fails. It is a dry question that matters enormously in the rare cases where it matters at all.",
+          "In crypto the same question appears as custody. An exchange balance is a claim on a company; a self-custodied asset is controlled by whoever holds the key. The trade-off is between someone else's solvency and your own operational care."
+        ]
+      }
+    ]
+  }
+]

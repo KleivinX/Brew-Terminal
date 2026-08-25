@@ -1,0 +1,68 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Contains the body: without this a tall table paints straight through the panel's
+     bottom edge and over whatever is stacked below it. Also clips the rounded corners. */
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  /* Without this the flex parent will happily shrink the title to one character per line. */
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bodyScroll {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Opt-in: only a panel that owns its viewport should fill. */
+.bodyFill {
+  flex: 1;
+}

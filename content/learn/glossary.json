@@ -1,0 +1,631 @@
+[
+  {
+    "id": "stock",
+    "term": "Stock",
+    "aliases": ["share", "equity", "shares"],
+    "category": "stocks",
+    "short": "A stock is a share of ownership in a company, bought and sold on an exchange.",
+    "body": [
+      "Owning a stock means owning a slice of a company. If the company has issued a hundred million shares and you hold one hundred of them, you own a hundred-millionth of it. That entitles you to your share of anything the company distributes to owners, and usually to a vote on certain company decisions.",
+      "Shares change hands on an exchange, and the price moves as buyers and sellers disagree about what the company is worth. That price reflects what people are currently willing to pay — not an official valuation, and not a measure of whether the company is well run.",
+      "The words \"stock\", \"share\" and \"equity\" are used more or less interchangeably in everyday conversation."
+    ],
+    "seeAlso": ["exchange", "dividend", "market-cap", "ticker"]
+  },
+  {
+    "id": "ticker",
+    "term": "Ticker symbol",
+    "aliases": ["symbol", "ticker"],
+    "category": "stocks",
+    "short": "A short code that identifies an asset on a particular exchange.",
+    "body": [
+      "AAPL, MSFT and BTC are tickers. They exist because a short unique code is easier to route and quote than a company name, and because names are not unique.",
+      "The same company can have different tickers on different exchanges, and a ticker freed up by one company can later be reassigned to another. A ticker identifies a listing, not a company for all time — which is why mixing up similarly-named tickers is a recurring way people buy something other than what they meant to."
+    ],
+    "seeAlso": ["stock", "exchange"]
+  },
+  {
+    "id": "exchange",
+    "term": "Exchange",
+    "aliases": [],
+    "category": "stocks",
+    "short": "A regulated venue where buyers and sellers meet to trade assets under common rules.",
+    "body": [
+      "An exchange matches buy and sell orders and publishes the resulting prices. Its rules cover who may trade, what must be disclosed, and what happens when something goes wrong.",
+      "Not every asset trades on an exchange. Some trade over the counter, meaning directly between two parties, with less public price information. Crypto trades on venues that call themselves exchanges but are regulated very differently, or in some cases barely at all — the shared word covers quite different things."
+    ],
+    "seeAlso": ["stock", "liquidity", "custody"]
+  },
+  {
+    "id": "etf",
+    "term": "ETF",
+    "aliases": ["exchange-traded fund", "exchange traded fund"],
+    "category": "stocks",
+    "short": "An exchange-traded fund holds a basket of assets, and shares in the fund trade like a stock.",
+    "body": [
+      "Buying one share of an ETF gives you exposure to everything the fund holds, in proportion. A fund tracking a broad index might hold several hundred companies, so one purchase spreads your money across all of them.",
+      "ETFs charge an ongoing fee, quoted as an expense ratio — a percentage of your holding taken each year. Small differences compound over long periods.",
+      "The name describes the wrapper, not the contents. An ETF can hold shares, bonds, commodities, or a narrow slice of one industry, and it can use borrowing or derivatives internally. Two things both called ETFs can behave nothing alike."
+    ],
+    "seeAlso": ["index", "index-fund", "diversification", "expense-ratio"]
+  },
+  {
+    "id": "index",
+    "term": "Index",
+    "aliases": [],
+    "category": "markets",
+    "short": "An index is a measurement of a group of assets, used as a summary of how that group is doing.",
+    "body": [
+      "An index is a number calculated from a defined list of assets by a published rule. The S&P 500 tracks 500 large US companies; the FTSE 100 tracks 100 large UK-listed ones.",
+      "You cannot buy an index. It is a measurement, like a temperature. What you can buy is a fund built to follow one.",
+      "Which companies are in an index, and how much each one counts, is decided by whoever publishes it. Most weight companies by size, which means the largest few can dominate the number. \"The market is up\" often means a handful of very large companies are up."
+    ],
+    "seeAlso": ["etf", "index-fund", "market-cap"]
+  },
+  {
+    "id": "index-fund",
+    "term": "Index fund",
+    "aliases": [],
+    "category": "stocks",
+    "short": "A fund that tries to match an index rather than beat it.",
+    "body": [
+      "An index fund buys the assets in an index in roughly the published proportions, and adjusts when the index changes. It is not trying to pick winners, which is why its fees are typically lower than a fund that employs people to choose.",
+      "Tracking is never exact. The gap between a fund's result and its index — from fees, timing, and the cost of trading — is called tracking difference."
+    ],
+    "seeAlso": ["index", "etf", "expense-ratio"]
+  },
+  {
+    "id": "dividend",
+    "term": "Dividend",
+    "aliases": ["dividend yield"],
+    "category": "stocks",
+    "short": "A payment a company makes to its shareholders out of its profits.",
+    "body": [
+      "Companies that pay dividends usually do so on a schedule, quarterly or annually. The amount is decided by the board and can be raised, cut, or stopped entirely.",
+      "Dividend yield expresses the annual dividend as a percentage of the share price. Because the price is the denominator, a falling share price makes the yield rise — a high yield can reflect a payment the market expects to be cut rather than a generous one.",
+      "Many companies pay no dividend at all, reinvesting instead. That is a choice about how to use profits, not an indicator of health in either direction."
+    ],
+    "seeAlso": ["stock", "earnings", "p-e-ratio"]
+  },
+  {
+    "id": "earnings",
+    "term": "Earnings",
+    "aliases": ["EPS", "earnings per share"],
+    "category": "stocks",
+    "short": "A company's profit over a period, after costs and taxes.",
+    "body": [
+      "Public companies report earnings on a fixed schedule, usually quarterly, along with revenue and commentary. Earnings per share divides that profit by the number of shares.",
+      "Reported earnings follow accounting rules that involve judgement — when revenue is recognised, how assets are depreciated. Companies often also publish an \"adjusted\" figure that excludes items they consider unrepresentative. Which figure a headline is quoting is worth checking, because they can differ substantially.",
+      "Prices frequently move on the gap between reported earnings and what analysts collectively expected, rather than on the number itself."
+    ],
+    "seeAlso": ["p-e-ratio", "dividend", "volatility"]
+  },
+  {
+    "id": "p-e-ratio",
+    "term": "P/E ratio",
+    "aliases": ["price to earnings", "PE ratio"],
+    "category": "stocks",
+    "short": "The share price divided by earnings per share — a rough measure of how much you pay per unit of profit.",
+    "body": [
+      "A P/E of 20 means the price is twenty times the annual earnings per share. It is a way of comparing price to something the company actually produces, rather than looking at the price alone.",
+      "A high P/E can mean investors expect earnings to grow, or that the price has run ahead of the business. A low one can mean the opposite of either. The ratio raises a question; it does not answer it.",
+      "P/E is undefined for a company with no profits, and comparisons across different industries are usually meaningless — the typical range differs enormously between, say, a utility and a software company."
+    ],
+    "seeAlso": ["earnings", "market-cap", "stock"]
+  },
+  {
+    "id": "market-cap",
+    "term": "Market capitalisation",
+    "aliases": ["market cap", "mcap"],
+    "category": "markets",
+    "short": "The share price multiplied by the number of shares — what the market currently prices the whole company at.",
+    "body": [
+      "Market cap is the quickest way to compare the size of two companies, and it is what people usually mean by \"large-cap\" or \"small-cap\".",
+      "It is a price, not a valuation. It says what the last shares to change hands sold for, multiplied out across every share. Nobody could actually sell every share at that price.",
+      "For crypto, market cap is the token price multiplied by circulating supply. Since supply figures vary in how they are counted and a thinly traded token can have its price moved cheaply, crypto market caps deserve more scepticism than equity ones."
+    ],
+    "seeAlso": ["stock", "volume", "liquidity", "circulating-supply"]
+  },
+  {
+    "id": "ipo",
+    "term": "IPO",
+    "aliases": ["initial public offering", "listing"],
+    "category": "stocks",
+    "short": "The first time a company sells shares to the public.",
+    "body": [
+      "An initial public offering turns a private company into a listed one. The company publishes a detailed prospectus, sets an offer price with its banks, and shares begin trading.",
+      "The offer price is negotiated, not discovered by a market, so the first day of trading often moves sharply as an actual market price forms. Most ordinary investors cannot buy at the offer price; they buy once trading has begun."
+    ],
+    "seeAlso": ["stock", "exchange", "volatility"]
+  },
+  {
+    "id": "stock-split",
+    "term": "Stock split",
+    "aliases": [],
+    "category": "stocks",
+    "short": "A company divides its existing shares into more, smaller shares.",
+    "body": [
+      "In a two-for-one split, every share becomes two, each worth half as much. If you held ten shares at £100 you now hold twenty at £50. Nothing about the company or the value of your holding has changed.",
+      "Companies split to bring the price of one share into a range they consider convenient. A reverse split does the opposite, consolidating shares to raise the price — sometimes to satisfy an exchange's minimum price rule."
+    ],
+    "seeAlso": ["stock", "market-cap"]
+  },
+  {
+    "id": "expense-ratio",
+    "term": "Expense ratio",
+    "aliases": [],
+    "category": "stocks",
+    "short": "The annual percentage a fund charges for running itself.",
+    "body": [
+      "An expense ratio of 0.20% means £2 a year for every £1,000 held, deducted from the fund rather than billed to you. You will not see it leave your account; it shows up as a slightly lower result.",
+      "Because it applies every year to the whole balance, small differences matter over long periods far more than they appear to at a glance."
+    ],
+    "seeAlso": ["etf", "index-fund"]
+  },
+  {
+    "id": "volume",
+    "term": "Volume",
+    "aliases": [],
+    "category": "markets",
+    "short": "How much of an asset changed hands over a period.",
+    "body": [
+      "Volume counts shares or units traded, not the number of people trading. It is usually reported daily, and often shown alongside price.",
+      "High volume means a lot of the asset moved. It says nothing on its own about direction or about whether a move will continue — a heavily traded fall and a heavily traded rise look identical in the volume column.",
+      "Volume is most useful as context for how meaningful a price is. A price set by very few trades is a weaker signal than the same price set by many."
+    ],
+    "seeAlso": ["liquidity", "market-cap", "spread"]
+  },
+  {
+    "id": "liquidity",
+    "term": "Liquidity",
+    "aliases": [],
+    "category": "markets",
+    "short": "How easily an asset can be bought or sold without moving its price much.",
+    "body": [
+      "A liquid asset has many buyers and sellers at any moment, so a normal-sized order barely shifts the price. An illiquid one may have a quoted price that you could not actually transact at in any size.",
+      "Liquidity is not a fixed property. An asset can be liquid on a calm day and illiquid in a panic, which is precisely when people most want to sell.",
+      "Signs of thin liquidity include a wide spread, low volume, and a price that jumps between trades rather than moving smoothly."
+    ],
+    "seeAlso": ["spread", "volume", "slippage", "order-book"]
+  },
+  {
+    "id": "spread",
+    "term": "Spread",
+    "aliases": ["bid-ask spread", "bid ask spread"],
+    "category": "markets",
+    "short": "The gap between the highest price a buyer will pay and the lowest a seller will accept.",
+    "body": [
+      "If the best bid is 99 and the best offer is 101, the spread is 2. Buy immediately and you pay 101; sell immediately and you get 99. That difference is a real cost, paid on the way in and again on the way out.",
+      "Heavily traded assets tend to have narrow spreads. Thinly traded ones can have very wide ones, which is one of the clearest signals that a quoted price is not a price you can actually get."
+    ],
+    "seeAlso": ["bid-ask", "liquidity", "slippage"]
+  },
+  {
+    "id": "bid-ask",
+    "term": "Bid and ask",
+    "aliases": ["bid", "ask", "offer"],
+    "category": "mechanics",
+    "short": "The bid is what someone will pay; the ask is what someone will sell for.",
+    "body": [
+      "At any moment an actively traded asset has a highest bid and a lowest ask, and they are not the same number. The bid is what you would receive selling right now, the ask what you would pay buying right now.",
+      "A single \"price\" quoted anywhere is usually the last trade, or the midpoint between bid and ask. It is a summary of two different numbers."
+    ],
+    "seeAlso": ["spread", "order-book", "market-order"]
+  },
+  {
+    "id": "order-book",
+    "term": "Order book",
+    "aliases": ["depth", "book"],
+    "category": "mechanics",
+    "short": "The live list of outstanding buy and sell orders at each price.",
+    "body": [
+      "An order book shows how much people want to buy at each price below the current one and how much they want to sell above it. It is where the bid, the ask and the spread come from.",
+      "Depth describes how much sits at prices near the current one. A book that is thin just below the current price will fall quickly if someone sells in size — the price does not glide down, it steps through whatever is there."
+    ],
+    "seeAlso": ["bid-ask", "liquidity", "slippage"]
+  },
+  {
+    "id": "market-order",
+    "term": "Market order",
+    "aliases": [],
+    "category": "mechanics",
+    "short": "An instruction to trade immediately at whatever price is currently available.",
+    "body": [
+      "A market order prioritises certainty of execution over price. It will fill, and it will fill now, at whatever the book offers.",
+      "In a liquid asset the difference between the price you saw and the price you get is usually small. In an illiquid one, or during a fast move, it can be large — the order walks up or down the book until it is filled."
+    ],
+    "seeAlso": ["limit-order", "slippage", "order-book", "liquidity"]
+  },
+  {
+    "id": "limit-order",
+    "term": "Limit order",
+    "aliases": [],
+    "category": "mechanics",
+    "short": "An instruction to trade only at a specified price or better.",
+    "body": [
+      "A limit order prioritises price over certainty. Set a limit to buy at 100 and you will not pay 101 — but if the price never returns to 100, nothing happens at all.",
+      "Limit orders are what populate an order book. Every resting bid and ask is somebody's unfilled limit order."
+    ],
+    "seeAlso": ["market-order", "order-book", "bid-ask"]
+  },
+  {
+    "id": "slippage",
+    "term": "Slippage",
+    "aliases": [],
+    "category": "mechanics",
+    "short": "The difference between the price you expected and the price you actually got.",
+    "body": [
+      "Slippage happens because the price you saw was a snapshot and the market kept moving, or because your order was larger than what was available at that price.",
+      "It grows with order size, with how thinly the asset trades, and with how fast the market is moving at that moment. It is generally worst in exactly the conditions where people trade most urgently."
+    ],
+    "seeAlso": ["market-order", "liquidity", "spread", "order-book"]
+  },
+  {
+    "id": "volatility",
+    "term": "Volatility",
+    "aliases": [],
+    "category": "markets",
+    "short": "How much a price moves around over a period.",
+    "body": [
+      "Volatility measures the size of movement, not its direction. An asset that rises and falls sharply is volatile; so is one that only falls sharply.",
+      "It is usually calculated from past price movement, which means it describes what has already happened. Periods of calm can end abruptly, and a low reading is a description of the recent past rather than a forecast.",
+      "Higher volatility means a wider range of plausible outcomes over a given period, in both directions."
+    ],
+    "seeAlso": ["risk-tolerance", "drawdown", "past-performance"]
+  },
+  {
+    "id": "bull-market",
+    "term": "Bull market",
+    "aliases": ["bull"],
+    "category": "markets",
+    "short": "An extended period of rising prices.",
+    "body": [
+      "There is no official definition. A common rule of thumb is a rise of 20% or more from a recent low, but the term is used loosely and mostly in hindsight.",
+      "Naming a period is a description of what has happened, not information about what happens next. Every bull market in history was also, eventually, a period that ended."
+    ],
+    "seeAlso": ["bear-market", "volatility"]
+  },
+  {
+    "id": "bear-market",
+    "term": "Bear market",
+    "aliases": ["bear"],
+    "category": "markets",
+    "short": "An extended period of falling prices.",
+    "body": [
+      "Conventionally a fall of 20% or more from a recent high, though as with bull markets the definition is a convention rather than a rule.",
+      "Both terms are labels applied to stretches of price history. They compress a lot of different circumstances into one word, which is worth remembering when a headline uses one."
+    ],
+    "seeAlso": ["bull-market", "drawdown", "volatility"]
+  },
+  {
+    "id": "short-selling",
+    "term": "Short selling",
+    "aliases": ["shorting", "short"],
+    "category": "mechanics",
+    "short": "Selling an asset you have borrowed, hoping to buy it back cheaper.",
+    "body": [
+      "A short seller borrows shares, sells them, and must return them later. If the price falls they buy back for less and keep the difference; if it rises they buy back for more and take the loss.",
+      "The asymmetry matters: a share you own can only fall to zero, so the most you can lose is what you paid. A share you have sold short can in principle rise without limit, so the loss has no natural ceiling.",
+      "Borrowing also has a cost, and the lender can usually demand the shares back at an inconvenient moment."
+    ],
+    "seeAlso": ["volatility", "risk-tolerance"]
+  },
+  {
+    "id": "market-maker",
+    "term": "Market maker",
+    "aliases": [],
+    "category": "mechanics",
+    "short": "A firm that continuously offers to both buy and sell, earning the spread.",
+    "body": [
+      "Market makers quote a bid and an ask at the same time and profit from the gap, taking on the risk of holding whatever they are left with.",
+      "Their presence is a large part of why liquid assets stay liquid. When they withdraw during turbulence, spreads widen and liquidity thins out — often at the worst moment."
+    ],
+    "seeAlso": ["spread", "liquidity", "bid-ask"]
+  },
+  {
+    "id": "settlement",
+    "term": "Settlement",
+    "aliases": [],
+    "category": "mechanics",
+    "short": "The point at which a trade is finalised and ownership actually changes.",
+    "body": [
+      "Agreeing a trade and completing it are separate events. Equity markets typically settle a day or two after the trade, though the timing varies by market and has been shortening.",
+      "Until settlement, the transfer is a promise. Most of the plumbing of a market exists to make sure those promises are kept."
+    ],
+    "seeAlso": ["exchange", "custody", "brokerage"]
+  },
+  {
+    "id": "brokerage",
+    "term": "Broker",
+    "aliases": ["broker"],
+    "category": "mechanics",
+    "short": "A firm that places trades on your behalf and holds the resulting assets.",
+    "body": [
+      "Most people cannot trade directly on an exchange; a broker is the intermediary that can. Brokers differ in what they charge, what they let you trade, and how your assets are held.",
+      "How your holdings are registered — in your name or pooled in the broker's — determines what happens if the broker fails. It is a dry question that turns out to matter a great deal in the rare cases where it matters at all.",
+      "Brew Terminal does not connect to brokers and cannot place trades."
+    ],
+    "seeAlso": ["custody", "settlement", "exchange"]
+  },
+  {
+    "id": "blockchain",
+    "term": "Blockchain",
+    "aliases": [],
+    "category": "crypto",
+    "short": "A shared record of transactions, maintained by many computers rather than one authority.",
+    "body": [
+      "A blockchain is a ledger copied across many machines, which agree on its contents by following a common rule. Entries are grouped into blocks, each referring to the one before, so altering an old entry means redoing everything after it on a majority of machines.",
+      "What this buys is a record no single participant controls and that is hard to quietly rewrite. What it does not buy is truth: a blockchain records that a transaction happened, not that it was a good idea, that the parties were honest, or that whatever the transaction refers to exists.",
+      "Different blockchains make different trade-offs between speed, cost and how decentralised they really are. \"On a blockchain\" describes a storage arrangement, not a guarantee of quality."
+    ],
+    "seeAlso": ["token", "wallet", "smart-contract", "gas-fee"]
+  },
+  {
+    "id": "token",
+    "term": "Token",
+    "aliases": ["coin", "cryptocurrency", "crypto"],
+    "category": "crypto",
+    "short": "A unit of value recorded on a blockchain.",
+    "body": [
+      "Some blockchains have a native coin used to pay for their own operation. Other tokens are created on top of an existing chain by deploying a contract, which is cheap and requires nobody's permission.",
+      "Because creation is permissionless, anyone can issue a token using any name and symbol they like, including one already in use. The contract address, not the name, is what identifies a specific token.",
+      "A token confers whatever rights its issuer chose to give it, which is often none. It is not automatically a share of anything."
+    ],
+    "seeAlso": ["blockchain", "smart-contract", "stablecoin", "circulating-supply"]
+  },
+  {
+    "id": "wallet",
+    "term": "Wallet",
+    "aliases": [],
+    "category": "crypto",
+    "short": "Software or hardware that stores the keys controlling your crypto.",
+    "body": [
+      "A wallet does not hold coins. The coins are entries on the blockchain; the wallet holds the private key that authorises moving them. Losing the key means losing the ability to move them, permanently.",
+      "A custodial wallet has someone else holding the key on your behalf. A self-custody wallet means you hold it, with the consequences that follow either way.",
+      "Wallets typically show a recovery phrase when created. Anyone with that phrase has full control of the funds. No legitimate service ever needs it."
+    ],
+    "seeAlso": ["private-key", "custody", "cold-storage", "phishing"]
+  },
+  {
+    "id": "private-key",
+    "term": "Private key",
+    "aliases": ["seed phrase", "recovery phrase"],
+    "category": "crypto",
+    "short": "The secret that proves you control a crypto address.",
+    "body": [
+      "A private key is a very large number. It generates the public address others send to, and it produces the signatures that authorise moving funds out. The relationship only works one way: an address reveals nothing about its key.",
+      "Control of the key is control of the funds — there is no separate concept of ownership behind it, no account to recover, and no authority to appeal to. This is what people mean when they say crypto transactions are irreversible."
+    ],
+    "seeAlso": ["wallet", "cold-storage", "phishing"]
+  },
+  {
+    "id": "cold-storage",
+    "term": "Cold storage",
+    "aliases": ["hardware wallet"],
+    "category": "crypto",
+    "short": "Keeping private keys on a device that is not connected to the internet.",
+    "body": [
+      "A key that never touches a networked machine cannot be taken by malware on that machine. Hardware wallets sign transactions internally so the key itself never leaves the device.",
+      "It shifts the risk rather than removing it: physical loss, damage, and the security of the recovery phrase become the things that matter."
+    ],
+    "seeAlso": ["private-key", "wallet", "custody"]
+  },
+  {
+    "id": "custody",
+    "term": "Custody",
+    "aliases": [],
+    "category": "crypto",
+    "short": "Who actually holds the asset, and what happens if they fail.",
+    "body": [
+      "Holding an asset yourself means you carry the risk of losing access. Leaving it with an exchange or broker means you carry the risk of that firm failing, being hacked, or freezing withdrawals.",
+      "Neither is simply safer. They are different risks, and which is preferable depends on amounts, competence and what protections exist where you are. In some jurisdictions customer assets at a regulated broker are segregated and insured; at many crypto venues no equivalent exists.",
+      "\"Not your keys, not your coins\" is shorthand for the point that an exchange balance is a claim on a company, not direct control of the asset."
+    ],
+    "seeAlso": ["wallet", "private-key", "brokerage", "cold-storage"]
+  },
+  {
+    "id": "stablecoin",
+    "term": "Stablecoin",
+    "aliases": [],
+    "category": "crypto",
+    "short": "A token designed to hold a steady value, usually one unit of a currency.",
+    "body": [
+      "Most stablecoins aim to stay at one US dollar. Some hold reserves of cash and short-term government debt and publish attestations. Others try to hold the peg algorithmically, and some have failed doing so.",
+      "The peg is a design goal, not a property. It holds while the mechanism behind it holds, and the relevant questions are what backs it, who verifies that, and whether redemption works in practice under stress.",
+      "They are widely used for moving value between crypto venues without converting to conventional currency each time."
+    ],
+    "seeAlso": ["token", "blockchain", "custody"]
+  },
+  {
+    "id": "staking",
+    "term": "Staking",
+    "aliases": [],
+    "category": "crypto",
+    "short": "Committing tokens to help operate a blockchain, in exchange for a reward.",
+    "body": [
+      "Blockchains that use proof of stake choose who validates transactions partly by who has committed tokens. Committed tokens can be forfeited if the validator misbehaves, which is what gives the system its teeth.",
+      "Rewards come from newly issued tokens and transaction fees. Quoted percentages are denominated in the token, so the value of a reward moves with the token's price.",
+      "Staked tokens are often locked for a period, sometimes with a queue to withdraw. \"Staking\" offered by a company may mean something quite different — lending your tokens to that company, with its solvency as the thing you now depend on."
+    ],
+    "seeAlso": ["token", "blockchain", "custody", "yield"]
+  },
+  {
+    "id": "yield",
+    "term": "Yield",
+    "aliases": ["APY", "APR"],
+    "category": "crypto",
+    "short": "A return expressed as a percentage of the amount committed.",
+    "body": [
+      "Yield describes what something pays over a period. It says nothing by itself about where the payment comes from, and that is the part worth understanding.",
+      "A yield has to be produced by something: interest from a borrower, fees from users, or new issuance. Where a quoted yield substantially exceeds what similar arrangements pay, the difference is being paid for by risk somewhere — and identifying where is the whole exercise.",
+      "Advertised rates are frequently variable, frequently promotional, and frequently quoted before costs."
+    ],
+    "seeAlso": ["staking", "due-diligence", "risk-tolerance"]
+  },
+  {
+    "id": "gas-fee",
+    "term": "Gas fee",
+    "aliases": ["gas", "network fee"],
+    "category": "crypto",
+    "short": "The cost of getting a transaction processed on a blockchain.",
+    "body": [
+      "Blockchain capacity is limited, so users bid for it. A gas fee is that bid, paid in the chain's native coin. Pay more and your transaction is processed sooner.",
+      "Fees rise with demand and can become large enough to make small transactions impractical. They are paid whether or not the transaction achieves what you intended — a failed transaction can still cost its fee."
+    ],
+    "seeAlso": ["blockchain", "token", "smart-contract"]
+  },
+  {
+    "id": "smart-contract",
+    "term": "Smart contract",
+    "aliases": [],
+    "category": "crypto",
+    "short": "A program stored on a blockchain that runs when its conditions are met.",
+    "body": [
+      "Smart contracts execute automatically and identically for everyone. Most tokens, exchanges and lending arrangements in crypto are smart contracts.",
+      "They do exactly what their code says, which is the point and also the risk: a bug is not a misunderstanding to be resolved but behaviour the system will faithfully carry out. Large sums have been lost to contracts working precisely as written.",
+      "\"Audited\" means a firm reviewed a specific version of the code and produced a report. It is worth reading the report rather than the badge — audits list findings, cover a fixed scope, and go stale when the code changes."
+    ],
+    "seeAlso": ["blockchain", "token", "defi", "due-diligence"]
+  },
+  {
+    "id": "defi",
+    "term": "DeFi",
+    "aliases": ["decentralised finance", "decentralized finance"],
+    "category": "crypto",
+    "short": "Financial services built as smart contracts rather than run by a company.",
+    "body": [
+      "Decentralised finance covers lending, trading and derivatives implemented in code on a blockchain, usually usable by anyone with a wallet and no account.",
+      "Removing the intermediary removes both its costs and its protections. There is generally no complaints process, no deposit protection, no ability to reverse a mistaken transaction, and often no identifiable party at all.",
+      "How decentralised any given protocol really is varies enormously — many retain administrative keys that can change or halt the system."
+    ],
+    "seeAlso": ["smart-contract", "custody", "due-diligence"]
+  },
+  {
+    "id": "circulating-supply",
+    "term": "Circulating supply",
+    "aliases": ["supply", "total supply"],
+    "category": "crypto",
+    "short": "How many units of a token are currently in general circulation.",
+    "body": [
+      "Circulating supply excludes tokens that are locked, reserved, or not yet issued. It is the number used to calculate market cap, so how it is counted directly changes that figure.",
+      "Total supply and maximum supply are different numbers again. A token with a small circulating supply and a large amount due to unlock later has future selling pressure built into its schedule — which is disclosed for some projects and not for others."
+    ],
+    "seeAlso": ["market-cap", "token", "due-diligence"]
+  },
+  {
+    "id": "risk-tolerance",
+    "term": "Risk tolerance",
+    "aliases": ["risk appetite"],
+    "category": "risk",
+    "short": "How much fluctuation and potential loss you can carry, financially and personally.",
+    "body": [
+      "Risk tolerance has two halves that people often conflate. The financial half is what a loss would actually do to your circumstances — whether it would change your plans, your housing, your ability to handle an emergency. The personal half is how you behave when a number is falling.",
+      "The second half is the one that is hard to know in advance. A plan that seems reasonable in a calm period is tested during a sharp fall, and the common failure is not the fall itself but selling into it.",
+      "Brew Terminal has no view on your risk tolerance and does not ask. It is here because it appears constantly in financial writing, usually without explanation."
+    ],
+    "seeAlso": ["volatility", "drawdown", "diversification"]
+  },
+  {
+    "id": "drawdown",
+    "term": "Drawdown",
+    "aliases": [],
+    "category": "risk",
+    "short": "The fall from a peak to the lowest point that follows.",
+    "body": [
+      "A maximum drawdown of 40% means that at some point the value fell 40% below its previous high. It is a more visceral measure than volatility because it describes an experience rather than a statistic.",
+      "Recovering from a drawdown takes a larger percentage gain than the percentage lost: falling 50% requires a 100% rise to get back. This arithmetic is why large falls matter more than symmetrical thinking suggests."
+    ],
+    "seeAlso": ["volatility", "risk-tolerance", "past-performance"]
+  },
+  {
+    "id": "diversification",
+    "term": "Diversification",
+    "aliases": [],
+    "category": "risk",
+    "short": "Spreading holdings across different things so no single one dominates the outcome.",
+    "body": [
+      "Diversification reduces exposure to any one company, sector or country failing. Its effectiveness depends on whether the things you hold behave differently from one another.",
+      "Holdings that look varied can move together. Assets that appear unrelated in calm periods frequently become correlated during a crisis, which is when the separation was supposed to help.",
+      "It reduces the chance of an unusually bad outcome from one holding, and equally the chance of an unusually good one. It is a way of narrowing the range, not of improving the average."
+    ],
+    "seeAlso": ["etf", "index-fund", "risk-tolerance", "correlation"]
+  },
+  {
+    "id": "correlation",
+    "term": "Correlation",
+    "aliases": [],
+    "category": "risk",
+    "short": "The degree to which two things move together.",
+    "body": [
+      "Correlation runs from +1, meaning they move in lockstep, through 0, meaning no consistent relationship, to −1, meaning they move oppositely.",
+      "It is measured over a chosen period, and it changes. Two assets uncorrelated for years can move together sharply during stress.",
+      "Correlation is not causation, and a correlation calculated over a short window or a small sample can appear striking purely by chance."
+    ],
+    "seeAlso": ["diversification", "volatility"]
+  },
+  {
+    "id": "past-performance",
+    "term": "Past performance",
+    "aliases": ["track record", "backtest"],
+    "category": "risk",
+    "short": "What an asset has done historically — which is not a forecast.",
+    "body": [
+      "The standard warning that past performance does not indicate future results is regulatory boilerplate, and it is also simply true. A chart is a record of what happened, and the conditions that produced it may not repeat.",
+      "Presentation choices change the impression a track record gives: the start date, whether costs are included, and whether failed products were dropped from the sample all shift the picture.",
+      "Longer records are more informative than short ones, but no record is evidence about a specific future period."
+    ],
+    "seeAlso": ["survivorship-bias", "volatility", "drawdown"]
+  },
+  {
+    "id": "survivorship-bias",
+    "term": "Survivorship bias",
+    "aliases": [],
+    "category": "risk",
+    "short": "Judging a group by only the members that lasted long enough to be counted.",
+    "body": [
+      "An index of today's largest companies contains the ones that succeeded; the ones that failed dropped out. A study of funds available now excludes the funds that closed. Both make the average look better than the experience actually was.",
+      "It appears constantly in crypto, where the projects still being discussed are by definition the ones that survived. The failures are numerous and stop being mentioned.",
+      "The corrective question is simple: what happened to everything that is not in this sample?"
+    ],
+    "seeAlso": ["past-performance", "due-diligence"]
+  },
+  {
+    "id": "due-diligence",
+    "term": "Due diligence",
+    "aliases": ["DYOR", "research"],
+    "category": "risk",
+    "short": "Checking things yourself before committing money.",
+    "body": [
+      "Due diligence means going to primary sources — filings, official documentation, the contract itself — rather than relying on summaries and enthusiasm. It is unglamorous and mostly consists of reading.",
+      "For a listed company that usually means annual and quarterly reports. For a crypto project it means the actual contract address, the audit report rather than the badge, who holds the supply, and what unlocks when.",
+      "The phrase \"do your own research\" is sometimes used to wave away scrutiny of a claim. Actual due diligence is the opposite of that."
+    ],
+    "seeAlso": ["smart-contract", "circulating-supply", "survivorship-bias", "rug-pull"]
+  },
+  {
+    "id": "rug-pull",
+    "term": "Rug pull",
+    "aliases": ["exit scam"],
+    "category": "risk",
+    "short": "A pattern where a project's creators take the money and abandon it.",
+    "body": [
+      "The pattern typically involves promotion, a rapid rise, and then the people behind the project selling their holdings or withdrawing the pooled funds, leaving holders with something unsellable.",
+      "Recognisable warning signs include anonymous teams with no accountability, a large share of supply held by a few addresses, contracts granting administrators unusual powers, and urgency in the marketing.",
+      "None of these is proof of anything, and their absence is not proof of safety either. They are reasons to look harder. Brew Terminal does not label assets as scams — it has no basis to, and a tool that did would be wrong often enough to be dangerous."
+    ],
+    "seeAlso": ["due-diligence", "smart-contract", "phishing", "circulating-supply"]
+  },
+  {
+    "id": "phishing",
+    "term": "Phishing",
+    "aliases": [],
+    "category": "risk",
+    "short": "Tricking someone into revealing credentials or approving a transaction.",
+    "body": [
+      "Phishing in crypto usually means a convincing copy of a real site, a message pretending to be support, or a transaction that looks routine but grants an attacker permission to move your funds.",
+      "Two rules cover most of it. No legitimate service ever asks for a recovery phrase. And an approval you did not deliberately seek out should be treated as hostile until you understand exactly what it authorises.",
+      "Reaching a site through a link you were sent, rather than one you already had, is the common thread in a large share of these losses."
+    ],
+    "seeAlso": ["wallet", "private-key", "due-diligence"]
+  }
+]

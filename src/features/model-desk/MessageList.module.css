@@ -1,0 +1,74 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  margin: 0;
+  list-style: none;
+}
+
+.user,
+.assistant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 78ch;
+}
+
+.user {
+  align-self: flex-end;
+  padding: var(--space-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.role {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.content {
+  /* Model output is plain text. Preserving newlines is all the formatting it gets. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.caution {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--status-warning-text, var(--text-primary));
+  background: var(--accent-muted);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.pending {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.emptyTitle {
+  font-weight: var(--weight-medium);
+}
+
+.emptyBody {
+  max-width: 60ch;
+  margin: 0 auto;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

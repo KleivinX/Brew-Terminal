@@ -1,0 +1,15 @@
+dist/
+node_modules/
+src-tauri/target/
+src/types/generated/
+package-lock.json
+
+# Recorded provider responses. These are evidence of what an API actually returned on a given
+# date — reformatting them would make them a tidied-up version of the real thing rather than
+# the real thing. See docs/PROVIDERS.md.
+content/fixtures/providers/
+
+# The system prompt is sent to a model byte-for-byte, and a test asserts it matches the copy in
+# docs/AI_POLICY.md §4. Prettier inserts blank lines around its plain-text headings, which would
+# change what is actually transmitted. See AI_POLICY.md §4.
+content/ai/

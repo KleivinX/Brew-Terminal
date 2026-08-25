@@ -1,0 +1,36 @@
+.bar {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-5);
+  align-items: center;
+  height: var(--status-bar-height);
+  padding: 0 var(--space-6);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.item {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  white-space: nowrap;
+}
+
+.mock {
+  color: var(--status-stale);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.disclaimer {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.version {
+  font-family: var(--font-mono);
+}

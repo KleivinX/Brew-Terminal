@@ -1,0 +1,5 @@
+.price {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  white-space: nowrap;
+}

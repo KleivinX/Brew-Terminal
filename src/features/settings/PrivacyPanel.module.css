@@ -1,0 +1,92 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  color: var(--text-secondary);
+}
+
+.prose strong {
+  color: var(--text-primary);
+}
+
+.paths {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  background: var(--bg-inset);
+  border-radius: var(--radius-sm);
+}
+
+.paths dt {
+  color: var(--text-muted);
+}
+
+.paths dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.cacheNote {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.log {
+  padding: 0;
+  margin: 0;
+  max-height: 22rem;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.logRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.logMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.logProvider {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.logContext {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.logMeta {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

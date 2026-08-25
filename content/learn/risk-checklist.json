@@ -1,0 +1,43 @@
+{
+  "id": "crypto-risk-checklist",
+  "title": "Things worth checking",
+  "intro": "Questions to work through yourself before putting money into a crypto asset. Brew Terminal does not answer them for you, does not score them, and does not conclude anything from your answers — a checklist that graded an asset would be exactly the verdict this app has no basis to give.",
+  "items": [
+    {
+      "id": "official-links",
+      "question": "Have you reached the project through links you verified yourself?",
+      "why": "Impersonation is common. A search result, an advert or a message can lead to a convincing copy of a real project's site. Reaching it through a source you already trusted, and checking the address matches, is the cheapest thing on this list."
+    },
+    {
+      "id": "contract-address",
+      "question": "If this is a token, did you get its contract address from the project itself?",
+      "why": "Anyone can create a token using an existing project's name and symbol. The contract address is what distinguishes them, and it has to come from the project's own channels rather than from whoever is telling you to buy."
+    },
+    {
+      "id": "market-availability",
+      "question": "Where does it actually trade, and could you sell it?",
+      "why": "An asset can show a price while being difficult to sell in any size. Where it trades, and how much trades there, decides whether that price is one you could act on."
+    },
+    {
+      "id": "team-and-tokenomics",
+      "question": "Who is behind it, and who already holds it?",
+      "why": "Whether the people are identifiable, how much of the supply exists, and who holds it are all matters of public record for some projects and undisclosed for others. Which of those is true is itself informative."
+    },
+    {
+      "id": "audits",
+      "question": "Has the code been audited, and did you read the audit rather than the badge?",
+      "why": "\"Audited\" on a website is a claim. An audit is a document, by a named firm, covering a specific version of specific code, usually listing findings. The gap between the two is where a lot of trouble lives."
+    },
+    {
+      "id": "pressure",
+      "question": "Is anything about how you found this creating urgency?",
+      "why": "Time pressure, guaranteed-sounding returns, private groups and messages from strangers are patterns worth noticing in themselves, regardless of the asset. Nothing legitimate stops being available because you took a day to read about it."
+    },
+    {
+      "id": "loss-tolerance",
+      "question": "Would losing this amount entirely change anything for you?",
+      "why": "This one is about you rather than the asset, and Brew Terminal has no view on your answer. It is on the list because it is the question people most often skip."
+    }
+  ],
+  "closing": "Working through these does not make an asset safe, and this app cannot tell you whether one is. There is no score at the end because there is nothing honest to score."
+}

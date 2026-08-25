@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+src-tauri/target/
+src-tauri/gen/
+
+# Generated type output is committed; the check below guards drift.
+# (src/types/generated is intentionally NOT ignored)
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+coverage/
+
+# Never commit credentials or user data
+*.brewprofile
+.env
+.env.*
+!.env.example

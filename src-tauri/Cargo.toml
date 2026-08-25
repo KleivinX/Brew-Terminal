@@ -1,0 +1,94 @@
+[package]
+name = "brew-terminal"
+version = "0.1.0"
+description = "Local-first market research and learning terminal"
+authors = ["Brew Terminal contributors"]
+license = "AGPL-3.0-or-later"
+edition = "2021"
+rust-version = "1.77.2"  # matches Tauri 2.11
+
+[lib]
+name = "brew_terminal_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6", features = [] }
+
+[dependencies]
+tauri = { version = "2.11", features = [] }
+tauri-plugin-dialog = "2.7"
+tauri-plugin-opener = "2.5"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# `bundled` compiles SQLite into the binary: one version, one set of compile flags, identical
+# behaviour on all three platforms. FTS5 (which backs note search) is compiled into the
+# bundled build rather than being a separate cargo feature — the migration test asserts the
+# virtual table can actually be created, so a change upstream would fail the suite, not
+# silently drop search. See ADR-003.
+rusqlite = { version = "0.40", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.35"
+
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
+
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+uuid = { version = "1", features = ["v4"] }
+
+# Provider traits are dyn-dispatched behind the registry; native async-fn-in-trait is not
+# object safe, so this stays until that changes upstream.
+async-trait = "0.1"
+
+# `rustls` (not native-tls): identical TLS behaviour on all three platforms and no OpenSSL
+# build dependency on Linux. `rustls-native-certs` reads the OS trust store, so a machine
+# behind a corporate proxy with its own CA still works. See DEPENDENCIES.md.
+reqwest = { version = "0.13", default-features = false, features = [
+  "rustls",
+  "rustls-native-certs",
+  "json",
+  "gzip",
+  "charset",
+] }
+
+# macOS Keychain / Windows Credential Manager / Linux Secret Service. The default `v1`
+# feature already selects the native store on each of the three target platforms.
+keyring = "4"
+
+# Already compiled as part of reqwest; taken as a direct dependency because the "Local ·
+# offline" label turns on correctly extracting a host from a user-typed URL, and that is not
+# something to hand-roll. See AI_POLICY.md §1.
+url = "2"
+
+# `.brewprofile` encryption. These are the exact primitives THREAT_MODEL.md §6.1 specifies, in
+# their RustCrypto implementations — nothing here is invented or assembled by hand. Argon2id
+# resists GPU brute force on a user-chosen password; XChaCha20-Poly1305 gives a 24-byte nonce,
+# large enough to generate randomly without birthday-bound worry, and authenticates the header
+# as associated data so a downgraded format version invalidates the tag.
+argon2 = "0.5"
+chacha20poly1305 = { version = "0.10", features = ["getrandom"] }
+# Passwords and derived keys are wiped on drop rather than left in freed memory.
+zeroize = "1"
+# Compresses the payload before encryption. A profile is JSON with a lot of repeated structure;
+# compressing after encryption would be pointless, and before it also hides plaintext length
+# less predictably. Builds on the same C toolchain rusqlite's `bundled` already requires.
+zstd = "0.13"
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+# Nothing here yet. Live provider adapters (Phase 2) and the AI adapters (Phase 5) will be
+# additive; the mock provider is always compiled so tests never depend on the network.
+default = []
+
+[profile.release]
+# The 2016 Intel MacBook is the target: smaller binary, less to page in at launch.
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

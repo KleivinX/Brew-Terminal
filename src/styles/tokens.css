@@ -1,0 +1,217 @@
+/*
+ * Brew Terminal design tokens.
+ *
+ * Components reference semantic tokens only — never a raw hex value. A theme is a block of
+ * overrides selected by [data-theme], so switching themes is one attribute change with no
+ * class duplication and no flash of restyled content.
+ *
+ * Contrast: body text pairs target >= 4.5:1, large text and UI boundaries >= 3:1.
+ * Values are verified in tests/a11y/contrast.test.ts — change a colour, run the test.
+ *
+ * Two constraints are less obvious than the rest:
+ *   - --border-strong marks real controls (input and toggle borders), so it needs 3:1
+ *     against its surface, not just "visible enough".
+ *   - --positive and --negative must differ in *luminance*, not only hue. Red and green at
+ *     equal luminance are indistinguishable to a deuteranope. Direction is never signalled
+ *     by colour alone here, but the colours should not actively mislead either.
+ */
+
+:root {
+  /* ---- Scale: spacing ---- */
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+
+  /* ---- Scale: radius ---- */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
+
+  /* ---- Typography ---- */
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', SFMono-Regular, 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---- Layout ---- */
+  --nav-rail-width: 64px;
+  --nav-rail-width-expanded: 200px;
+  --header-height: 48px;
+  --status-bar-height: 28px;
+
+  /* ---- Motion (overridden to 0 under reduced motion, see global.css) ---- */
+  --motion-fast: 90ms;
+  --motion-base: 150ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ---- Z-index ---- */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-palette: 60;
+  --z-toast: 70;
+}
+
+/* ============================================================
+ * DARK — default. Terminal focus mode.
+ * ============================================================ */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-app: #0b0d10;
+  --bg-surface: #15191f;
+  --bg-elevated: #1c2129;
+  --bg-inset: #0e1116;
+  --bg-hover: #1f242c;
+  --bg-active: #262d36;
+
+  --border-subtle: #232a33;
+  --border-strong: #667485;
+  --border-focus: #f97316;
+
+  --text-primary: #f7f7f2;
+  --text-secondary: #aab3bf;
+  --text-muted: #79838f;
+  --text-inverse: #0b0d10;
+
+  --accent: #f97316;
+  --accent-hover: #fb8a3c;
+  --accent-muted: rgb(249 115 22 / 14%);
+  --accent-contrast-text: #0b0d10;
+
+  --positive: #3fb950;
+  --positive-muted: rgb(63 185 80 / 14%);
+  --negative: #f85149;
+  --negative-muted: rgb(248 81 73 / 14%);
+  --neutral: #8b949e;
+
+  --status-live: #3fb950;
+  --status-stale: #d29922;
+  --status-error: #f85149;
+  --status-offline: #79838f;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 50%);
+
+  --skeleton-base: #1c2129;
+  --skeleton-shine: #262d36;
+}
+
+/* ============================================================
+ * LIGHT — daylight / research mode.
+ * The brand orange is darkened here: #F97316 on white is ~2.9:1 and fails
+ * body-text contrast. #C2410C reaches ~5.9:1 while reading as the same hue.
+ * ============================================================ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-app: #f8f6f1;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f1eee7;
+  --bg-hover: #f0ece4;
+  --bg-active: #e7e2d8;
+
+  --border-subtle: #e2ddd3;
+  --border-strong: #8b8371;
+  --border-focus: #c2410c;
+
+  --text-primary: #0b0d10;
+  --text-secondary: #454c55;
+  --text-muted: #63696f;
+  --text-inverse: #ffffff;
+
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-muted: rgb(194 65 12 / 10%);
+  --accent-contrast-text: #ffffff;
+
+  --positive: #0b4f1f;
+  --positive-muted: rgb(11 79 31 / 10%);
+  --negative: #b3261e;
+  --negative-muted: rgb(179 38 30 / 10%);
+  --neutral: #5c6470;
+
+  --status-live: #0b4f1f;
+  --status-stale: #8a5a00;
+  --status-error: #b3261e;
+  --status-offline: #63696f;
+
+  --shadow-1: 0 1px 2px rgb(11 13 16 / 8%);
+  --shadow-2: 0 8px 24px rgb(11 13 16 / 12%);
+
+  --skeleton-base: #eae5dc;
+  --skeleton-shine: #f4f1ea;
+}
+
+/* ============================================================
+ * SOFT — eye-comfort mode. Warm charcoal, amber instead of saturated orange,
+ * lower contrast between surfaces while body text stays above 4.5:1.
+ * ============================================================ */
+[data-theme='soft'] {
+  color-scheme: dark;
+
+  --bg-app: #1a1d21;
+  --bg-surface: #22262b;
+  --bg-elevated: #2a2f35;
+  --bg-inset: #16191c;
+  --bg-hover: #2e343a;
+  --bg-active: #363c43;
+
+  --border-subtle: #31363d;
+  --border-strong: #747e8b;
+  --border-focus: #e8a24a;
+
+  --text-primary: #e6e3dc;
+  --text-secondary: #b0aca3;
+  --text-muted: #8a867d;
+  --text-inverse: #1a1d21;
+
+  --accent: #e8a24a;
+  --accent-hover: #f0b268;
+  --accent-muted: rgb(232 162 74 / 12%);
+  --accent-contrast-text: #1a1d21;
+
+  --positive: #79ad79;
+  --positive-muted: rgb(121 173 121 / 12%);
+  --negative: #e8b3ab;
+  --negative-muted: rgb(232 179 171 / 12%);
+  --neutral: #9a968d;
+
+  --status-live: #79ad79;
+  --status-stale: #c9a86a;
+  --status-error: #e8b3ab;
+  --status-offline: #8a867d;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 25%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 32%);
+
+  --skeleton-base: #2a2f35;
+  --skeleton-shine: #333940;
+}

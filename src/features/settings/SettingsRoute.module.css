@@ -1,0 +1,44 @@
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--space-6);
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+.nav {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0 var(--space-4) 0 0;
+  margin: 0;
+  list-style: none;
+}
+
+.navLink {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.navActive {
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.content {
+  min-height: 0;
+  overflow-y: auto;
+}

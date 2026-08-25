@@ -1,0 +1,24 @@
+.change {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: flex-end;
+  font-size: var(--text-base);
+  white-space: nowrap;
+}
+
+.glyph {
+  font-size: 9px;
+}
+
+.up {
+  color: var(--positive);
+}
+
+.down {
+  color: var(--negative);
+}
+
+.flat {
+  color: var(--neutral);
+}

@@ -1,0 +1,103 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  overflow-y: auto;
+}
+
+.status {
+  padding: 1px var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.policy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-5);
+}
+
+.policyHeading {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.policyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-5);
+  color: var(--text-secondary);
+}
+
+.disclaimer {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  color: var(--text-secondary);
+}
+
+/*
+ * The desk owns its viewport: the transcript scrolls while the composer stays put. A page that
+ * scrolls as a whole would push the input off screen exactly when it is being used.
+ */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.transcript {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.error {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--status-error);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.standingNote {
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+@media (width <= 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
