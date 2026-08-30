@@ -121,6 +121,7 @@ jobs:
         with:
           name: rust-test-output-${{ matrix.os }}
           path: test-output.txt
+          retention-days: 7
 
       # ADR-010, and the whole point of generating the types: `cargo test` re-exports
       # `src/types/generated/` from the Rust models, so if the committed output differs the
@@ -129,6 +130,7 @@ jobs:
       # fail three times for one cause.
       - name: Check the generated TypeScript is in step with the Rust models
         if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           if ! git diff --quiet -- src/types/generated; then
             echo "::error::src/types/generated is out of date. Run 'cargo test' in src-tauri and commit the result."
@@ -137,7 +139,6 @@ jobs:
             exit 1
           fi
           echo "Generated types match the Rust models."
-          retention-days: 7
 
   build:
     name: App build (${{ matrix.os }})
