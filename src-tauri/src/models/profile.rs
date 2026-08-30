@@ -132,6 +132,11 @@ pub struct ExportedProvider {
 
 /// How an import should treat what is already on this machine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum ImportMode {
     /// Add and update; nothing already here is deleted.
@@ -145,18 +150,33 @@ pub enum ImportMode {
 /// Produced by decrypting and validating, without touching the database — so the user chooses
 /// merge or replace while looking at real counts rather than a promise. See DATA_MODEL.md §6.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfileSummary {
+    #[cfg_attr(test, ts(type = "number"))]
     pub schema_version: i64,
     pub app_version: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub exported_at: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub watchlists: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub watchlist_items: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub notes: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub progress: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub bookmarks: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub preferences: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub providers: usize,
+    #[cfg_attr(test, ts(type = "number"))]
     pub assets: usize,
 }
 
@@ -180,6 +200,11 @@ impl ProfileSummary {
 
 /// The outcome of an import, reported after the transaction commits.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportResult {
     pub mode: ImportMode,

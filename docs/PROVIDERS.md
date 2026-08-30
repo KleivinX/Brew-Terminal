@@ -160,11 +160,54 @@ the locally stored canonical asset, which is why an asset must exist before it c
 
 ---
 
-## News
+## News — RSS and Atom feeds
 
-`GET /news?category=general` on Finnhub is used for market news when a Finnhub key is present.
-Without a key the app falls back to the mock news provider. A keyless RSS/Atom news adapter is
-still open — see `PRODUCT_SCOPE_V0_1.md` §4.
+News comes from feeds the user configures. There is no news API, no key, and no fixture
+fallback.
+
+**Correcting the record.** Until v0.2 this section claimed Finnhub `/news` was used when a key
+was present, with a fixture fallback otherwise. The code never did that: `registry.news()`
+returned the fixture provider unconditionally, in release builds as well as debug. A shipped
+v0.1.0 therefore showed invented headlines, and — because `source_for` only recognised the
+market mock — labelled them `source: live`. The fixture news provider has been deleted, not
+merely disabled.
+
+### Terms position
+
+An RSS or Atom feed is published for syndication; reading one with a feed reader is its intended
+use. That is the whole basis for this adapter, and it is why no per-publisher agreement is
+claimed here. The app stores nothing but what the feed itself carries, shows title, a short
+extract and attribution, and opens the article in the user's browser rather than reproducing it.
+
+The user can add any feed. Anything they add is their choice and outside this review.
+
+### Shipped defaults
+
+| Feed                           | Section | Basis                        |
+| ------------------------------ | ------- | ---------------------------- |
+| CoinDesk                       | Crypto  | Public syndication feed      |
+| Cointelegraph                  | Crypto  | Public syndication feed      |
+| SEC press releases             | Stocks  | US Government, public domain |
+| Federal Reserve press releases | Macro   | US Government, public domain |
+
+Each was fetched and parsed successfully on 2026-08-29 before being listed. Each is removable,
+and a removal is remembered so seeding does not undo it.
+
+**Yahoo Finance's feed was tested and works**, but is not shipped as a default: Yahoo appears
+under "deliberately not used" below over its unofficial quote endpoints, and shipping its feed
+would read as a contradiction even though a syndication feed is a different thing. A user who
+wants it can add it.
+
+### Limits
+
+No published rate limit applies to a feed read at the intervals this app uses. Responses share
+the shared HTTP client's caps — HTTPS only, 2 MB body limit, 15 s timeout, 3 redirects. At most
+40 entries are taken from any one feed so a prolific publisher cannot crowd out the rest.
+
+### Not verified
+
+- **No individual publisher's terms of service have been read line by line.** The position above rests on what RSS is for, not on a per-outlet agreement.
+- Feed availability is not monitored. A feed that stops working shows its error in Settings → News feeds rather than disappearing.
 
 ---
 

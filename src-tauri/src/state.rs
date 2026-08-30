@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::db::{DbConnection, DbPool};
 use crate::error::{AppError, AppResult};
@@ -10,6 +10,12 @@ pub struct AppState {
     pub registry: Arc<ProviderRegistry>,
     pub data_dir: PathBuf,
     pub db_path: PathBuf,
+    /// The locally downloaded model server, if one has been started. Killed when the app
+    /// exits — see `EngineProcess::drop`.
+    pub engine: Arc<crate::localai::engine::EngineProcess>,
+    /// The download in flight, if any. One at a time on purpose: two concurrent gigabyte
+    /// downloads on a domestic connection make both of them slow and neither of them clear.
+    pub downloads: Mutex<Option<(String, Arc<crate::localai::download::DownloadHandle>)>>,
 }
 
 impl AppState {
@@ -19,6 +25,8 @@ impl AppState {
             pool,
             data_dir,
             db_path,
+            engine: Arc::new(crate::localai::engine::EngineProcess::default()),
+            downloads: Mutex::new(None),
         })
     }
 
@@ -46,6 +54,13 @@ impl AppState {
             crate::db::repo_providers::upsert_defaults(
                 &conn,
                 &crate::providers::registry::default_provider_config(),
+            )?;
+
+            // Same contract as the provider defaults: seeded once, and a feed the user
+            // removed is never brought back. See `repo_news_feeds::seed_defaults`.
+            crate::db::repo_news_feeds::seed_defaults(
+                &conn,
+                crate::providers::live::rss::DEFAULT_FEEDS,
             )?;
         }
 

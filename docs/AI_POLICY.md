@@ -9,12 +9,31 @@ depends on it. Removing the Model Desk entirely would break nothing else in the 
 
 | Mode                | What it is                                                                              | Network           | Label shown                  |
 | ------------------- | --------------------------------------------------------------------------------------- | ----------------- | ---------------------------- |
+| Local, managed      | An engine and weights the app downloaded on request, run by the app on `127.0.0.1`      | Loopback only     | **Local · offline**          |
 | Local               | An OpenAI-compatible endpoint the user runs (Ollama, llama.cpp server, LM Studio, etc.) | Loopback only     | **Local · offline**          |
 | Local, non-loopback | The same protocol pointed at a LAN or remote host                                       | Leaves the device | **Local endpoint · network** |
 | Cloud               | A hosted provider using the user's own API key                                          | Leaves the device | **Cloud · API**              |
 
 The "offline" label is earned, not assumed: it appears only when the configured host resolves
-to a loopback address. No model weights are bundled — v0.1 ships an adapter, not an engine.
+to a loopback address.
+
+**No model weights are bundled, and none ever will be.** v0.1 shipped an adapter and nothing
+else, which meant the Model Desk was unusable unless the user already ran a model server. Since
+v0.2 the app can _fetch_ an engine and weights on request — but the distinction still holds:
+the installer contains neither, nothing is downloaded until the user asks, and what is
+downloaded is verified against a checksum its publisher advertises before it is unpacked or run.
+
+Two guarantees govern the managed mode:
+
+- **The server binds `127.0.0.1` explicitly**, passed on every launch rather than left to a
+  default. A model server on `0.0.0.0` would be an unauthenticated endpoint open to the whole
+  network. See `localai::engine`.
+- **It is the app's process, so it is the app's to stop.** Closing Brew Terminal kills the
+  server and frees the memory; nothing is left resident.
+
+The managed mode is not a different privacy story from the "Local" row above — it is the same
+loopback endpoint, reached by the same adapter, with the same label. The only thing that changed
+is who installed it.
 
 ---
 

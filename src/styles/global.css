@@ -1,4 +1,5 @@
 @import './reset.css';
+@import './fonts.css';
 @import './tokens.css';
 
 body {
@@ -8,11 +9,52 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-app);
   overflow: hidden; /* the app owns its own scroll containers */
+
+  /*
+   * Inter's disambiguating alternates, which matter more here than they would in most apps:
+   * `cv05` puts a tail on the lowercase l and `cv08` gives a flat-top 1, so l / 1 / I stop
+   * looking alike in a ticker, and `ss03` opens up the a. Getting a symbol wrong because two
+   * glyphs looked the same is exactly the kind of error this app should not cause.
+   */
+  font-feature-settings:
+    'cv05' 1,
+    'cv08' 1,
+    'ss03' 1;
+
+  /* Inter is drawn for screens and reads thin without this on macOS. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Numeric data is tabular and monospaced so columns line up while values tick. */
+/*
+ * Numeric data is tabular and monospaced so columns line up while values tick.
+ *
+ * Ligatures are switched off deliberately: JetBrains Mono ships programming ligatures that
+ * turn `->` into an arrow and `!=` into a single glyph. That is fine in a code editor and
+ * wrong in a table of prices and tickers, where every character should be what it is.
+ */
 .tabular {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0;
+}
+
+/* Same reasoning wherever monospace is used for literal values. */
+code,
+kbd,
+pre,
+samp {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0;
+}
+
+/*
+ * Numbers inside ordinary UI text still need to line up when they change — a relative time
+ * ticking from "9m ago" to "10m ago" should not shift the text beside it.
+ */
+time,
+.tabular-inline {
   font-variant-numeric: tabular-nums;
 }
 

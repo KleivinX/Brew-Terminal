@@ -18,14 +18,20 @@ import type {
   ChartRange,
   CommunityFilter,
   CommunityPost,
+  FeedPreview,
   LearningProgress,
+  LocalModelOverview,
+  DownloadProgress,
   NewsArticle,
+  NewsCategory,
+  NewsFeed,
   NewsFilter,
   Note,
   ProgressStatus,
   Preferences,
   ProviderInfo,
   Quote,
+  UpdateCheck,
   ExportResult,
   ImportMode,
   ImportResult,
@@ -124,6 +130,34 @@ export interface IpcContract {
 
   // --- news ---
   get_news: { args: { filter: NewsFilter }; result: Envelope<NewsArticle[]> };
+  list_news_feeds: { args: undefined; result: NewsFeed[] };
+  /** Fetches and parses a candidate feed without storing anything. */
+  preview_news_feed: { args: { url: string }; result: FeedPreview };
+  add_news_feed: {
+    args: { url: string; title: string; category: NewsCategory };
+    result: NewsFeed;
+  };
+  remove_news_feed: { args: { feedId: string }; result: void };
+  set_news_feed_enabled: { args: { feedId: string; enabled: boolean }; result: void };
+  restore_default_news_feeds: { args: undefined; result: NewsFeed[] };
+
+  /**
+   * Asks GitHub whether a newer release exists. User-initiated only — nothing calls this on
+   * launch or on a timer, and it downloads nothing.
+   */
+  check_for_updates: { args: undefined; result: UpdateCheck };
+
+  // --- local models ---
+  get_local_models: { args: undefined; result: LocalModelOverview };
+  /** Downloads and unpacks the inference engine for this platform. */
+  install_engine: { args: undefined; result: LocalModelOverview };
+  download_model: { args: { modelId: string }; result: LocalModelOverview };
+  /** Polled while a download runs. Null when nothing is downloading. */
+  get_download_progress: { args: undefined; result: DownloadProgress | null };
+  cancel_download: { args: undefined; result: void };
+  delete_local_model: { args: { modelId: string }; result: LocalModelOverview };
+  start_local_model: { args: { modelId: string }; result: LocalModelOverview };
+  stop_local_model: { args: undefined; result: LocalModelOverview };
 
   // --- model desk ---
   get_ai_status: { args: undefined; result: AiStatus };

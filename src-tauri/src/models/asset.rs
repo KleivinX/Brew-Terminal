@@ -3,6 +3,11 @@ use serde::{Deserialize, Serialize};
 /// Asset class. Anything outside this set is rejected at the adapter boundary rather than
 /// carried through as a string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AssetType {
     Crypto,
@@ -38,6 +43,11 @@ impl AssetType {
 /// (watchlists, notes, progress) references this id, never a provider's symbol, so swapping
 /// providers never rewrites anything the user made.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
     pub id: String,
@@ -50,6 +60,11 @@ pub struct Asset {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetSearchResult {
     pub asset: Asset,
@@ -58,6 +73,11 @@ pub struct AssetSearchResult {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 pub enum ChartRange {
     #[serde(rename = "1D")]
     Day,
@@ -74,9 +94,15 @@ pub enum ChartRange {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct ChartPoint {
     /// Unix epoch seconds, UTC.
+    #[cfg_attr(test, ts(type = "number"))]
     pub time: i64,
     pub close: f64,
 }

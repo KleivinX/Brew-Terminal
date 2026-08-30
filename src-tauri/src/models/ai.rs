@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 
 /// How the Model Desk is reaching a model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AiMode {
     Local,
@@ -25,6 +30,11 @@ impl AiMode {
 /// the label fails closed — the app never claims offline because it could not check.
 /// See AI_POLICY.md §1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum EndpointReach {
     Loopback,
@@ -53,6 +63,11 @@ impl EndpointReach {
 /// `has_credential` is a flag, never a key and never a fragment of one — the same rule the
 /// market providers follow. See THREAT_MODEL.md §4.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiProviderSummary {
     pub configured: bool,
@@ -71,6 +86,11 @@ pub struct AiProviderSummary {
 /// `endpoint` is present because the user typed it and needs to see it back; it is a host and
 /// port, never a credential.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiStatus {
     pub configured: bool,
@@ -93,6 +113,11 @@ pub struct AiStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum ChatRole {
     System,
@@ -120,6 +145,11 @@ impl ChatRole {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiConversation {
     pub id: String,
@@ -128,17 +158,25 @@ pub struct AiConversation {
     pub mode: AiMode,
     pub model_name: Option<String>,
     pub system_prompt_version: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub created_at: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub updated_at: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiMessage {
     pub id: String,
     pub conversation_id: String,
     pub role: ChatRole,
     pub content: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub created_at: i64,
 }
 
@@ -148,6 +186,11 @@ pub struct AiMessage {
 /// is never logged. The split is the point — the log proves a send happened and how big it
 /// was, without becoming a second copy of everything the user asked. See AI_POLICY.md §2.4.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiContextItem {
     /// e.g. `glossary-term`, `note`, `article`.
@@ -159,19 +202,31 @@ pub struct AiContextItem {
 
 /// A row of the transparency log. Deliberately not the prompt.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiOutboundEntry {
     pub id: String,
     pub provider_id: String,
     pub mode: String,
     pub conversation_id: Option<String>,
+    #[cfg_attr(test, ts(type = "number"))]
     pub char_count: i64,
     /// JSON array of `{kind, label}` — kinds of context, never the context itself.
     pub included_context: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub created_at: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiSendResult {
     pub conversation_id: String,
@@ -185,12 +240,22 @@ pub struct AiSendResult {
 /// user is shown is the count of the bytes actually sent, rather than a frontend estimate that
 /// can drift from what Rust assembles. See AI_POLICY.md §2.2.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AiSendPreview {
+    #[cfg_attr(test, ts(type = "number"))]
     pub char_count: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub system_prompt_chars: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub history_chars: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub prompt_chars: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub context_chars: i64,
     pub context_labels: Vec<String>,
     pub leaves_device: bool,

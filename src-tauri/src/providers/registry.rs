@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use super::live::{
-    coingecko::COINGECKO_ID, finnhub::FINNHUB_ID, CoinGeckoProvider, FinnhubProvider,
+    coingecko::COINGECKO_ID, finnhub::FINNHUB_ID, rss::RSS_PROVIDER_ID, CoinGeckoProvider,
+    FinnhubProvider, RssNewsProvider,
 };
 use super::mock::{
     community::MOCK_COMMUNITY_ID, market::MOCK_PROVIDER_ID, MockCommunityProvider,
-    MockMarketProvider, MockNewsProvider,
+    MockMarketProvider,
 };
 use super::{http, to_provider_info, CommunityProvider, MarketDataProvider, NewsProvider};
 use crate::db::{repo_providers, DbPool};
@@ -22,6 +23,10 @@ pub fn default_provider_config() -> Vec<(&'static str, &'static str, bool)> {
         (COINGECKO_ID, "market", true),
         (FINNHUB_ID, "market", false),
         (MOCK_PROVIDER_ID, "market", cfg!(debug_assertions)),
+        // News is on by default: the feeds it reads are public, need no credential, and the
+        // panel is empty without it. The user's feed list is what actually decides what is
+        // fetched, and they can empty it.
+        (RSS_PROVIDER_ID, "news", true),
         // The Model Desk is off until the user configures an endpoint. AI_POLICY.md §1.
         (crate::providers::ai::LOCAL_PROVIDER_ID, "ai", false),
         (crate::providers::ai::CLOUD_PROVIDER_ID, "ai", false),
@@ -36,10 +41,12 @@ pub fn default_provider_config() -> Vec<(&'static str, &'static str, bool)> {
 /// canonical id carries the type, so a watchlist mixing both can be split without guessing.
 pub struct ProviderRegistry {
     pool: DbPool,
+    client: reqwest::Client,
+    download_client: reqwest::Client,
     coingecko: Arc<CoinGeckoProvider>,
     finnhub: Arc<FinnhubProvider>,
     mock_market: Arc<MockMarketProvider>,
-    mock_news: Arc<MockNewsProvider>,
+    rss_news: Arc<RssNewsProvider>,
     mock_community: Arc<MockCommunityProvider>,
 }
 
@@ -50,13 +57,35 @@ impl ProviderRegistry {
         let client = http::build_client()?;
 
         Ok(Self {
-            pool,
+            client: client.clone(),
+            // Large downloads need a client with no total timeout — see `http::build_download_client`.
+            download_client: http::build_download_client()?,
             coingecko: Arc::new(CoinGeckoProvider::new(client.clone())),
-            finnhub: Arc::new(FinnhubProvider::new(client)),
+            finnhub: Arc::new(FinnhubProvider::new(client.clone())),
             mock_market: Arc::new(MockMarketProvider::new()),
-            mock_news: Arc::new(MockNewsProvider::new()),
+            // The feed adapter reads the user's feed list on every call, so it needs the pool
+            // as well as the client.
+            rss_news: Arc::new(RssNewsProvider::new(client, pool.clone())),
             mock_community: Arc::new(MockCommunityProvider::new()),
+            pool,
         })
+    }
+
+    /// The shared HTTP client.
+    ///
+    /// Exposed so a service making a one-off request — checking a feed the user just typed,
+    /// say — reuses the client that carries the guarantees in THREAT_MODEL.md §3, rather than
+    /// building a second one that quietly does not.
+    pub fn http_client(&self) -> reqwest::Client {
+        self.client.clone()
+    }
+
+    /// The client for model and engine downloads.
+    ///
+    /// Deliberately not `http_client`: that one caps the whole request at 15 seconds, which no
+    /// multi-hundred-megabyte download can meet.
+    pub fn download_client(&self) -> reqwest::Client {
+        self.download_client.clone()
     }
 
     fn enabled(&self, provider_id: &str) -> bool {
@@ -116,8 +145,17 @@ impl ProviderRegistry {
         providers
     }
 
-    pub fn news(&self) -> Arc<dyn NewsProvider> {
-        self.mock_news.clone()
+    /// The news provider, or `None` when none is enabled.
+    ///
+    /// An `Option` for the same reason `market_for` returns one. v0.1.0 returned a fixture
+    /// provider here unconditionally — in release builds too — so a shipped app presented
+    /// invented headlines under a badge that said `source: live`. There is no fixture news
+    /// adapter any more: if no feed provider is on, the panel says so.
+    pub fn news(&self) -> Option<Arc<dyn NewsProvider>> {
+        if self.enabled(RSS_PROVIDER_ID) {
+            return Some(self.rss_news.clone());
+        }
+        None
     }
 
     /// The community provider, or `None` when none is enabled.
@@ -177,27 +215,40 @@ impl ProviderRegistry {
             ));
         }
 
-        let news = self.news();
-        let news_caps = super::ProviderCapabilities {
-            asset_types: Vec::new(),
-            search: false,
-            quotes: false,
-            charts: Vec::new(),
-            profiles: false,
-            regions: Vec::new(),
-            requires_credential: false,
-            attribution: news.attribution().to_string(),
-            docs_url: None,
-        };
-        out.push(to_provider_info(
-            news.id(),
-            news.display_name(),
-            ProviderKind::News,
-            &news_caps,
-            true,
-            false,
-            news.health().await,
-        ));
+        // Listed whether or not it is on, the same as the market adapters, so Settings shows
+        // what exists rather than only what happens to be enabled.
+        let news: Vec<Arc<dyn NewsProvider>> = vec![self.rss_news.clone()];
+
+        for provider in news {
+            let enabled = self.enabled(provider.id());
+            let caps = super::ProviderCapabilities {
+                asset_types: Vec::new(),
+                search: false,
+                quotes: false,
+                charts: Vec::new(),
+                profiles: false,
+                regions: Vec::new(),
+                requires_credential: false,
+                attribution: provider.attribution().to_string(),
+                docs_url: None,
+            };
+
+            let health = if !enabled {
+                crate::models::ProviderHealth::Disabled
+            } else {
+                provider.health().await
+            };
+
+            out.push(to_provider_info(
+                provider.id(),
+                provider.display_name(),
+                ProviderKind::News,
+                &caps,
+                enabled,
+                false,
+                health,
+            ));
+        }
 
         out
     }

@@ -86,8 +86,58 @@ jobs:
       - name: Clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
+      # Failures are echoed back as workflow annotations, not just left in the log.
+      # Job logs need repo-admin rights to download; annotations are readable by anyone. On a
+      # matrix where one platform fails and the others pass, that difference is what decides
+      # whether the failure can be diagnosed without pushing another commit to find out.
       - name: Test
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --manifest-path src-tauri/Cargo.toml --no-fail-fast \
+            2>&1 | tee test-output.txt && status=0 || status=$?
+
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Rust tests failed on ${{ matrix.os }}"
+
+            # The names, from the `failures:` summary cargo prints at the end.
+            sed -n '/^failures:$/,/^test result:/p' test-output.txt \
+              | grep -E '^    ' | sort -u | while IFS= read -r name; do
+                echo "::error::failed:${name## }"
+              done
+
+            # The first assertion message, which is usually the whole story.
+            grep -E "panicked at|assertion .*failed|left:|right:" test-output.txt \
+              | head -12 | while IFS= read -r line; do
+                echo "::error::${line}"
+              done
+          fi
+
+          exit "$status"
+
+      - name: Keep the test output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-test-output-${{ matrix.os }}
+          path: test-output.txt
+
+      # ADR-010, and the whole point of generating the types: `cargo test` re-exports
+      # `src/types/generated/` from the Rust models, so if the committed output differs the
+      # models changed without the TypeScript being regenerated. Running on one platform is
+      # enough — the output is identical everywhere, and checking on all three would just
+      # fail three times for one cause.
+      - name: Check the generated TypeScript is in step with the Rust models
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          if ! git diff --quiet -- src/types/generated; then
+            echo "::error::src/types/generated is out of date. Run 'cargo test' in src-tauri and commit the result."
+            git diff --stat -- src/types/generated
+            git diff -- src/types/generated | head -100
+            exit 1
+          fi
+          echo "Generated types match the Rust models."
+          retention-days: 7
 
   build:
     name: App build (${{ matrix.os }})

@@ -33,6 +33,18 @@ performance number in the docs was measured on the target.
 | 6     | Community temperature, encrypted `.brewprofile`              | Done  |
 | 7     | Release readiness                                            | Done  |
 
+**Since v0.1.0 shipped** (all on `main`, none released yet):
+
+| Change                                                                          | State                               |
+| ------------------------------------------------------------------------------- | ----------------------------------- |
+| RSS/Atom news adapter; fixture news provider **deleted**                        | Done                                |
+| `source_for` bug fix — fixture data was labelled `source: live`                 | Done                                |
+| Local model downloads: pinned catalogue, verified downloader, engine supervisor | Done, **never run end to end**      |
+| Manual update check (no polling)                                                | Done                                |
+| Bundled Inter + JetBrains Mono                                                  | Done                                |
+| Credits panel                                                                   | Done                                |
+| `.gitattributes`; CI emits failures as readable annotations                     | Done, **unverified — needs a push** |
+
 **620 tests passing** — 327 frontend (vitest), 293 Rust. Clippy clean at `-D warnings`, both
 formatters clean, entry bundle 94.5 KB gzipped against a 200 KB budget, `npm audit` clean.
 
@@ -184,18 +196,77 @@ semantic CSS tokens, never raw hex. Direction is never colour alone.
 ### Needs the owner
 
 - **Bundle identifier** — assumed `com.brewterminal.app` in `tauri.conf.json`.
-- **A git remote.** The repository exists locally with four commits on `main`; nothing has been
-  pushed. **CI has therefore still never run**, and the Windows and Linux matrix legs remain
-  unproven. This is the only acceptance criterion in the whole plan that is not ticked.
+- **CI is red on `main`.** The Windows Rust leg fails; macOS, Linux, the frontend and the audit
+  all pass. The failure has never been diagnosed because job logs need repo-admin rights to
+  download — which is why the `Test` step now echoes failures as workflow annotations, which
+  _are_ publicly readable. The next push to `main` should make the cause visible without
+  anyone having to open the log.
+- **The v0.1.0 release has an empty body and is not flagged pre-release.** Confirmed from the
+  API: `name=''`, `body=''`, `prerelease=false`. `tauri-action` only writes those when it
+  _creates_ the release, and this one already existed, so it just uploaded assets. Users get no
+  unsigned-app instructions. Fix in the GitHub UI, and consider having the workflow create the
+  release explicitly before the matrix runs.
+- **The repository has no description, no topics and no homepage.**
 - **Code signing.** The app is unsigned, so a `.dmg` that is downloaded or AirDropped anywhere
   is blocked by Gatekeeper. A locally built one opens fine because it carries no quarantine
   flag. Distributing to anyone else needs an Apple Developer ID certificate plus notarization.
 
 ### Not verified, and honestly so
 
-- **No AI request has been made against a live endpoint**, local or hosted. The path is covered
-  by unit tests, the guardrail suite and the browser harness. Wiring a real Ollama instance and
-  sending one message is the single highest-value next check.
+- **A model has now answered, on this machine, end to end.** The Model Desk's request path is
+  no longer covered only by tests: `cargo test --test live_localai -- --ignored` downloads the
+  pinned engine and the 0.5B model, starts the server on loopback and gets a real completion
+  back. On the run that proved it, engine and weights both matched their published checksums
+  byte-for-byte, the server was ready in two seconds, and the model replied `"ready"`.
+
+  Set `BREW_TEST_ENGINE_DIR` and `BREW_TEST_MODEL` to reuse cached files — 470 MB per run makes
+  a test nobody runs twice.
+
+  Still open: no request has gone to a _hosted_ provider with a real API key. That path shares
+  `assemble_messages` and the outbound log with the local one, so most of it is exercised, but
+  the cloud adapter itself has never made a live call.
+
+- **The local model path is now partly proven, for real.** `src-tauri/tests/live_localai.rs`
+  holds three `#[ignore]` tests that download the actual files. The engine one has been run:
+  11 MB fetched from the pinned URL, checksum and byte length both matching the catalogue, the
+  archive unpacked, and `llama-server` found where `store::server_binary` looks for it. Run them
+  with `cargo test --test live_localai -- --ignored --nocapture`.
+
+  **Running them immediately found a bug that would have shipped.** The downloader used the
+  shared HTTP client, whose `REQUEST_TIMEOUT` caps the _entire_ request including the body at 15
+  seconds. That is right for a JSON API response and impossible for model weights: no 470 MB
+  download completes in 15 seconds on any domestic connection, so every model download would
+  have failed — and failed as `AppError::Network`, which reads as "your connection is bad"
+  rather than "this was never going to work". The 11 MB engine passed only because it happened
+  to fit. `http::build_download_client` now has no total timeout and instead uses
+  `read_timeout`, so a genuinely stalled transfer is still caught while a slow one is not.
+
+  Worth noting how this was missed: every unit test used fixtures or tempdirs, and every one of
+  them passed. Nothing in the suite could see a timeout that only bites above a certain file
+  size. That is the argument for keeping these live tests, ignored but present.
+
+  **It found three more before the path worked.** In order:
+
+  1. The server's stdout and stderr went to `Stdio::null()`, so a server that died left nothing
+     but "it did not start" — useless to a user and to whoever is debugging it. Output now goes
+     to `engine/llama-server.log`, and the tail is returned in the error.
+  2. The readiness check added for (1) used `std::thread::sleep` inside a function called from
+     an async command, blocking a runtime worker — the thing ARCHITECTURE.md §8 rules out.
+     `start` is async now.
+  3. The app reported "Running" as soon as the process existed. `llama-server` binds only
+     _after_ loading weights, so for the first few seconds the Model Desk was pointed at an
+     endpoint refusing connections. `engine::wait_until_ready` polls the server's own `/health`
+     instead of guessing.
+
+  The last was found because the test hit the same trap in mirror image: it health-checked
+  through the `https_only` download client, which refuses a plain-HTTP loopback URL, and so
+  reported the server dead while the server's own log said `listening`.
+
+- **`docs/PROVIDERS.md` used to describe a news path the code never had.** It claimed Finnhub
+  `/news` was used with a fixture fallback; `registry.news()` in fact returned fixtures
+  unconditionally, in release builds too. Both the code and the doc are fixed. Worth
+  remembering as the failure mode: a doc that was accurate when written and silently stopped
+  being true.
 - **No live community provider is wired in.** The pipeline is complete and opt-in; only a
   fixture adapter ships, because no discussion platform's terms have been read (ADR-035).
 - **Start-to-interactive is still unmeasured.** Everything else in the performance budget now
@@ -205,11 +276,13 @@ semantic CSS tokens, never raw hex. Direction is never colour alone.
 
 ### Smaller gaps
 
-- News is category-matched, not asset-tagged. `news_asset_links.link_kind` exists and is unused.
+- News is category-matched, not asset-tagged. `news_asset_links.link_kind` exists and is unused. Feeds carry one category each; nothing classifies an individual story, deliberately.
+- `set_mock_behavior` is registered in release builds. The mock provider it drives is seeded off there, so it is inert, but gating the command itself would match how the rest of the dev surface is handled.
 - Notes render as plain text; a Markdown renderer would add an injection surface.
 - Charts are crypto-only (Finnhub candles are premium; its capabilities correctly advertise none).
 - No cross-linking from market data into the glossary yet.
-- `ts-rs` type generation (ADR-010) is committed to but not wired up; `src/types/domain.ts` is currently hand-maintained and says so. It has now grown large enough that the drift risk is real.
+- `ts-rs` type generation (ADR-010) is **done**, having been outstanding since Phase 0. 46 types generate into `src/types/generated/`; `domain.ts` is re-exports plus two frontend narrowings. Derives are behind `#[cfg_attr(test, ...)]` so nothing reaches the release binary, and CI diffs the generated output. See ADR-010 for the `i64`/`bigint` trap, which is the part to read before touching it.
+
 - The community panel is not asset-filtered — `CommunityFilter.assetId` is plumbed through and ignored by the fixture adapter.
 - AI conversations are excluded from `.brewprofile` in v0.1, as DATA_MODEL.md §6 specifies. Including them would need a separate opt-in.
 

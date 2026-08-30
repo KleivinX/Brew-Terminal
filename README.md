@@ -163,6 +163,15 @@ code, but a fork must use a different name and must not present itself as offici
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
 
+## Credits
+
+Made with love by **Kleivin** &amp; **Blocks and Brew**.
+
+|                       |                                                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Kleivin Gjuzi**     | [GitHub](https://github.com/KleivinX) · [LinkedIn](https://www.linkedin.com/in/kleivin-gjuzi-7a7w/)                                                          |
+| **Blocks &amp; Brew** | [blocksandbrew.com](https://blocksandbrew.com) · [LinkedIn](https://www.linkedin.com/company/blocks-brew) · [Instagram](https://instagram.com/blocksandbrew) |
+
 ---
 
 <div align="center">

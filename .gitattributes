@@ -1,0 +1,22 @@
+# Normalise line endings on checkout, everywhere.
+#
+# Without this, GitHub's Windows runners check out with `core.autocrlf=true` and every text file
+# arrives with CRLF. That matters more here than in most projects: nine files are compiled into
+# the binary with `include_str!` — the AI system prompt, the provider fixtures and the SQL
+# migrations — so the bytes the Windows build embeds would differ from the ones macOS and Linux
+# embed. Pinning LF means all three platforms compile the same bytes.
+* text=auto eol=lf
+
+# Binary, never touched.
+*.png    binary
+*.ico    binary
+*.icns   binary
+*.gguf   binary
+*.dmg    binary
+*.gz     binary
+*.zip    binary
+*.brewprofile binary
+
+# Windows-only scripts genuinely need CRLF.
+*.bat    text eol=crlf
+*.cmd    text eol=crlf

@@ -34,9 +34,15 @@ use crate::state::{with_db, AppState};
 const FAILED_PASSWORD_DELAY: Duration = Duration::from_millis(750);
 
 #[derive(Debug, serde::Serialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportResult {
     pub path: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub bytes: u64,
 }
 

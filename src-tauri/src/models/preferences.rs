@@ -1,17 +1,28 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Preferences {
+    /// Closed set, enforced by `validate_preference`. Kept in step with `VALID_THEMES`.
+    #[cfg_attr(test, ts(type = "\"dark\" | \"light\" | \"soft\""))]
     pub theme: String,
     pub region: String,
     pub display_currency: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub refresh_interval_secs: i64,
     pub refresh_when_unfocused: bool,
+    /// Closed set, enforced by `validate_preference`. Kept in step with `VALID_MOTION`.
+    #[cfg_attr(test, ts(type = "\"system\" | \"always\" | \"never\""))]
     pub reduced_motion: String,
     pub community_enabled: bool,
     pub ai_enabled: bool,
     /// Which configured AI provider the Model Desk uses. Both can be set up; one is active.
+    #[cfg_attr(test, ts(type = "\"local\" | \"cloud\""))]
     pub ai_mode: String,
     pub nav_rail_expanded: bool,
     pub onboarding_completed: bool,

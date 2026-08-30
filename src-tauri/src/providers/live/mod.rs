@@ -6,6 +6,8 @@
 
 pub mod coingecko;
 pub mod finnhub;
+pub mod rss;
 
 pub use coingecko::CoinGeckoProvider;
 pub use finnhub::FinnhubProvider;
+pub use rss::RssNewsProvider;

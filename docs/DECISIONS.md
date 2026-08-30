@@ -187,6 +187,28 @@ time only, no runtime dependency, no schema server.
 (strong contender with typed `invoke` wrappers; revisit — `ts-rs` chosen for a smaller, more
 stable surface, with a hand-written thin `ipc.ts` providing the typed call layer).
 
+**Wired up in v0.2**, having been outstanding since Phase 0. 46 types export from
+`src-tauri/src/models/` and the service-level payloads; `domain.ts` is now re-exports plus two
+frontend narrowings. The derives sit behind `#[cfg_attr(test, ...)]`, so `ts-rs` is a
+dev-dependency and never reaches the release binary. Export happens during `cargo test`, and CI
+runs `git diff --exit-code -- src/types/generated` afterwards, so a Rust model that changes
+without its TypeScript being regenerated fails the build.
+
+**One thing to know before touching it: `ts-rs` maps `i64` to `bigint`.** That is wrong for this
+transport — `serde_json` writes an `i64` as a JSON number and Tauri hands the frontend a
+`number`. Every integer field therefore carries an explicit
+`#[cfg_attr(test, ts(type = "number"))]`, and `Option<i64>` needs `"number | null"` because the
+override replaces the whole field type including the `Option`. Adopting the generated output
+without those annotations would have produced a file that was confidently wrong — worse than
+the hand-written one it replaced, which at least said it was hand-written.
+
+Turning it on immediately caught real drift: `Preferences.theme`, `reducedMotion` and `aiMode`
+were typed as narrow unions in TypeScript while Rust sent `String`. Rust does enforce the closed
+set — `validate_preference` checks every write against `VALID_THEMES` and friends — so the fix
+was to state that invariant at the type boundary rather than let it be lost as `string`. That
+mismatch had been sitting in the codebase unnoticed, which is precisely the argument for this
+ADR.
+
 ---
 
 ## ADR-011 — Zustand for ephemeral UI state

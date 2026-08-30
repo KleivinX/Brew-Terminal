@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod db;
 pub mod error;
+pub mod localai;
 pub mod models;
 pub mod providers;
 pub mod security;
@@ -56,6 +57,22 @@ pub fn run() {
             commands::market::get_asset,
             commands::market::get_chart,
             commands::market::get_news,
+            // news feeds
+            commands::news_feeds::list_news_feeds,
+            commands::news_feeds::preview_news_feed,
+            commands::news_feeds::add_news_feed,
+            commands::news_feeds::remove_news_feed,
+            commands::news_feeds::set_news_feed_enabled,
+            commands::news_feeds::restore_default_news_feeds,
+            // local models
+            commands::local_models::get_local_models,
+            commands::local_models::install_engine,
+            commands::local_models::download_model,
+            commands::local_models::get_download_progress,
+            commands::local_models::cancel_download,
+            commands::local_models::delete_local_model,
+            commands::local_models::start_local_model,
+            commands::local_models::stop_local_model,
             // community
             commands::community::get_community_posts,
             // learn
@@ -86,6 +103,7 @@ pub fn run() {
             commands::settings::save_provider_credential,
             commands::settings::delete_provider_credential,
             commands::settings::test_provider,
+            commands::settings::check_for_updates,
             // ai
             commands::ai::get_ai_status,
             commands::ai::save_ai_endpoint,

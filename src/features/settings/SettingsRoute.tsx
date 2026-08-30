@@ -3,7 +3,9 @@ import { WorkspaceHeader } from '@/components/layout/WorkspaceHeader';
 import { AppearancePanel } from './AppearancePanel';
 import { MarketsPanel } from './MarketsPanel';
 import { ProvidersPanel } from './ProvidersPanel';
+import { NewsFeedsPanel } from './NewsFeedsPanel';
 import { AiPanel } from './AiPanel';
+import { LocalModelsPanel } from './LocalModelsPanel';
 import { ProfilePanel } from './ProfilePanel';
 import { PrivacyPanel } from './PrivacyPanel';
 import { AboutPanel } from './AboutPanel';
@@ -13,7 +15,9 @@ const SECTIONS = [
   { to: '/settings/appearance', label: 'Appearance' },
   { to: '/settings/markets', label: 'Markets' },
   { to: '/settings/providers', label: 'Data providers' },
+  { to: '/settings/news', label: 'News feeds' },
   { to: '/settings/ai', label: 'AI providers' },
+  { to: '/settings/models', label: 'Local models' },
   { to: '/settings/privacy', label: 'Privacy and data' },
   { to: '/settings/profile', label: 'Backup and transfer' },
   { to: '/settings/about', label: 'About' },
@@ -48,7 +52,9 @@ export function SettingsRoute() {
             <Route path="appearance" element={<AppearancePanel />} />
             <Route path="markets" element={<MarketsPanel />} />
             <Route path="providers" element={<ProvidersPanel />} />
+            <Route path="news" element={<NewsFeedsPanel />} />
             <Route path="ai" element={<AiPanel />} />
+            <Route path="models" element={<LocalModelsPanel />} />
             <Route path="privacy" element={<PrivacyPanel />} />
             <Route path="profile" element={<ProfilePanel />} />
             <Route path="about" element={<AboutPanel />} />

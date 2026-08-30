@@ -74,3 +74,13 @@ pub async fn test_provider(
 ) -> AppResult<services::settings::ProviderTestResult> {
     services::settings::test_provider(&state, provider_id).await
 }
+
+/// Checks GitHub for a newer release.
+///
+/// User-initiated only — there is no launch check and no timer. See `services::updates`.
+#[tauri::command]
+pub async fn check_for_updates(
+    state: State<'_, AppState>,
+) -> AppResult<crate::services::updates::UpdateCheck> {
+    services::updates::check(&state).await
+}

@@ -3,6 +3,11 @@ use serde::{Deserialize, Serialize};
 use super::{AssetType, ChartRange};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum ProviderKind {
     Market,
@@ -12,6 +17,11 @@ pub enum ProviderKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum ProviderHealth {
     Ok,
@@ -31,6 +41,11 @@ pub enum ProviderHealth {
 /// user picks from. Deliberately not an enum: the set of regions is provider-driven and will
 /// grow, and a closed enum would mean a schema change for every new market.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Region {
     pub id: String,
@@ -50,6 +65,11 @@ impl Region {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct ProviderInfo {
     pub id: String,
@@ -69,19 +89,33 @@ pub struct ProviderInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheStats {
+    #[cfg_attr(test, ts(type = "number"))]
     pub entry_count: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub total_bytes: i64,
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub oldest_fetched_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct AppInfo {
     pub version: String,
     pub data_dir: String,
     pub db_path: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub schema_version: i64,
     pub is_mock_mode: bool,
 }

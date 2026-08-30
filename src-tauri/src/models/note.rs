@@ -5,6 +5,11 @@ use serde::{Deserialize, Serialize};
 /// Notes never leave the device on their own: they are excluded from any provider request, and
 /// attaching one to a model prompt takes a separate, explicit action (see AI_POLICY.md §2).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Note {
     pub id: String,
@@ -14,6 +19,8 @@ pub struct Note {
     /// Markdown source. Rendered as plain text for now — introducing a Markdown renderer
     /// means introducing an HTML-injection surface. See DEPENDENCIES.md.
     pub body_md: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub created_at: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub updated_at: i64,
 }

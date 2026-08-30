@@ -8,6 +8,11 @@ use serde::{Deserialize, Serialize};
 /// anything that aggregates opinion into a number is a verdict, and the app has no basis for
 /// one. See PRODUCT_SCOPE_V0_1.md §6 and UI_MAP.md.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct CommunityPost {
     pub id: String,
@@ -17,17 +22,26 @@ pub struct CommunityPost {
     /// Where it was posted, in that platform's own words: `r/investing`, a forum name.
     pub community: Option<String>,
     /// The platform's own number. Reported, never interpreted.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub score: Option<i64>,
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub comment_count: Option<i64>,
     /// Unix epoch seconds. `None` when the provider gives no date — one is never invented.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub posted_at: Option<i64>,
     pub source_name: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct CommunityFilter {
     pub asset_id: Option<String>,
+    #[cfg_attr(test, ts(type = "number"))]
     pub limit: u32,
 }
 

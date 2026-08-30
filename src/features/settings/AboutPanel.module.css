@@ -72,3 +72,59 @@
 .mock {
   color: var(--status-stale);
 }
+
+.madeWith {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.credits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.credit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.creditName {
+  font-weight: var(--weight-medium);
+}
+
+.creditRole {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.creditLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.creditLink {
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.updateResult {
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+}
+
+.updateError {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--negative);
+}

@@ -167,8 +167,17 @@ fn merge_meta(parts: Vec<EnvelopeMeta>) -> EnvelopeMeta {
     }
 }
 
+/// Whether an envelope is carrying real data or fixtures.
+///
+/// Every mock provider must be listed here. v0.1.0 checked only the market mock, so fixture
+/// community posts were labelled `Live` and the UI's "fixtures" marker never appeared on that
+/// panel. (Fixture *news* had the same bug; that provider has since been deleted outright.)
+/// Anything that can serve invented data belongs in this list.
 pub(crate) fn source_for(provider_id: &str) -> EnvelopeSource {
-    if provider_id == crate::providers::mock::market::MOCK_PROVIDER_ID {
+    let is_mock = provider_id == crate::providers::mock::market::MOCK_PROVIDER_ID
+        || provider_id == crate::providers::mock::community::MOCK_COMMUNITY_ID;
+
+    if is_mock {
         EnvelopeSource::Mock
     } else {
         EnvelopeSource::Live
@@ -451,7 +460,9 @@ pub async fn get_news(
     state: &AppState,
     filter: NewsFilter,
 ) -> AppResult<Envelope<Vec<NewsArticle>>> {
-    let provider = state.registry.news();
+    let Some(provider) = state.registry.news() else {
+        return Ok(not_configured("news"));
+    };
     let key = cache_key(
         provider.id(),
         "news",
@@ -492,6 +503,42 @@ mod tests {
             source,
             stale: false,
             degraded: None,
+        }
+    }
+
+    /// Regression test. `source_for` used to check only the market mock, so fixture news and
+    /// fixture community posts were labelled live and the UI's "fixtures" marker never showed
+    /// on those panels.
+    #[test]
+    fn every_mock_provider_is_labelled_as_fixtures() {
+        use crate::providers::mock;
+
+        for id in [
+            mock::market::MOCK_PROVIDER_ID,
+            mock::community::MOCK_COMMUNITY_ID,
+        ] {
+            assert_eq!(
+                source_for(id),
+                EnvelopeSource::Mock,
+                "{id} serves fixtures and must be labelled as such"
+            );
+        }
+    }
+
+    #[test]
+    fn real_providers_are_labelled_live() {
+        use crate::providers::live;
+
+        for id in [
+            live::coingecko::COINGECKO_ID,
+            live::finnhub::FINNHUB_ID,
+            live::rss::RSS_PROVIDER_ID,
+        ] {
+            assert_eq!(
+                source_for(id),
+                EnvelopeSource::Live,
+                "{id} is a real source"
+            );
         }
     }
 

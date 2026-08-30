@@ -7,6 +7,11 @@ use super::AssetType;
 pub const MAX_SPARKLINE_POINTS: usize = 24;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Quote {
     pub asset_id: String,

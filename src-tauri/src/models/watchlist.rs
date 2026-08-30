@@ -1,20 +1,33 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Watchlist {
     pub id: String,
     pub name: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub position: i64,
     pub is_default: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct WatchlistItem {
     pub watchlist_id: String,
     pub asset_id: String,
+    #[cfg_attr(test, ts(type = "number"))]
     pub position: i64,
+    #[cfg_attr(test, ts(type = "number"))]
     pub added_at: i64,
 }
 

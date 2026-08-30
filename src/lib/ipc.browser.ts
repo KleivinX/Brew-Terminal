@@ -15,7 +15,10 @@ import type {
   ChartPoint,
   ChartRange,
   CommunityPost,
+  LocalModelOverview,
   NewsArticle,
+  NewsCategory,
+  NewsFeed,
   LearningProgress,
   Note,
   Preferences,
@@ -200,6 +203,93 @@ function saveState(state: HarnessState): void {
 }
 
 let state = loadState();
+
+/**
+ * Feed list for the browser harness, mirroring `rss::DEFAULT_FEEDS` in Rust.
+ *
+ * The harness never fetches a real feed — `get_news` still answers from fixtures. What this
+ * models is the *management* surface: adding, removing, enabling and the fact that removing a
+ * default sticks.
+ */
+function defaultFeeds(): NewsFeed[] {
+  const seeded: Array<[string, string, NewsCategory]> = [
+    ['CoinDesk', 'https://www.coindesk.com/arc/outboundfeeds/rss', 'crypto'],
+    ['Cointelegraph', 'https://cointelegraph.com/rss', 'crypto'],
+    ['SEC press releases', 'https://www.sec.gov/news/pressreleases.rss', 'stocks'],
+    [
+      'Federal Reserve press releases',
+      'https://www.federalreserve.gov/feeds/press_all.xml',
+      'macro',
+    ],
+  ];
+  return seeded.map(([title, url, category], index) => ({
+    id: `feed-${index}`,
+    title,
+    url,
+    category,
+    enabled: true,
+    isDefault: true,
+    addedAt: 1_756_000_000,
+    lastOkAt: 1_756_000_000,
+    lastError: null,
+  }));
+}
+
+function defaultLocalModels(): LocalModelOverview {
+  return {
+    models: [
+      {
+        id: 'qwen2.5-0.5b-instruct-q4km',
+        name: 'Qwen2.5 0.5B Instruct',
+        description: 'The smallest option. Fast on any machine.',
+        parameters: '0.5B',
+        quantisation: 'Q4_K_M',
+        sizeBytes: 491_400_032,
+        approxRamMb: 1200,
+        licence: 'Apache-2.0',
+        publisher: 'Qwen',
+        sourceUrl: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF',
+        installed: false,
+        partialBytes: 0,
+      },
+      {
+        id: 'llama-3.2-1b-instruct-q4km',
+        name: 'Llama 3.2 1B Instruct',
+        description: 'A good default.',
+        parameters: '1B',
+        quantisation: 'Q4_K_M',
+        sizeBytes: 807_694_464,
+        approxRamMb: 1800,
+        licence: 'Llama 3.2 Community License',
+        publisher: 'Meta, packaged by bartowski',
+        sourceUrl: 'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF',
+        installed: false,
+        partialBytes: 0,
+      },
+    ],
+    engine: {
+      installed: false,
+      running: false,
+      loadedModel: null,
+      endpoint: 'http://127.0.0.1:11821/v1',
+      build: 'b10687',
+      project: 'llama.cpp',
+      licence: 'MIT',
+      sourceUrl: 'https://github.com/ggml-org/llama.cpp',
+    },
+    diskUsedBytes: 0,
+    supported: true,
+  };
+}
+
+/**
+ * The harness downloads nothing. It models the *state machine* — install the engine, download a
+ * model, start it, stop it — so the UI can be built and tested without a gigabyte of traffic.
+ */
+let localModels: LocalModelOverview = defaultLocalModels();
+
+let newsFeeds: NewsFeed[] = defaultFeeds();
+let feedSeq = 0;
 
 const allQuotes: Quote[] = [...(cryptoQuotes as Quote[]), ...(stockQuotes as Quote[])];
 const allAssets: Asset[] = searchIndex as Asset[];
@@ -652,6 +742,141 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       return envelope<NewsArticle[]>(rows, []);
     }
 
+    case 'get_local_models':
+      return structuredClone(localModels);
+
+    case 'install_engine':
+      localModels = {
+        ...localModels,
+        engine: { ...localModels.engine, installed: true },
+        diskUsedBytes: localModels.diskUsedBytes + 11_027_677,
+      };
+      return structuredClone(localModels);
+
+    case 'download_model': {
+      localModels = {
+        ...localModels,
+        models: localModels.models.map((m) =>
+          m.id === args.modelId ? { ...m, installed: true, partialBytes: 0 } : m,
+        ),
+        diskUsedBytes:
+          localModels.diskUsedBytes +
+          (localModels.models.find((m) => m.id === args.modelId)?.sizeBytes ?? 0),
+      };
+      return structuredClone(localModels);
+    }
+
+    case 'get_download_progress':
+      return null;
+
+    case 'cancel_download':
+      return null;
+
+    case 'delete_local_model': {
+      const removed = localModels.models.find((m) => m.id === args.modelId);
+      localModels = {
+        ...localModels,
+        models: localModels.models.map((m) =>
+          m.id === args.modelId ? { ...m, installed: false, partialBytes: 0 } : m,
+        ),
+        engine:
+          localModels.engine.loadedModel === args.modelId
+            ? { ...localModels.engine, running: false, loadedModel: null }
+            : localModels.engine,
+        diskUsedBytes: Math.max(
+          0,
+          localModels.diskUsedBytes - (removed?.installed ? (removed.sizeBytes ?? 0) : 0),
+        ),
+      };
+      return structuredClone(localModels);
+    }
+
+    case 'start_local_model': {
+      if (!localModels.engine.installed) {
+        throw { kind: 'storage', message: 'The engine is not installed. Download it first.' };
+      }
+      localModels = {
+        ...localModels,
+        engine: {
+          ...localModels.engine,
+          running: true,
+          loadedModel: String(args.modelId),
+        },
+      };
+      return structuredClone(localModels);
+    }
+
+    case 'stop_local_model':
+      localModels = {
+        ...localModels,
+        engine: { ...localModels.engine, running: false, loadedModel: null },
+      };
+      return structuredClone(localModels);
+
+    case 'check_for_updates':
+      // The harness never reaches the network. This models the "already current" answer;
+      // the other branches are exercised by unit tests on the Rust side.
+      return {
+        currentVersion: '0.1.0',
+        latestVersion: 'v0.1.0',
+        updateAvailable: false,
+        comparisonFailed: false,
+        releaseUrl: 'https://github.com/KleivinX/Brew-Terminal/releases/tag/v0.1.0',
+        publishedAt: '2026-08-25T11:53:44Z',
+        prerelease: true,
+      };
+
+    case 'list_news_feeds':
+      return newsFeeds.map((f) => ({ ...f }));
+
+    case 'preview_news_feed': {
+      const url = String(args.url ?? '');
+      if (!url.startsWith('https://')) {
+        throw { kind: 'validation', message: 'A feed address must start with https://' };
+      }
+      return { title: 'A Publisher', itemCount: 12, newestTitle: 'A recent headline' };
+    }
+
+    case 'add_news_feed': {
+      const url = String(args.url ?? '');
+      if (!url.startsWith('https://')) {
+        throw { kind: 'validation', message: 'A feed address must start with https://' };
+      }
+      const existing = newsFeeds.find((f) => f.url === url);
+      if (existing) return { ...existing };
+
+      feedSeq += 1;
+      const feed: NewsFeed = {
+        id: `feed-added-${feedSeq}`,
+        title: String(args.title ?? '') || 'A Publisher',
+        url,
+        category: args.category as NewsCategory,
+        enabled: true,
+        isDefault: false,
+        addedAt: Math.floor(Date.now() / 1000),
+        lastOkAt: Math.floor(Date.now() / 1000),
+        lastError: null,
+      };
+      newsFeeds = [...newsFeeds, feed];
+      return { ...feed };
+    }
+
+    case 'remove_news_feed':
+      newsFeeds = newsFeeds.filter((f) => f.id !== args.feedId);
+      return null;
+
+    case 'set_news_feed_enabled':
+      newsFeeds = newsFeeds.map((f) =>
+        f.id === args.feedId ? { ...f, enabled: Boolean(args.enabled) } : f,
+      );
+      return null;
+
+    case 'restore_default_news_feeds': {
+      const custom = newsFeeds.filter((f) => !f.isDefault);
+      newsFeeds = [...defaultFeeds(), ...custom];
+      return newsFeeds.map((f) => ({ ...f }));
+    }
+
     case 'set_provider_enabled': {
       const entry = providerState[args.providerId as string];
       if (entry) entry.enabled = Boolean(args.enabled);
@@ -1004,6 +1229,9 @@ export function __resetHarness(): void {
   providerState.mock = { enabled: true, hasCredential: false };
   providerState['mock-community'] = { enabled: true, hasCredential: false };
   ai = emptyAi();
+  newsFeeds = defaultFeeds();
+  feedSeq = 0;
+  localModels = defaultLocalModels();
   harnessFiles.clear();
   try {
     localStorage.removeItem(STORAGE_KEY);

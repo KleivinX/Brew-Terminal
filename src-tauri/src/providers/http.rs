@@ -36,6 +36,38 @@ pub fn build_client() -> AppResult<reqwest::Client> {
         })
 }
 
+/// How long a large download may go without receiving any bytes before it is abandoned.
+///
+/// This replaces the total timeout rather than adding to it, and the distinction is the whole
+/// point of `build_download_client`.
+const DOWNLOAD_STALL_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// A client for large file downloads.
+///
+/// Separate from `build_client` because of one incompatible requirement: `REQUEST_TIMEOUT` is a
+/// cap on the *entire* request including the body, which is right for a JSON API response and
+/// impossible for model weights. Fifteen seconds cannot fetch 470 MB on any domestic
+/// connection, and the failure looks like a network error rather than a misconfiguration —
+/// which is exactly how it presented before an end-to-end test caught it.
+///
+/// So there is no total timeout here. A stalled transfer is still caught, by `read_timeout`:
+/// the download fails if no bytes arrive for a minute, which is the condition actually worth
+/// detecting. Every other guarantee is unchanged — HTTPS only, bounded redirects, the same
+/// user agent.
+pub fn build_download_client() -> AppResult<reqwest::Client> {
+    reqwest::Client::builder()
+        .connect_timeout(CONNECT_TIMEOUT)
+        .read_timeout(DOWNLOAD_STALL_TIMEOUT)
+        .redirect(reqwest::redirect::Policy::limited(MAX_REDIRECTS))
+        .user_agent(concat!("BrewTerminal/", env!("CARGO_PKG_VERSION")))
+        .https_only(true)
+        .build()
+        .map_err(|error| {
+            tracing::error!(?error, "could not build the download client");
+            AppError::Storage("The download client could not be created.".into())
+        })
+}
+
 /// A header that carries a credential. The value is never logged.
 pub struct AuthHeader<'a> {
     pub name: &'a str,
@@ -154,6 +186,93 @@ pub async fn get_json<T: DeserializeOwned>(
     })
 }
 
+/// Performs a GET and returns the raw body.
+///
+/// Separate from `get_json` because feeds are XML and the caller parses them itself. Every
+/// other guarantee is identical — the same client, the same timeout, the same size cap, the
+/// same redirect limit, the same redacted logging.
+///
+/// The cap matters more here than for JSON: a feed is a URL the *user* supplied, so the body
+/// on the other end is entirely outside this project's control.
+pub async fn get_bytes(
+    client: &reqwest::Client,
+    provider_id: &str,
+    url: &str,
+) -> AppResult<Vec<u8>> {
+    tracing::debug!(provider = provider_id, url = %redact_url(url), "provider request");
+
+    let response = client.get(url).send().await.map_err(|error| {
+        if error.is_timeout() || error.is_connect() {
+            tracing::warn!(provider = provider_id, "provider unreachable");
+            AppError::Network {
+                provider_id: provider_id.to_string(),
+            }
+        } else {
+            tracing::warn!(provider = provider_id, ?error, "provider request failed");
+            AppError::ProviderError {
+                provider_id: provider_id.to_string(),
+                status: None,
+            }
+        }
+    })?;
+
+    let status = response.status();
+
+    if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+        let retry_after_secs = response
+            .headers()
+            .get(reqwest::header::RETRY_AFTER)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.parse::<u64>().ok());
+
+        return Err(AppError::RateLimited {
+            provider_id: provider_id.to_string(),
+            retry_after_secs,
+        });
+    }
+
+    if !status.is_success() {
+        tracing::warn!(
+            provider = provider_id,
+            status = status.as_u16(),
+            "provider error"
+        );
+        return Err(AppError::ProviderError {
+            provider_id: provider_id.to_string(),
+            status: Some(status.as_u16()),
+        });
+    }
+
+    if let Some(len) = response.content_length() {
+        if len as usize > MAX_BODY_BYTES {
+            return Err(AppError::InvalidResponse {
+                provider_id: provider_id.to_string(),
+                detail: "response exceeds the size cap".into(),
+            });
+        }
+    }
+
+    let bytes = response.bytes().await.map_err(|error| {
+        tracing::warn!(
+            provider = provider_id,
+            ?error,
+            "could not read the response body"
+        );
+        AppError::Network {
+            provider_id: provider_id.to_string(),
+        }
+    })?;
+
+    if bytes.len() > MAX_BODY_BYTES {
+        return Err(AppError::InvalidResponse {
+            provider_id: provider_id.to_string(),
+            detail: "response exceeds the size cap".into(),
+        });
+    }
+
+    Ok(bytes.to_vec())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -161,6 +280,28 @@ mod tests {
     #[test]
     fn client_builds_with_https_enforced() {
         assert!(build_client().is_ok());
+    }
+
+    #[test]
+    fn the_download_client_builds_and_enforces_https() {
+        assert!(build_download_client().is_ok());
+    }
+
+    #[tokio::test]
+    async fn the_download_client_still_refuses_plain_http() {
+        // No total timeout does not mean no rules: the same https_only guarantee applies.
+        let client = build_download_client().unwrap();
+        let result = get_bytes(&client, "test", "http://example.com/model.gguf").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn plain_http_is_refused_for_bytes_too() {
+        // The feed adapter takes user-supplied URLs, so this path must refuse http:// for
+        // exactly the same reason get_json does.
+        let client = build_client().unwrap();
+        let result = get_bytes(&client, "test", "http://example.com/feed.xml").await;
+        assert!(result.is_err());
     }
 
     #[tokio::test]

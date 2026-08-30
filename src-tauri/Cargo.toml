@@ -77,8 +77,34 @@ zeroize = "1"
 # less predictably. Builds on the same C toolchain rusqlite's `bundled` already requires.
 zstd = "0.13"
 
+# RSS/Atom parsing for the news adapter. Hand-rolling this was rejected: a feed reader has to
+# cope with RSS 0.9x, RSS 2.0, Atom and JSON Feed, four date formats, XML namespaces, CDATA and
+# entity handling — untrusted XML is exactly where hand-written parsers grow holes. `sanitize`
+# is deliberately off: summaries are reduced to plain text here (see `rss::to_plain_text`)
+# rather than being sanitised as HTML, because nothing in this app renders provider HTML.
+feed-rs = { version = "2.4", default-features = false }
+
+# --- Local model downloads (Model Desk) ---
+#
+# The app fetches an inference engine and model weights on request. Everything below exists to
+# make that verifiable rather than hopeful.
+
+# Checksums for downloaded engines and models. Every catalogue entry pins a SHA-256 taken from
+# the publisher's own metadata, and a file that does not match it is deleted rather than run.
+sha2 = "0.10"
+
+# The engine ships as .tar.gz on macOS and Linux and .zip on Windows, so both are needed to
+# unpack it. Extraction is the highest-risk step here — an archive is attacker-controlled data
+# if the download is ever compromised — which is why these are well-tested crates rather than
+# hand-rolled parsing, and why `archive.rs` rejects absolute and traversing paths itself
+# instead of trusting either of them to.
+flate2 = "1.1"
+tar = "0.4"
+zip = { version = "4", default-features = false, features = ["deflate"] }
+
 [dev-dependencies]
 tempfile = "3"
+ts-rs = "10.1.0"
 
 [features]
 # Nothing here yet. Live provider adapters (Phase 2) and the AI adapters (Phase 5) will be

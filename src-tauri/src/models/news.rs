@@ -1,6 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "lowercase")]
 pub enum NewsCategory {
     Crypto,
@@ -23,6 +28,11 @@ pub enum NewsLinkKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct NewsArticle {
     pub id: String,
@@ -32,15 +42,89 @@ pub struct NewsArticle {
     pub source_name: String,
     pub category: NewsCategory,
     /// Unix epoch seconds. `None` when the provider gives no date — we never invent one.
+    #[cfg_attr(test, ts(type = "number | null"))]
     pub published_at: Option<i64>,
 }
 
+/// A user-configured RSS or Atom source.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
+#[serde(rename_all = "camelCase")]
+pub struct NewsFeed {
+    pub id: String,
+    pub title: String,
+    pub url: String,
+    pub category: NewsCategory,
+    pub enabled: bool,
+    /// True for the small set seeded on first run. Surfaced so the UI can explain why a feed
+    /// is present without the user having added it.
+    pub is_default: bool,
+    #[cfg_attr(test, ts(type = "number"))]
+    pub added_at: i64,
+    /// When this feed last returned something parseable, or `None` if it never has.
+    #[cfg_attr(test, ts(type = "number | null"))]
+    pub last_ok_at: Option<i64>,
+    /// A short reason for the last failure. Never a URL, never a response body.
+    pub last_error: Option<String>,
+}
+
+/// The longest feed URL accepted. Well past any real one; stops a pathological paste.
+const MAX_FEED_URL_LEN: usize = 2048;
+const MAX_FEED_TITLE_LEN: usize = 120;
+
+impl NewsFeed {
+    /// Checks a URL the user typed or pasted.
+    ///
+    /// HTTPS only, matching the rule the shared HTTP client enforces anyway — checking here
+    /// too means the user is told why at the moment they add it, rather than seeing a feed
+    /// that silently never loads. See THREAT_MODEL.md §3.
+    pub fn validate_url(url: &str) -> Result<url::Url, String> {
+        let trimmed = url.trim();
+        if trimmed.is_empty() {
+            return Err("Enter a feed address.".into());
+        }
+        if trimmed.len() > MAX_FEED_URL_LEN {
+            return Err("That address is too long to be a feed.".into());
+        }
+
+        let parsed = url::Url::parse(trimmed)
+            .map_err(|_| "That does not look like a web address.".to_string())?;
+
+        if parsed.scheme() != "https" {
+            return Err("A feed address must start with https://".into());
+        }
+        if parsed.host_str().is_none() {
+            return Err("That address has no host.".into());
+        }
+
+        Ok(parsed)
+    }
+
+    pub fn validate_title(title: &str) -> Result<String, String> {
+        let trimmed = title.trim();
+        if trimmed.len() > MAX_FEED_TITLE_LEN {
+            return Err("That name is too long.".into());
+        }
+        Ok(trimmed.to_string())
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
+#[cfg_attr(
+    test,
+    derive(ts_rs::TS),
+    ts(export, export_to = "../../src/types/generated/")
+)]
 #[serde(rename_all = "camelCase")]
 pub struct NewsFilter {
     /// `"all"` or a `NewsCategory` value.
     pub category: String,
     pub asset_id: Option<String>,
+    #[cfg_attr(test, ts(type = "number"))]
     pub limit: u32,
 }
 
@@ -97,6 +181,24 @@ mod tests {
         let mut a = article("https://example.org/x");
         a.published_at = Some(99_999_999_999);
         assert!(a.validate().is_err());
+    }
+
+    #[test]
+    fn a_feed_url_must_be_https_and_parseable() {
+        assert!(NewsFeed::validate_url("https://example.org/feed.xml").is_ok());
+
+        // The same rule the HTTP client enforces, applied where the user can see it.
+        assert!(NewsFeed::validate_url("http://example.org/feed.xml").is_err());
+        assert!(NewsFeed::validate_url("javascript:alert(1)").is_err());
+        assert!(NewsFeed::validate_url("file:///etc/passwd").is_err());
+        assert!(NewsFeed::validate_url("not a url").is_err());
+        assert!(NewsFeed::validate_url("   ").is_err());
+    }
+
+    #[test]
+    fn a_feed_url_is_length_capped() {
+        let long = format!("https://example.org/{}", "x".repeat(3000));
+        assert!(NewsFeed::validate_url(&long).is_err());
     }
 
     #[test]

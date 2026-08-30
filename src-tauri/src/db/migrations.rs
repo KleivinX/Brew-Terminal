@@ -13,6 +13,7 @@ const MIGRATIONS: &[(i64, &str)] = &[
         2,
         include_str!("../../migrations/0002_ai_prompt_version.sql"),
     ),
+    (3, include_str!("../../migrations/0003_news_feeds.sql")),
 ];
 
 pub fn latest_version() -> i64 {

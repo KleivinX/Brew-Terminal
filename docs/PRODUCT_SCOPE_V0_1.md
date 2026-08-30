@@ -109,7 +109,7 @@ Not built, and not designed for:
 | Mock market/news/community/AI | **Ships enabled in dev builds**                                         | Fixtures drive every UI state including failures                                                                            |
 | Crypto — CoinGecko            | Wire in Phase 2 after terms review                                      | Public/demo tier; attribution required; rate limits recorded in `docs/PROVIDERS.md`                                         |
 | Stocks — **Finnhub**          | Adapter written first against Finnhub; requires the user's own free key | Disabled until a key is entered. Terms and current rate limits recorded in `docs/PROVIDERS.md` before the adapter goes live |
-| News                          | Adapter + user-configurable RSS/Atom feeds                              | Free and permitted; keyed news APIs are opt-in                                                                              |
+| News                          | **Shipped in v0.2**: RSS/Atom adapter, user-configurable feeds          | Free, keyless, permitted. Four defaults, all removable. The fixture news provider was deleted — see `PROVIDERS.md`.         |
 | Community                     | Phase 6, opt-in, **disabled by default**                                | Confirmed in scope by the owner. Requires a recorded terms review before it can be enabled at all                           |
 | AI                            | Local OpenAI-compatible endpoint + one cloud adapter                    | Both off until configured                                                                                                   |
 

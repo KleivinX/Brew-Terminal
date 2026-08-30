@@ -1,0 +1,40 @@
+/*
+ * Bundled typefaces.
+ *
+ * The app previously named Inter and JetBrains Mono in its font stacks and then fell back to
+ * whatever the machine had, so almost nobody saw the design as drawn. These are the real ones,
+ * shipped with the app.
+ *
+ * Only the Latin subsets are declared, by hand, rather than importing the packages' own CSS.
+ * That CSS declares every subset — Cyrillic, Greek, Vietnamese — and in a desktop app every one
+ * of those files would be bundled into the installer whether or not a byte of it is ever
+ * rendered. Latin covers U+0000–00FF, which includes the accented characters this app's own
+ * strings use. Adding a subset later is one more block here.
+ *
+ * `font-display: block` rather than `swap`: this is a local file that resolves in a few
+ * milliseconds, and a flash of fallback text reflowing a dense table looks like a bug.
+ */
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: block;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
