@@ -7,23 +7,53 @@
  */
 
 /**
- * Words and phrases that must never reach a user-facing surface.
+ * Words and phrases the app may never say in its own voice.
  *
- * From PRODUCT_SCOPE_V0_1.md §6. Language like "scam score" or "guaranteed" implies a verdict
- * or an outcome the app has no basis to offer, and "signal"/"best trade" implies advice.
+ * This list governs *Brew Terminal's copy*, not what a provider or a model says. It is
+ * deliberately narrower than it used to be. The old list also banned "price target",
+ * "strong buy" and "trading signal", which are not claims — they are the names of things real
+ * terminals show. Banning the vocabulary banned the features, and a research tool that cannot
+ * display an analyst rating because of a lint rule is hobbled for no safety gain.
+ *
+ * What stays banned is what the app has no basis to assert in the first place. A verdict on
+ * whether something is a scam, or a promise that a return is guaranteed or risk-free, is not a
+ * feature that needs unlocking — it is a claim that would be false however it were framed.
+ *
+ * Third-party ratings and targets are fine to render *attributed*: "Mean analyst target $180
+ * (24 analysts, via Finnhub)" reports what other people think and says whose opinion it is.
+ * "Price target: $180" in the app's own voice does not, and is what the review in
+ * PRODUCT_SCOPE_V0_1.md §6 is for.
  */
 const BANNED_PATTERNS = [
+  // Verdicts on legitimacy. The app has no basis for one and will not be acquiring one.
   { pattern: /\bscam\s+score\b/i, why: 'implies a verdict the app cannot justify' },
   { pattern: /\bfake\s+coin\b/i, why: 'implies a legitimacy determination' },
   { pattern: /\bcoin\s+detector\b/i, why: 'implies a legitimacy determination' },
-  { pattern: /\bguaranteed?\b/i, why: 'implies a certain outcome' },
-  { pattern: /\brisk[- ]free\b/i, why: 'implies a certain outcome' },
-  { pattern: /\bsafe\s+investment\b/i, why: 'implies a recommendation' },
-  { pattern: /\bbest\s+trade\b/i, why: 'implies a recommendation' },
-  { pattern: /\bstrong\s+buy\b/i, why: 'is a trading recommendation' },
-  { pattern: /\bprice\s+target\b/i, why: 'is a price prediction' },
-  { pattern: /\btrading\s+signals?\b/i, why: 'implies actionable trading guidance' },
-  { pattern: /\bto\s+the\s+moon\b/i, why: 'is hype language' },
+
+  // Claims about outcomes. False for every market instrument that exists, so no framing
+  // rescues them.
+  {
+    pattern: /\bguaranteed?\s+(?:returns?|profits?|gains?|income)\b/i,
+    why: 'promises an outcome nothing can promise',
+  },
+  {
+    pattern: /\brisk[- ]free\s+(?:returns?|profits?|trade|investment)\b/i,
+    why: 'no market instrument is risk-free',
+  },
+  { pattern: /\bsafe\s+investment\b/i, why: 'is a verdict on suitability' },
+  // Both apostrophes: editors turn a typed ' into ’ and the rule should not be dodgeable by
+  // smart quotes.
+  { pattern: /\bcan['’]?t\s+lose\b/i, why: 'promises an outcome nothing can promise' },
+  { pattern: /\bto\s+the\s+moon\b/i, why: 'is hype, and hype is a promise in disguise' },
+
+  // The app speaking as though it had a position. Showing someone else's is fine; holding one
+  // is what makes software an adviser.
+  {
+    pattern: /\bwe\s+recommend\s+(?:buying|selling|shorting)\b/i,
+    why: 'is the app taking a position',
+  },
+  { pattern: /\byou\s+should\s+(?:buy|sell|short)\b/i, why: 'is the app taking a position' },
+  { pattern: /\bour\s+(?:pick|call)\s+of\s+the\b/i, why: 'is the app taking a position' },
 ];
 
 const noBannedCopy = {

@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DISCLAIMER_TEXT } from '@/components/status/DisclaimerNote';
+import { DISCLAIMER_LONG, DISCLAIMER_TEXT } from '@/components/status/DisclaimerNote';
 import { RESPONSE_CAUTION_PATTERNS } from '@/features/model-desk/guardrails';
 
 /**
@@ -111,7 +111,35 @@ describe('the model-output scan', () => {
 describe('the disclaimer', () => {
   it('uses the exact agreed wording', () => {
     // Changing this string changes it everywhere at once, which is the point of centralising it.
-    expect(DISCLAIMER_TEXT).toBe('Educational information only — not financial advice.');
+    expect(DISCLAIMER_TEXT).toBe(
+      'A research tool, not an adviser. Your decisions, and their consequences, are your own.',
+    );
+  });
+
+  /*
+   * The wording above is allowed to change; these two properties are not, which is why they
+   * are asserted separately from the literal.
+   *
+   * v0.2 moved the notice from a positioning statement ("educational information only") to a
+   * liability one. That was a deliberate repositioning — the app shows live market data and
+   * runs real analysis, and calling that educational undersold it. What could not move is the
+   * disclaimer of advice: an app issuing personalised investment recommendations is regulated
+   * as an adviser in most jurisdictions, and no wording cures that.
+   */
+  it('still disclaims being an adviser', () => {
+    expect(DISCLAIMER_TEXT.toLowerCase()).toMatch(/not an adviser|not advice|not financial advice/);
+  });
+
+  it('still puts the consequences on the reader', () => {
+    expect(`${DISCLAIMER_TEXT} ${DISCLAIMER_LONG}`.toLowerCase()).toMatch(
+      /your own|are yours|your decisions|your responsibility/,
+    );
+  });
+
+  it('the long form accepts no responsibility and says data can be wrong', () => {
+    const long = DISCLAIMER_LONG.toLowerCase();
+    expect(long).toMatch(/accepts no responsibility|no liability/);
+    expect(long).toMatch(/delayed, incomplete or wrong|may be wrong/);
   });
 
   it('is defined in exactly one place', () => {

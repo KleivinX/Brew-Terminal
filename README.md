@@ -9,7 +9,7 @@
 
 A local-first, open-source market research and learning terminal for crypto and stocks.
 
-_Educational information only — not financial advice._
+_A research tool, not an adviser. Your decisions, and their consequences, are your own._
 
 [![CI](https://github.com/KleivinX/Brew-Terminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KleivinX/Brew-Terminal/actions/workflows/ci.yml)
 [![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-orange.svg)](LICENSE)
@@ -180,7 +180,8 @@ Made with love by **Kleivin** &amp; **Blocks and Brew**.
 
 </div>
 
-**Disclaimer.** Brew Terminal provides educational and research information only. It is not
-financial, investment, legal or tax advice. Market data comes from third-party providers and
-may be delayed, incomplete or wrong. Verify anything that matters against a primary source, and
-consider talking to a licensed professional before making financial decisions.
+**Disclaimer.** Brew Terminal shows you market data and helps you analyse it. It does not tell
+you what to do, and it accepts no responsibility for what you decide to do. Nothing it displays
+is financial, investment, legal or tax advice. Market data comes from third-party providers and
+may be delayed, incomplete or wrong — verify anything that matters against a primary source.
+Any losses are yours.

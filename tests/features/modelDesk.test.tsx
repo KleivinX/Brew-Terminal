@@ -9,6 +9,7 @@ import { browserInvoke, __resetHarness } from '@/lib/ipc.browser';
 import { __resetSession } from '@/features/model-desk/session';
 import type { AiMessage } from '@/types/domain';
 import { renderWithProviders } from '../setup/renderWithProviders';
+import { DISCLAIMER_TEXT } from '@/components/status/DisclaimerNote';
 
 /**
  * The reach label appears twice on the settings page — once in the status pill, once in the
@@ -84,7 +85,7 @@ describe('Model Desk — the off state', () => {
   it('carries the disclaimer even while switched off', async () => {
     renderWithProviders(<ModelDeskRoute />);
 
-    const disclaimers = await screen.findAllByText(/not financial advice/i);
+    const disclaimers = await screen.findAllByText(DISCLAIMER_TEXT);
     expect(disclaimers.length).toBeGreaterThan(0);
   });
 });
@@ -290,7 +291,7 @@ describe('Model Desk — model output', () => {
       <MessageList messages={[message('assistant', 'An ETF is a fund.')]} pending={false} />,
     );
 
-    expect(screen.getByText(/not financial advice/i)).toBeInTheDocument();
+    expect(screen.getByText(DISCLAIMER_TEXT)).toBeInTheDocument();
   });
 
   it('does not caution the user’s own words back at them', () => {

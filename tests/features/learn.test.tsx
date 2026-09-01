@@ -8,6 +8,7 @@ import { ExplainWithModel } from '@/features/learn/ExplainWithModel';
 import { searchGlossary, glossary, learningPaths } from '@/features/learn/content';
 import { renderWithProviders } from '../setup/renderWithProviders';
 import { findAccessibilityViolations, describeViolations } from '../setup/axe';
+import { DISCLAIMER_TEXT } from '@/components/status/DisclaimerNote';
 
 function renderLearn(route = '/learn') {
   return renderWithProviders(
@@ -211,16 +212,12 @@ describe('Learn — Explain this', () => {
     expect(screen.getByText(/sends nothing at all/i)).toBeInTheDocument();
   });
 
-  it('carries the educational disclaimer', async () => {
+  it('carries the standing disclaimer', async () => {
     const user = userEvent.setup();
     renderWithProviders(<ExplainWithModel term="Spread" short="The gap." />);
 
     await user.click(screen.getByRole('button', { name: /explain this/i }));
-    await waitFor(() =>
-      expect(
-        screen.getByText(/Educational information only — not financial advice/),
-      ).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(DISCLAIMER_TEXT)).toBeInTheDocument());
   });
 });
 
