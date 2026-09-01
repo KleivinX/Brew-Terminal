@@ -2,17 +2,30 @@ Local-first market research and learning terminal for crypto and stocks.
 
 **A research tool, not an adviser. Your decisions, and their consequences, are your own.**
 
-## What is new since v0.1.0
+## What is new since v0.2.0
 
-- **Real news.** RSS/Atom feeds you configure, seeded with four public ones. v0.1.0 shipped fixture headlines presented as live data — that is fixed, and the fixture provider is deleted rather than disabled.
-- **Portfolio.** Holdings, cost basis (FIFO or average — your choice, because the right answer depends where you file), realised and unrealised gain, allocation.
-- **Screener.** Filter the market on your own criteria. No presets, no scores.
-- **Indicators.** SMA, EMA, RSI, MACD and Bollinger bands, computed locally — switching one on makes no request.
-- **Stock charts.** Equities finally have history, via Alpha Vantage.
-- **Compare.** Several assets indexed to one axis, a correlation matrix over daily returns, and a macro backdrop from FRED that needs no API key at all.
-- **Price alerts.** Off by default — see below.
-- **Backtest.** What a regular contribution would have done, over history that already happened.
-- **Run a model locally.** The app can fetch an inference engine and open-weight model and run it on `127.0.0.1`, verified against published checksums.
+A patch release. No new features — this fixes rendering faults that shipped in v0.2.0.
+
+Five CSS custom properties were read by the stylesheets but defined nowhere. CSS discards such
+a declaration rather than reporting it, so the styles were simply absent and the result looked
+like a deliberately flat design rather than a bug.
+
+- **The screener's column headers are opaque again.** Its sticky header had no background, so
+  result rows scrolled straight through the column labels. This was the only one of the five
+  that broke behaviour rather than appearance.
+- **Raised surfaces are raised.** Thirteen places across the portfolio, screener, compare,
+  backtest and settings panels rendered transparent instead of on their own background: the
+  portfolio totals and allocation bars, the correlation matrix, the compare chips, the dropdown
+  controls, and the inline notices throughout settings.
+- **Badge weights.** Four badges inherited their container's medium weight instead of resetting
+  to regular.
+
+Checked in all three themes. Two further undefined properties carried fallbacks, so they
+rendered correctly while naming nothing any theme could override; they now use real tokens.
+
+A test parses the stylesheets and fails the build on any `var()` naming a property nothing
+defines, and on any token present in one theme but missing from another. Both faults are
+invisible at runtime by construction, which is how they reached a release.
 
 ## Downloads
 
@@ -32,7 +45,7 @@ The app is **not code-signed**, so both macOS and Windows will warn you.
 
 Signing needs a paid Apple Developer ID and a Windows code-signing certificate. Until those exist the warnings are expected and are not a sign anything is wrong.
 
-## One promise that now has an exception
+## One promise that has an exception
 
 Everywhere else the app makes no request you did not cause. **Price alerts poll in the background**, because an alert that only fires while you are looking at the screen is not an alert. It is off by default, makes no request at all until you both switch it on and arm an alert, and fetches only the assets those alerts name.
 
@@ -43,5 +56,7 @@ Everywhere else the app makes no request you did not cause. **Price alerts poll 
 - **No hosted AI request has been made with a real key.** A local model has been run end to end and answered; the cloud adapter shares most of that path but has never made a live call.
 - **The portfolio has not been reconciled against a broker statement.** The arithmetic is tested, including eight-decimal crypto quantities; agreeing with your exchange's own figures is a different claim and is not made.
 - **Guardrails reduce advice-shaped output; they do not eliminate it.** You choose the model, and your model may ignore its instructions.
+
+New to Brew Terminal? The [v0.2.0 notes](https://github.com/KleivinX/Brew-Terminal/releases/tag/v0.2.0) list what the app actually does.
 
 Full detail: [`docs/PRODUCT_SCOPE_V0_1.md`](docs/PRODUCT_SCOPE_V0_1.md), [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`docs/PROVIDERS.md`](docs/PROVIDERS.md).

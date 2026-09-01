@@ -1,6 +1,6 @@
 {
   "name": "brew-terminal",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "Local-first, open-source market research and learning terminal. Educational information only — not financial advice.",
