@@ -910,6 +910,52 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       return fired;
     }
 
+    case 'list_macro_series':
+      return [
+        {
+          id: 'DGS10',
+          name: '10-year Treasury yield',
+          description: 'What the US government pays to borrow for ten years.',
+          unit: '%',
+          frequency: 'Daily',
+        },
+        {
+          id: 'UNRATE',
+          name: 'Unemployment rate',
+          description: 'The share of the US labour force without work and looking for it.',
+          unit: '%',
+          frequency: 'Monthly',
+        },
+      ];
+
+    case 'get_macro_series': {
+      // A plausible shape; the parser and its edge cases are tested on the Rust side.
+      const points = Array.from({ length: 60 }, (_, i) => ({
+        time: 1_755_820_800 + i * 86_400,
+        close: 4 + Math.sin(i / 8) * 0.4,
+      }));
+      return envelope<ChartPoint[]>(points, []);
+    }
+
+    case 'get_multi_series': {
+      const ids = (args.assetIds as string[]).slice(0, 6);
+      const known = new Set(allQuotes.map((q) => q.assetId));
+      return {
+        series: ids
+          .filter((id) => known.has(id))
+          .map((assetId, index) => ({
+            assetId,
+            symbol: assetId.split(':').pop()?.toUpperCase() ?? assetId,
+            points: Array.from({ length: 90 }, (_, i) => ({
+              time: 1_750_000_000 + i * 86_400,
+              // Distinct shapes, so a correlation matrix over them is not all ones.
+              close: 100 + Math.sin(i / (4 + index * 3)) * 12 + i * (index % 2 === 0 ? 0.3 : -0.2),
+            })),
+          })),
+        unavailable: ids.filter((id) => !known.has(id)),
+      };
+    }
+
     case 'run_screen': {
       // Mirrors the Rust filter semantics closely enough for the UI to be exercised; the
       // authoritative implementation and its tests live in `models::screener`.

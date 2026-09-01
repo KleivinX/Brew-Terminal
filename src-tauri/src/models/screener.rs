@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{AssetType, Quote};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[cfg_attr(
     test,
     derive(ts_rs::TS),
@@ -20,18 +20,15 @@ use super::{AssetType, Quote};
 )]
 #[serde(rename_all = "kebab-case")]
 pub enum ScreenerSort {
+    /// The default: it is the ordering a market list already arrives in, so an unsorted screen
+    /// does not silently reshuffle what the reader was looking at.
+    #[default]
     MarketCap,
     Price,
     Change24h,
     Change7d,
     Volume,
     Symbol,
-}
-
-impl Default for ScreenerSort {
-    fn default() -> Self {
-        Self::MarketCap
-    }
 }
 
 /// A numeric window. Either end may be absent, meaning unbounded on that side.
@@ -60,7 +57,8 @@ impl Range {
                 if !value.is_finite() {
                     return false;
                 }
-                self.min.is_none_or(|min| value >= min) && self.max.is_none_or(|max| value <= max)
+                self.min.map_or(true, |min| value >= min)
+                    && self.max.map_or(true, |max| value <= max)
             }
             None => self.min.is_none() && self.max.is_none(),
         }
@@ -108,7 +106,7 @@ impl ScreenerFilter {
             && self.change_24h.is_unbounded()
             && self.change_7d.is_unbounded()
             && self.volume_24h.is_unbounded()
-            && self.query.as_ref().is_none_or(|q| q.trim().is_empty())
+            && self.query.as_ref().map_or(true, |q| q.trim().is_empty())
     }
 
     fn matches(&self, quote: &Quote) -> bool {
@@ -145,7 +143,7 @@ pub fn screen(quotes: Vec<Quote>, filter: &ScreenerFilter) -> Vec<Quote> {
     let mut matched: Vec<Quote> = quotes.into_iter().filter(|q| filter.matches(q)).collect();
 
     if filter.sort == ScreenerSort::Symbol {
-        matched.sort_by(|a, b| a.symbol.to_lowercase().cmp(&b.symbol.to_lowercase()));
+        matched.sort_by_key(|q| q.symbol.to_lowercase());
         if filter.descending {
             matched.reverse();
         }

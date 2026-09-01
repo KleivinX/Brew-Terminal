@@ -88,6 +88,10 @@ pub fn run() {
             commands::alerts::set_alert_enabled,
             commands::alerts::rearm_alert,
             commands::alerts::check_alerts,
+            // macro and comparison
+            commands::macro_data::list_macro_series,
+            commands::macro_data::get_macro_series,
+            commands::macro_data::get_multi_series,
             // screener
             commands::screener::run_screen,
             // portfolio

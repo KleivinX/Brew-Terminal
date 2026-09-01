@@ -9,6 +9,9 @@ import { PulseRoute } from '@/features/pulse/PulseRoute';
  * Pulse ships in the initial chunk because it is the landing route. Everything else is lazy —
  * this is the main lever for the 200 KB initial-bundle budget in ARCHITECTURE.md §5.
  */
+const CompareRoute = lazy(() =>
+  import('@/features/compare/CompareRoute').then((m) => ({ default: m.CompareRoute })),
+);
 const ScreenerRoute = lazy(() =>
   import('@/features/screener/ScreenerRoute').then((m) => ({ default: m.ScreenerRoute })),
 );
@@ -33,6 +36,17 @@ export function AppRoutes() {
     <AppShell>
       <Routes>
         <Route path="/" element={<Navigate to="/pulse" replace />} />
+
+        <Route
+          path="/compare"
+          element={
+            <ErrorBoundary area="Compare">
+              <Suspense fallback={<RouteFallback label="Compare" />}>
+                <CompareRoute />
+              </Suspense>
+            </ErrorBoundary>
+          }
+        />
 
         <Route
           path="/screener"

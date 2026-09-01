@@ -90,6 +90,12 @@ export type { AlertKind } from './generated/AlertKind';
 
 export type { TriggeredAlert } from './generated/TriggeredAlert';
 
+export type { MacroSeries } from './generated/MacroSeries';
+
+export type { MultiSeries } from './generated/MultiSeries';
+
+export type { AssetSeries } from './generated/AssetSeries';
+
 // --- Frontend narrowings ---
 
 /**

@@ -7,9 +7,11 @@
 pub mod alphavantage;
 pub mod coingecko;
 pub mod finnhub;
+pub mod fred;
 pub mod rss;
 
 pub use alphavantage::AlphaVantageProvider;
 pub use coingecko::CoinGeckoProvider;
 pub use finnhub::FinnhubProvider;
+pub use fred::FredProvider;
 pub use rss::RssNewsProvider;

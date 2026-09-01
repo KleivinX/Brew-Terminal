@@ -38,7 +38,7 @@ pub enum TransactionKind {
 /// authorities mandate FIFO, others permit or require average cost. The app does not know where
 /// its user files, so it does not choose for them — it defaults to FIFO because that is the
 /// more commonly mandated of the two, and says which one produced a number.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[cfg_attr(
     test,
     derive(ts_rs::TS),
@@ -47,15 +47,13 @@ pub enum TransactionKind {
 #[serde(rename_all = "kebab-case")]
 pub enum CostBasisMethod {
     /// First in, first out. The oldest units are the ones sold.
+    ///
+    /// The default because it is the more commonly mandated of the two, not because it is more
+    /// correct — that depends entirely on where the user files.
+    #[default]
     Fifo,
     /// Every unit is assumed to have cost the running average.
     Average,
-}
-
-impl Default for CostBasisMethod {
-    fn default() -> Self {
-        Self::Fifo
-    }
 }
 
 impl CostBasisMethod {

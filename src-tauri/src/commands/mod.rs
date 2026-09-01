@@ -10,6 +10,7 @@ pub mod cache;
 pub mod community;
 pub mod learn;
 pub mod local_models;
+pub mod macro_data;
 pub mod market;
 pub mod news_feeds;
 pub mod notes;

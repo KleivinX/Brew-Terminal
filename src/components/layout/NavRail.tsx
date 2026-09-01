@@ -17,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/portfolio', label: 'Portfolio', icon: 'portfolio', hint: 'What you hold' },
   { to: '/screener', label: 'Screener', icon: 'search', hint: 'Filter the market' },
   { to: '/research', label: 'Research Lab', icon: 'research', hint: 'Asset deep dive' },
+  { to: '/compare', label: 'Compare', icon: 'pulse', hint: 'Side by side and macro' },
   { to: '/learn', label: 'Learn', icon: 'learn', hint: 'Glossary and paths' },
   { to: '/desk', label: 'Model Desk', icon: 'desk', hint: 'Optional AI' },
   { to: '/settings', label: 'Settings', icon: 'settings', hint: 'Providers and privacy' },

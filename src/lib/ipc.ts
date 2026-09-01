@@ -22,6 +22,8 @@ import type {
   FeedPreview,
   LearningProgress,
   LocalModelOverview,
+  MacroSeries,
+  MultiSeries,
   DownloadProgress,
   NewsArticle,
   NewsCategory,
@@ -161,6 +163,13 @@ export interface IpcContract {
   rearm_alert: { args: { id: string }; result: void };
   /** Runs a check now rather than waiting for the background tick. */
   check_alerts: { args: undefined; result: TriggeredAlert[] };
+
+  // --- macro and comparison ---
+  /** The shipped macro list. No request — this is a static catalogue. */
+  list_macro_series: { args: undefined; result: MacroSeries[] };
+  get_macro_series: { args: { id: string; range: ChartRange }; result: Envelope<ChartPoint[]> };
+  /** History for several assets at once, for comparison and correlation. */
+  get_multi_series: { args: { assetIds: string[]; range: ChartRange }; result: MultiSeries };
 
   // --- screener ---
   /** Filters the cached market list. Adjusting a filter costs no provider request. */
