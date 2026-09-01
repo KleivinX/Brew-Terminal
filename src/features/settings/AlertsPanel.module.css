@@ -22,7 +22,7 @@
   margin: 0;
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border-left: 2px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
@@ -92,7 +92,7 @@
   font: inherit;
   font-size: var(--text-sm);
   color: var(--text-primary);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
 }

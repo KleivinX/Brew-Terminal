@@ -73,7 +73,7 @@
   font: inherit;
   font-size: var(--text-sm);
   color: var(--text-primary);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
 }
@@ -105,7 +105,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: var(--surface);
+  background: var(--bg-inset);
 }
 
 .table th:first-child,

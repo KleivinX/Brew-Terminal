@@ -29,7 +29,7 @@
   align-items: center;
   padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   font-size: var(--text-sm);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
 }
@@ -177,7 +177,7 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   text-align: center;
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border-radius: var(--radius-sm);
 }
 
@@ -235,7 +235,7 @@
   font: inherit;
   font-size: var(--text-sm);
   color: var(--text-primary);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
 }

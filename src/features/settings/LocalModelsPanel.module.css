@@ -17,7 +17,7 @@
   margin: 0;
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border-left: 2px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
@@ -106,7 +106,7 @@
 .running {
   padding: 0 var(--space-2);
   font-size: var(--text-xs);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-normal);
   color: var(--positive);
   border: 1px solid var(--positive);
   border-radius: var(--radius-sm);

@@ -43,7 +43,7 @@
   align-items: flex-start;
   padding: var(--space-3) var(--space-4);
   font-size: var(--text-sm);
-  color: var(--status-warning-text, var(--text-primary));
+  color: var(--text-primary);
   background: var(--accent-muted);
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);

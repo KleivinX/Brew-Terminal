@@ -16,11 +16,11 @@ Local-first market research and learning terminal for crypto and stocks.
 
 ## Downloads
 
-| Platform | File |
-| -------- | ---- |
-| macOS (Intel and Apple Silicon) | `.dmg` |
-| Windows | `.msi` or `-setup.exe` |
-| Linux | `.AppImage`, `.deb` or `.rpm` |
+| Platform                        | File                          |
+| ------------------------------- | ----------------------------- |
+| macOS (Intel and Apple Silicon) | `.dmg`                        |
+| Windows                         | `.msi` or `-setup.exe`        |
+| Linux                           | `.AppImage`, `.deb` or `.rpm` |
 
 ## Opening it the first time
 

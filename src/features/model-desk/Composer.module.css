@@ -23,7 +23,7 @@
   font-size: var(--text-xs);
   background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--radius-full);
 }
 
 .attachmentLabel {

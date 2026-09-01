@@ -119,7 +119,7 @@
   padding: var(--space-3) var(--space-4);
   margin: 0;
   font-size: var(--text-sm);
-  background: var(--surface-raised);
+  background: var(--bg-inset);
   border-radius: var(--radius-sm);
 }
 
