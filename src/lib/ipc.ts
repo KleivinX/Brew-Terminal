@@ -32,6 +32,7 @@ import type {
   Preferences,
   ProviderInfo,
   Quote,
+  ScreenerFilter,
   Transaction,
   UpdateCheck,
   ExportResult,
@@ -148,6 +149,10 @@ export interface IpcContract {
    * launch or on a timer, and it downloads nothing.
    */
   check_for_updates: { args: undefined; result: UpdateCheck };
+
+  // --- screener ---
+  /** Filters the cached market list. Adjusting a filter costs no provider request. */
+  run_screen: { args: { filter: ScreenerFilter }; result: Envelope<Quote[]> };
 
   // --- portfolio ---
   /** Positions derived from the transaction history, priced where a provider can price them. */

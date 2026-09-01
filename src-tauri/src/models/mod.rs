@@ -10,6 +10,7 @@ pub mod profile;
 pub mod progress;
 pub mod provider;
 pub mod quote;
+pub mod screener;
 pub mod watchlist;
 
 pub use ai::*;
@@ -24,4 +25,5 @@ pub use profile::*;
 pub use progress::*;
 pub use provider::*;
 pub use quote::*;
+pub use screener::*;
 pub use watchlist::*;

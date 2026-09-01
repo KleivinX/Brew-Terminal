@@ -73,6 +73,8 @@ pub fn run() {
             commands::local_models::delete_local_model,
             commands::local_models::start_local_model,
             commands::local_models::stop_local_model,
+            // screener
+            commands::screener::run_screen,
             // portfolio
             commands::portfolio::get_portfolio,
             commands::portfolio::list_transactions,

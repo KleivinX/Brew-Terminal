@@ -58,3 +58,56 @@
   color: var(--text-secondary);
   border-top: 1px solid var(--border-subtle);
 }
+
+.overlays {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding-block: var(--space-2);
+}
+
+.overlaysLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.overlayButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.overlayToggle {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.overlayToggle:hover {
+  border-color: var(--border-strong);
+}
+
+.overlayOn {
+  color: var(--accent-contrast-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.overlaySummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.overlayReading {
+  white-space: nowrap;
+}

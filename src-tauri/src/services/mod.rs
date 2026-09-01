@@ -17,6 +17,7 @@ pub mod news_feeds;
 pub mod notes;
 pub mod portfolio;
 pub mod profile;
+pub mod screener;
 pub mod settings;
 pub mod updates;
 pub mod watchlist;

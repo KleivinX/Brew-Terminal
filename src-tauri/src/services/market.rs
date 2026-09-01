@@ -114,7 +114,7 @@ where
 }
 
 /// Envelope for "no provider is configured for this".
-fn not_configured<T: Default>(kind: &str) -> Envelope<T> {
+pub(crate) fn not_configured<T: Default>(kind: &str) -> Envelope<T> {
     Envelope::fresh(T::default(), "none", "No provider", EnvelopeSource::Live).with_degraded(
         Degraded {
             reason: DegradedReason::NotConfigured,
@@ -131,7 +131,7 @@ fn not_configured<T: Default>(kind: &str) -> Envelope<T> {
 /// A watchlist can mix crypto and equities, which come from different providers. Both have to
 /// be credited, so the display name lists every contributor — attribution is not something the
 /// UI gets to drop because the data came from more than one place.
-fn merge_meta(parts: Vec<EnvelopeMeta>) -> EnvelopeMeta {
+pub(crate) fn merge_meta(parts: Vec<EnvelopeMeta>) -> EnvelopeMeta {
     if parts.len() == 1 {
         return parts.into_iter().next().expect("length checked");
     }
@@ -428,15 +428,11 @@ pub async fn get_chart(
     asset_id: String,
     range: ChartRange,
 ) -> AppResult<Envelope<Vec<ChartPoint>>> {
-    let Some(provider) = state.registry.market_for_asset_id(&asset_id) else {
-        return Ok(not_configured("market data"));
-    };
-
-    // Capability check: a provider that cannot serve this range gets a clear not-configured
-    // state rather than an empty chart the user cannot interpret.
-    if !provider.capabilities().charts.contains(&range) {
+    // Charts route separately from quotes: the provider that prices an asset is not always the
+    // one that can draw its history. See `registry::chart_provider_for`.
+    let Some(provider) = state.registry.chart_provider_for(&asset_id, range) else {
         return Ok(not_configured("chart"));
-    }
+    };
 
     let kind = CacheKind::for_chart(range);
     let provider_id = provider.id().to_string();

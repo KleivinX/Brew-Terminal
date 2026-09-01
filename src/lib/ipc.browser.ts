@@ -28,6 +28,7 @@ import type {
   ProfileSummary,
   ProviderInfo,
   Quote,
+  ScreenerFilter,
   Watchlist,
   WatchlistItem,
 } from '@/types/domain';
@@ -838,6 +839,71 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
         .filter((n) => filter.category === 'all' || n.category === filter.category)
         .slice(0, filter.limit ?? 20);
       return envelope<NewsArticle[]>(rows, []);
+    }
+
+    case 'run_screen': {
+      // Mirrors the Rust filter semantics closely enough for the UI to be exercised; the
+      // authoritative implementation and its tests live in `models::screener`.
+      const f = args.filter as ScreenerFilter;
+      const within = (value: number | null, range: { min: number | null; max: number | null }) => {
+        if (value === null || !Number.isFinite(value))
+          return range.min === null && range.max === null;
+        return (
+          (range.min === null || value >= range.min) && (range.max === null || value <= range.max)
+        );
+      };
+      const q = (f.query ?? '').trim().toLowerCase();
+
+      let rows = allQuotes.filter((quote) => {
+        if (f.assetType !== null && quote.assetType !== f.assetType) return false;
+        if (
+          q !== '' &&
+          !quote.symbol.toLowerCase().includes(q) &&
+          !quote.name.toLowerCase().includes(q)
+        ) {
+          return false;
+        }
+        return (
+          within(quote.price, f.price) &&
+          within(quote.marketCap, f.marketCap) &&
+          within(quote.changePct24h, f.change24h) &&
+          within(quote.changePct7d, f.change7d) &&
+          within(quote.volume24h, f.volume24h)
+        );
+      });
+
+      const keyOf = (quote: Quote): number | null => {
+        switch (f.sort) {
+          case 'price':
+            return quote.price;
+          case 'change24h':
+            return quote.changePct24h;
+          case 'change7d':
+            return quote.changePct7d;
+          case 'volume':
+            return quote.volume24h;
+          case 'market-cap':
+            return quote.marketCap;
+          default:
+            return null;
+        }
+      };
+
+      rows = [...rows].sort((a, b) => {
+        if (f.sort === 'symbol') {
+          const cmp = a.symbol.toLowerCase().localeCompare(b.symbol.toLowerCase());
+          return f.descending ? -cmp : cmp;
+        }
+        const x = keyOf(a);
+        const y = keyOf(b);
+        // Unknown sorts last in both directions, matching Rust.
+        if (x === null && y === null) return 0;
+        if (x === null) return 1;
+        if (y === null) return -1;
+        return f.descending ? y - x : x - y;
+      });
+
+      return envelope<Quote[]>(rows, []);
     }
 
     case 'get_portfolio':

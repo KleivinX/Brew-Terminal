@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use super::live::{
-    coingecko::COINGECKO_ID, finnhub::FINNHUB_ID, rss::RSS_PROVIDER_ID, CoinGeckoProvider,
-    FinnhubProvider, RssNewsProvider,
+    alphavantage::ALPHAVANTAGE_ID, coingecko::COINGECKO_ID, finnhub::FINNHUB_ID,
+    rss::RSS_PROVIDER_ID, AlphaVantageProvider, CoinGeckoProvider, FinnhubProvider,
+    RssNewsProvider,
 };
 use super::mock::{
     community::MOCK_COMMUNITY_ID, market::MOCK_PROVIDER_ID, MockCommunityProvider,
@@ -22,6 +23,9 @@ pub fn default_provider_config() -> Vec<(&'static str, &'static str, bool)> {
     vec![
         (COINGECKO_ID, "market", true),
         (FINNHUB_ID, "market", false),
+        // Charts only, and only for equities — see `providers::live::alphavantage`. Off until
+        // a key is entered, like every other credentialed provider.
+        (ALPHAVANTAGE_ID, "market", false),
         (MOCK_PROVIDER_ID, "market", cfg!(debug_assertions)),
         // News is on by default: the feeds it reads are public, need no credential, and the
         // panel is empty without it. The user's feed list is what actually decides what is
@@ -45,6 +49,7 @@ pub struct ProviderRegistry {
     download_client: reqwest::Client,
     coingecko: Arc<CoinGeckoProvider>,
     finnhub: Arc<FinnhubProvider>,
+    alphavantage: Arc<AlphaVantageProvider>,
     mock_market: Arc<MockMarketProvider>,
     rss_news: Arc<RssNewsProvider>,
     mock_community: Arc<MockCommunityProvider>,
@@ -62,6 +67,7 @@ impl ProviderRegistry {
             download_client: http::build_download_client()?,
             coingecko: Arc::new(CoinGeckoProvider::new(client.clone())),
             finnhub: Arc::new(FinnhubProvider::new(client.clone())),
+            alphavantage: Arc::new(AlphaVantageProvider::new(client.clone())),
             mock_market: Arc::new(MockMarketProvider::new()),
             // The feed adapter reads the user's feed list on every call, so it needs the pool
             // as well as the client.
@@ -130,6 +136,40 @@ impl ProviderRegistry {
         self.market_for(asset_type)
     }
 
+    /// The provider that can draw a chart for this asset, which is not always the one that
+    /// prices it.
+    ///
+    /// Equities are the case that forces this to exist: Finnhub serves quotes on its free tier
+    /// but its candles are paid, so it advertises no ranges. Routing charts separately means a
+    /// user can hold a Finnhub key for prices and an Alpha Vantage key for history, and get
+    /// both, instead of the Stocks tab having no chart at all.
+    pub fn chart_provider_for(
+        &self,
+        asset_id: &str,
+        range: crate::models::ChartRange,
+    ) -> Option<Arc<dyn MarketDataProvider>> {
+        let asset_type = asset_type_of(asset_id)?;
+
+        // The asset's usual provider first, when it can actually serve the range.
+        if let Some(primary) = self.market_for(asset_type) {
+            if primary.capabilities().charts.contains(&range) {
+                return Some(primary);
+            }
+        }
+
+        // Otherwise anything enabled that can. Today that is only Alpha Vantage, for equities.
+        if matches!(
+            asset_type,
+            AssetType::Stock | AssetType::Etf | AssetType::Index
+        ) && self.enabled(ALPHAVANTAGE_ID)
+            && self.alphavantage.capabilities().charts.contains(&range)
+        {
+            return Some(self.alphavantage.clone());
+        }
+
+        None
+    }
+
     /// Every enabled market provider, for search fan-out.
     pub fn enabled_market_providers(&self) -> Vec<Arc<dyn MarketDataProvider>> {
         let mut providers: Vec<Arc<dyn MarketDataProvider>> = Vec::new();
@@ -190,6 +230,7 @@ impl ProviderRegistry {
         let market: Vec<Arc<dyn MarketDataProvider>> = vec![
             self.coingecko.clone(),
             self.finnhub.clone(),
+            self.alphavantage.clone(),
             self.mock_market.clone(),
         ];
 
@@ -257,6 +298,91 @@ impl ProviderRegistry {
 /// Reads the asset type out of a canonical id (`crypto:cg:bitcoin` → Crypto).
 pub fn asset_type_of(asset_id: &str) -> Option<AssetType> {
     AssetType::parse(asset_id.split(':').next()?)
+}
+
+#[cfg(test)]
+mod chart_routing_tests {
+    use super::*;
+    use crate::db::migrations;
+    use crate::models::ChartRange;
+
+    fn registry() -> ProviderRegistry {
+        let pool = crate::db::pool::create_in_memory().unwrap();
+        {
+            let mut conn = pool.get().unwrap();
+            migrations::run(&mut conn, None).unwrap();
+            repo_providers::upsert_defaults(&conn, &default_provider_config()).unwrap();
+            // The fixture provider is seeded on in debug builds and advertises every range, so
+            // it would answer before any real adapter and these tests would prove nothing.
+            repo_providers::set_enabled(&conn, MOCK_PROVIDER_ID, false).unwrap();
+        }
+        ProviderRegistry::new(pool).unwrap()
+    }
+
+    /// Crypto has always worked; this pins that the new routing did not change it.
+    #[test]
+    fn crypto_charts_still_come_from_coingecko() {
+        let registry = registry();
+        let provider = registry
+            .chart_provider_for("crypto:cg:bitcoin", ChartRange::Month)
+            .expect("crypto should have a chart provider");
+        assert_eq!(provider.id(), COINGECKO_ID);
+    }
+
+    /// The gap this feature exists to close: Finnhub prices equities but its candles are paid,
+    /// so before Alpha Vantage was routable a stock chart had no provider at all.
+    #[test]
+    fn a_stock_has_no_chart_provider_until_alpha_vantage_is_enabled() {
+        let registry = registry();
+        assert!(
+            registry
+                .chart_provider_for("stock:us:AAPL", ChartRange::Month)
+                .is_none(),
+            "Finnhub advertises no ranges, so nothing should answer yet"
+        );
+    }
+
+    #[test]
+    fn enabling_alpha_vantage_gives_stocks_a_chart_provider() {
+        let registry = registry();
+        {
+            let conn = registry.pool.get().unwrap();
+            repo_providers::set_enabled(&conn, ALPHAVANTAGE_ID, true).unwrap();
+        }
+
+        let provider = registry
+            .chart_provider_for("stock:us:AAPL", ChartRange::Month)
+            .expect("Alpha Vantage should answer once enabled");
+        assert_eq!(provider.id(), ALPHAVANTAGE_ID);
+    }
+
+    #[test]
+    fn it_is_not_offered_for_a_range_it_cannot_serve() {
+        let registry = registry();
+        {
+            let conn = registry.pool.get().unwrap();
+            repo_providers::set_enabled(&conn, ALPHAVANTAGE_ID, true).unwrap();
+        }
+
+        // Intraday is a different endpoint and is deliberately not served.
+        assert!(registry
+            .chart_provider_for("stock:us:AAPL", ChartRange::Day)
+            .is_none());
+    }
+
+    #[test]
+    fn it_is_never_routed_for_crypto() {
+        let registry = registry();
+        {
+            let conn = registry.pool.get().unwrap();
+            repo_providers::set_enabled(&conn, ALPHAVANTAGE_ID, true).unwrap();
+            repo_providers::set_enabled(&conn, COINGECKO_ID, false).unwrap();
+        }
+
+        assert!(registry
+            .chart_provider_for("crypto:cg:bitcoin", ChartRange::Month)
+            .is_none());
+    }
 }
 
 #[cfg(test)]

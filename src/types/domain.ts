@@ -78,6 +78,12 @@ export type { Transaction } from './generated/Transaction';
 
 export type { TransactionKind } from './generated/TransactionKind';
 
+export type { ScreenerFilter } from './generated/ScreenerFilter';
+
+export type { ScreenerSort } from './generated/ScreenerSort';
+
+export type { Range } from './generated/Range';
+
 // --- Frontend narrowings ---
 
 /**

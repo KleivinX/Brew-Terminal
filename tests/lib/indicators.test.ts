@@ -169,9 +169,11 @@ describe('Bollinger bands', () => {
 
 describe('closes', () => {
   it('takes the close of each point in order', () => {
-    expect(closes([
-      { time: 1, close: 10 },
-      { time: 2, close: 20 },
-    ])).toEqual([10, 20]);
+    expect(
+      closes([
+        { time: 1, close: 10 },
+        { time: 2, close: 20 },
+      ]),
+    ).toEqual([10, 20]);
   });
 });

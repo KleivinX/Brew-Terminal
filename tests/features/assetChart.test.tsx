@@ -18,6 +18,7 @@ vi.mock('lightweight-charts', () => ({
     return createChart;
   },
   AreaSeries: 'AreaSeries',
+  LineSeries: 'LineSeries',
 }));
 
 const points: ChartPoint[] = Array.from({ length: 40 }, (_, i) => ({
@@ -100,5 +101,68 @@ describe('AssetChart', () => {
     const rows = table.querySelectorAll('tbody tr').length;
     expect(rows).toBeLessThan(points.length);
     expect(screen.getByText(/including the high and the low/i)).toBeInTheDocument();
+  });
+});
+
+describe('chart overlays', () => {
+  /**
+   * Overlays are arithmetic over closes already on screen. Switching one on must not cause a
+   * request — that is what keeps "the app makes no request you did not cause" true for a
+   * control that looks like it might fetch something.
+   */
+  it('offers only the overlays the series is long enough for', () => {
+    const short = Array.from({ length: 30 }, (_, i) => ({
+      time: 1_700_000_000 + i * 86_400,
+      close: 100 + i,
+    }));
+    renderWithProviders(<AssetChart points={short} currency="USD" label="TEST · 1 month" />);
+
+    // 20-point windows fit in 30 points; 50 and 200 do not.
+    expect(screen.getByRole('button', { name: 'EMA 20' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bollinger' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'SMA 50' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'SMA 200' })).not.toBeInTheDocument();
+  });
+
+  it('states the overlay value in text, because the canvas is hidden from assistive tech', async () => {
+    const user = userEvent.setup();
+    const points = Array.from({ length: 60 }, (_, i) => ({
+      time: 1_700_000_000 + i * 86_400,
+      close: 100,
+    }));
+    renderWithProviders(<AssetChart points={points} currency="USD" label="TEST · 3 months" />);
+
+    const toggle = screen.getByRole('button', { name: 'SMA 50' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    // A flat series at 100 has a 50-point average of exactly 100.
+    expect(screen.getByText(/SMA 50:/)).toHaveTextContent('$100.00');
+  });
+
+  it('switches an overlay back off', async () => {
+    const user = userEvent.setup();
+    const points = Array.from({ length: 60 }, (_, i) => ({
+      time: 1_700_000_000 + i * 86_400,
+      close: 100 + i,
+    }));
+    renderWithProviders(<AssetChart points={points} currency="USD" label="TEST · 3 months" />);
+
+    const toggle = screen.getByRole('button', { name: 'EMA 20' });
+    await user.click(toggle);
+    expect(screen.getByText(/EMA 20:/)).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(screen.queryByText(/EMA 20:/)).not.toBeInTheDocument();
+  });
+
+  it('offers no overlays at all for a series too short for any of them', () => {
+    const tiny = [
+      { time: 1_700_000_000, close: 10 },
+      { time: 1_700_086_400, close: 11 },
+    ];
+    renderWithProviders(<AssetChart points={tiny} currency="USD" label="TEST · 2 days" />);
+    expect(screen.queryByText('Overlays')).not.toBeInTheDocument();
   });
 });

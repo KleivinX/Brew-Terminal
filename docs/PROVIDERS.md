@@ -160,6 +160,56 @@ the locally stored canonical asset, which is why an asset must exist before it c
 
 ---
 
+## Alpha Vantage — equity charts
+
+Added in v0.2 to close a gap that made the Stocks tab worse than useless: Finnhub serves quotes
+on its free tier but its candle endpoint is paid, so a stock had a price and no history at all.
+
+### What it is used for, and what it is not
+
+**Charts only.** `capabilities()` advertises no quotes, no search and no profiles even though the
+API offers all three, and the registry never routes them here. The reason is the limit below: one
+quote spent is one chart the user cannot open later.
+
+### Limits
+
+|            |                                                               |
+| ---------- | ------------------------------------------------------------- |
+| Free tier  | **25 API requests per day**                                   |
+| Verified   | 2026-08-30, from alphavantage.co/premium                      |
+| Credential | Required. The user's own free key, stored in the OS keychain. |
+
+That is the tightest budget of any provider here by a wide margin, and it drives two decisions.
+Only daily-derived ranges are offered — intraday is a separate endpoint and would double the cost
+of the same screen. And `outputsize=compact` (100 trading days) is requested for everything but
+MAX, because pulling twenty years to draw one month costs the same request and wastes the
+response.
+
+The existing cache layer does the rest of the work: a daily close changes once a day, so a cached
+series stays valid far longer than the request budget takes to refill.
+
+### The endpoint
+
+`GET /query?function=TIME_SERIES_DAILY&symbol=…&outputsize=…&apikey=…`
+
+The response is an **object keyed by date, not an array**, so ordering is the adapter's job — a
+chart drawn from hash order is noise. Field names are prefixed (`"4. close"`).
+
+**Exhausting the budget returns HTTP 200 with a prose `Note`, not a 429.** The adapter detects
+that and reports it as rate-limited, because a user told "invalid response" would go looking for
+the wrong problem.
+
+### Rejected alternatives
+
+- **Stooq.** No key, free CSV, and it was the obvious first choice. It now sits behind a JavaScript proof-of-work bot check, so using it would mean defeating bot detection. Not shipped, and not something this project will do.
+- **Twelve Data.** A larger free allowance on paper, but its pricing page describes free access as trial symbols "for evaluation and testing purposes", which is not what shipping an app to users is. Not wired without clearer terms.
+- **Yahoo Finance.** Its RSS and quote endpoints both work. Still excluded under ADR-008 — see "Deliberately not used" below.
+
+### Not verified
+
+- **The full terms of service have not been read line by line.** What was verified is the published free-tier limit and that the endpoint returns real data for real symbols on a free key.
+- Whether the 25/day limit is per key, per IP, or both.
+
 ## News — RSS and Atom feeds
 
 News comes from feeds the user configures. There is no news API, no key, and no fixture

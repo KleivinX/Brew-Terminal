@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { formatAbsoluteTime, formatPercent, formatPrice } from '@/lib/format';
 import { summarizeChart, tableRows } from './chartSummary';
-import { bollinger, closes, ema, rsi, sma, type IndicatorSeries } from './indicators';
+import { bollinger, closes, ema, sma, type IndicatorSeries } from './indicators';
 import type { ChartPoint } from '@/types/domain';
 import styles from './AssetChart.module.css';
 
@@ -97,7 +97,13 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [showTable, setShowTable] = useState(false);
+  const [active, setActive] = useState<OverlayId[]>([]);
   const summaryId = useId();
+
+  const values = closes(points);
+  const available = OVERLAYS.filter((o) => values.length >= o.minimum);
+  // An overlay whose window no longer fits the selected range would silently draw nothing.
+  const drawn = active.filter((id) => available.some((o) => o.id === id));
 
   const summary = summarizeChart(points);
 
@@ -139,6 +145,47 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
     series.setData(
       points.map((point) => ({ time: point.time as UTCTimestamp, value: point.close })),
     );
+
+    /*
+     * Overlays share the price scale, so they are drawn as plain lines with no last-value label
+     * — four price tags stacked on the axis makes the actual price harder to read, which is the
+     * opposite of the point.
+     */
+    const overlayColor = token('--text-muted', '#79838f');
+    const bandColor = token('--border-strong', '#39414d');
+
+    const plot = (line: IndicatorSeries, color: string, width: 1 | 2, dashed = false): void => {
+      const data = points
+        .map((point, i) => ({ time: point.time as UTCTimestamp, value: line[i] }))
+        .filter(
+          (d): d is { time: UTCTimestamp; value: number } =>
+            d.value !== null && d.value !== undefined,
+        );
+      if (data.length === 0) return;
+
+      chart
+        .addSeries(LineSeries, {
+          color,
+          lineWidth: width,
+          lineStyle: dashed ? 2 : 0,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: false,
+        })
+        .setData(data);
+    };
+
+    for (const id of drawn) {
+      if (id === 'sma50') plot(sma(values, 50), overlayColor, 1);
+      if (id === 'sma200') plot(sma(values, 200), overlayColor, 2);
+      if (id === 'ema20') plot(ema(values, 20), token('--accent', '#4c8dff'), 1);
+      if (id === 'bollinger') {
+        const bands = bollinger(values, 20, 2);
+        plot(bands.upper, bandColor, 1, true);
+        plot(bands.lower, bandColor, 1, true);
+      }
+    }
+
     chart.timeScale().fitContent();
 
     chartRef.current = chart;
@@ -158,7 +205,7 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [points, height, summary?.changePct, theme]);
+  }, [points, height, summary?.changePct, theme, drawn, values]);
 
   if (!summary) {
     return (
@@ -174,6 +221,64 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
     <div className={styles.wrapper}>
       {/* The visual layer. Everything it conveys is also in the summary and table below. */}
       <div ref={containerRef} className={styles.canvas} aria-hidden="true" />
+
+      {available.length > 0 ? (
+        <div className={styles.overlays}>
+          <span className={styles.overlaysLabel} id={`${summaryId}-overlays`}>
+            Overlays
+          </span>
+          <div
+            role="group"
+            aria-labelledby={`${summaryId}-overlays`}
+            className={styles.overlayButtons}
+          >
+            {available.map((overlay) => {
+              const on = drawn.includes(overlay.id);
+              return (
+                <button
+                  key={overlay.id}
+                  type="button"
+                  className={[styles.overlayToggle, on ? styles.overlayOn : null]
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-pressed={on}
+                  title={overlay.describe}
+                  onClick={() =>
+                    setActive((current) =>
+                      current.includes(overlay.id)
+                        ? current.filter((id) => id !== overlay.id)
+                        : [...current, overlay.id],
+                    )
+                  }
+                >
+                  {overlay.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/*
+        The canvas is aria-hidden, so an overlay drawn on it would be invisible to a screen
+        reader. Its latest value is stated here instead — the same discipline the price summary
+        already follows.
+      */}
+      {drawn.length > 0 ? (
+        <p className={styles.overlaySummary}>
+          {drawn.map((id) => {
+            const overlay = OVERLAYS.find((o) => o.id === id);
+            if (!overlay) return null;
+            const latest = latestOf(id, values);
+            return (
+              <span key={id} className={styles.overlayReading}>
+                {overlay.label}:{' '}
+                {latest === null ? 'not enough history' : formatPrice(latest, currency)}
+              </span>
+            );
+          })}
+        </p>
+      ) : null}
 
       <p id={summaryId} className={styles.summary}>
         <span className="visually-hidden">Price chart for {label}. </span>
@@ -228,4 +333,22 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
       ) : null}
     </div>
   );
+}
+
+/** The most recent defined value of an overlay, for the text alternative. */
+function latestOf(id: OverlayId, values: number[]): number | null {
+  const series: IndicatorSeries =
+    id === 'sma50'
+      ? sma(values, 50)
+      : id === 'sma200'
+        ? sma(values, 200)
+        : id === 'ema20'
+          ? ema(values, 20)
+          : bollinger(values, 20, 2).middle;
+
+  for (let i = series.length - 1; i >= 0; i -= 1) {
+    const value = series[i];
+    if (value !== null && value !== undefined) return value;
+  }
+  return null;
 }
