@@ -35,15 +35,22 @@ performance number in the docs was measured on the target.
 
 **Since v0.1.0 shipped** (all on `main`, none released yet):
 
-| Change                                                                          | State                               |
-| ------------------------------------------------------------------------------- | ----------------------------------- |
-| RSS/Atom news adapter; fixture news provider **deleted**                        | Done                                |
-| `source_for` bug fix — fixture data was labelled `source: live`                 | Done                                |
-| Local model downloads: pinned catalogue, verified downloader, engine supervisor | Done, **never run end to end**      |
-| Manual update check (no polling)                                                | Done                                |
-| Bundled Inter + JetBrains Mono                                                  | Done                                |
-| Credits panel                                                                   | Done                                |
-| `.gitattributes`; CI emits failures as readable annotations                     | Done, **unverified — needs a push** |
+| Change                                                                          | State                                   |
+| ------------------------------------------------------------------------------- | --------------------------------------- |
+| RSS/Atom news adapter; fixture news provider **deleted**                        | Done                                    |
+| `source_for` bug fix — fixture data was labelled `source: live`                 | Done                                    |
+| Local model downloads: pinned catalogue, verified downloader, engine supervisor | Done, **never run end to end**          |
+| Manual update check (no polling)                                                | Done                                    |
+| Bundled Inter + JetBrains Mono                                                  | Done                                    |
+| Credits panel                                                                   | Done                                    |
+| `.gitattributes`; CI emits failures as readable annotations                     | Done, **unverified — needs a push**     |
+| Repositioned from "educational only" to a liability disclaimer                  | Done                                    |
+| Portfolio: transactions, FIFO/average cost basis, realised and unrealised P&L   | Done                                    |
+| Indicators: SMA, EMA, RSI, MACD, Bollinger as chart overlays                    | Done                                    |
+| Alpha Vantage adapter — equities finally have charts                            | Done, **no live call made**             |
+| Screener over the cached market list                                            | Done                                    |
+| Price alerts with a background poller                                           | Done, **poller never observed running** |
+| Contribution/DCA backtest                                                       | Done                                    |
 
 **620 tests passing** — 327 frontend (vitest), 293 Rust. Clippy clean at `-D warnings`, both
 formatters clean, entry bundle 94.5 KB gzipped against a 200 KB budget, `npm audit` clean.
@@ -273,6 +280,23 @@ semantic CSS tokens, never raw hex. Direction is never colour alone.
   has a real number. Closing this needs a `performance.mark` on the first paint of the Pulse
   table, reported through IPC so it reaches the Rust log and can be read from a packaged build.
   `docs/PERFORMANCE.md` §3 explains why launch-to-idle is not a substitute.
+
+### The one promise that changed
+
+"The app makes no request you did not cause" is no longer unconditional. Price alerts poll in the
+background, because an alert that only fires while you are looking at the screen is not an alert.
+The exception is bounded — off by default, no request without an armed alert, only the named
+assets fetched, one firing per crossing — and README, ARCHITECTURE.md and THREAT_MODEL.md all now
+say so rather than continuing to state something untrue.
+
+If that trade is ever revisited, the thing to preserve is not the polling but the honesty: an
+exception nobody wrote down would be worse than the requests themselves.
+
+### Not verified in the v0.2 features
+
+- **No live Alpha Vantage call has been made.** The adapter is unit tested against recorded response shapes; nobody has held a real key and drawn a real stock chart. The free tier is 25 requests a day, so the first person to try should expect that to bite quickly.
+- **The alert poller has never been observed running.** `check_once` is tested directly and thoroughly; the two-minute loop around it has not been watched over a real interval.
+- **The portfolio has not been reconciled against a broker statement.** The arithmetic is tested, including eight-decimal crypto quantities and the FIFO/average divergence, but "agrees with a real exchange's own P&L" is a different claim and is not made.
 
 ### Smaller gaps
 
