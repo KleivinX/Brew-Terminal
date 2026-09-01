@@ -30,6 +30,7 @@ pub fn get_all(conn: &Connection) -> AppResult<Preferences> {
             "displayCurrency" => assign_string(&mut prefs.display_currency, value),
             "reducedMotion" => assign_string(&mut prefs.reduced_motion, value),
             "aiMode" => assign_string(&mut prefs.ai_mode, value),
+            "costBasisMethod" => assign_string(&mut prefs.cost_basis_method, value),
             "refreshIntervalSecs" => {
                 if let Some(v) = value.as_i64() {
                     prefs.refresh_interval_secs = v;

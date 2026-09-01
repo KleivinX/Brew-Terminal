@@ -68,6 +68,16 @@ export type { UpdateCheck } from './generated/UpdateCheck';
 export type { Watchlist } from './generated/Watchlist';
 export type { WatchlistItem } from './generated/WatchlistItem';
 
+export type { CostBasisMethod } from './generated/CostBasisMethod';
+
+export type { PortfolioSummary } from './generated/PortfolioSummary';
+
+export type { Position } from './generated/Position';
+
+export type { Transaction } from './generated/Transaction';
+
+export type { TransactionKind } from './generated/TransactionKind';
+
 // --- Frontend narrowings ---
 
 /**

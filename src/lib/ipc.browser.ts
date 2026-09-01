@@ -16,6 +16,9 @@ import type {
   ChartRange,
   CommunityPost,
   LocalModelOverview,
+  PortfolioSummary,
+  Position,
+  Transaction,
   NewsArticle,
   NewsCategory,
   NewsFeed,
@@ -158,6 +161,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   communityEnabled: false,
   aiEnabled: false,
   aiMode: 'local',
+  costBasisMethod: 'fifo',
   navRailExpanded: false,
   onboardingCompleted: false,
 };
@@ -287,6 +291,100 @@ function defaultLocalModels(): LocalModelOverview {
  * model, start it, stop it — so the UI can be built and tested without a gigabyte of traffic.
  */
 let localModels: LocalModelOverview = defaultLocalModels();
+
+/**
+ * Portfolio state for the harness.
+ *
+ * The replay maths lives in Rust and is tested there; what this models is the shape the UI
+ * consumes, so positions and totals here are computed with a deliberately simple average-cost
+ * pass rather than a second copy of the FIFO engine.
+ */
+let portfolioTx: Transaction[] = [];
+let txSeq = 0;
+
+function harnessPortfolio(): PortfolioSummary {
+  const byAsset = new Map<string, Transaction[]>();
+  for (const t of portfolioTx) {
+    byAsset.set(t.assetId, [...(byAsset.get(t.assetId) ?? []), t]);
+  }
+
+  const positions: Position[] = [];
+  for (const [assetId, txs] of byAsset) {
+    let quantity = 0;
+    let cost = 0;
+    let realised = 0;
+    let fees = 0;
+    let oversold = false;
+
+    for (const t of [...txs].sort((a, b) => a.executedAt - b.executedAt)) {
+      fees += t.fee;
+      if (t.kind === 'buy') {
+        cost += t.quantity * t.unitPrice + t.fee;
+        quantity += t.quantity;
+      } else {
+        if (t.quantity > quantity + 1e-9) oversold = true;
+        const sellable = Math.min(t.quantity, Math.max(quantity, 0));
+        const average = quantity > 0 ? cost / quantity : 0;
+        realised += sellable * t.unitPrice - t.fee - average * sellable;
+        cost -= average * sellable;
+        quantity -= sellable;
+      }
+      if (Math.abs(quantity) < 1e-9) {
+        quantity = 0;
+        cost = 0;
+      }
+    }
+
+    const last = txs[txs.length - 1] as Transaction;
+    const price = allQuotes.find((q) => q.assetId === assetId)?.price ?? null;
+    const value = price !== null && quantity > 0 ? price * quantity : null;
+
+    positions.push({
+      assetId,
+      symbol: last.symbol,
+      currency: last.currency,
+      quantity,
+      costBasis: Math.round(cost * 100) / 100,
+      averageCost: quantity > 0 ? cost / quantity : null,
+      realisedPnl: Math.round(realised * 100) / 100,
+      feesPaid: Math.round(fees * 100) / 100,
+      marketValue: value === null ? null : Math.round(value * 100) / 100,
+      unrealisedPnl: value === null ? null : Math.round((value - cost) * 100) / 100,
+      unrealisedPct: value === null || cost <= 0 ? null : ((value - cost) / cost) * 100,
+      lastPrice: price,
+      oversold,
+      transactionCount: txs.length,
+    });
+  }
+
+  positions.sort((a, b) => (b.marketValue ?? b.costBasis) - (a.marketValue ?? a.costBasis));
+
+  const currency = state.preferences.displayCurrency;
+  const mine = positions.filter((p) => p.currency === currency);
+  const excluded = [
+    ...new Set(positions.filter((p) => p.currency !== currency).map((p) => p.currency)),
+  ];
+  const open = mine.filter((p) => p.quantity > 0);
+
+  const marketValue = open.reduce((n, p) => n + (p.marketValue ?? 0), 0);
+  const costBasis = open.reduce((n, p) => n + p.costBasis, 0);
+  const unpriced = open.filter((p) => p.marketValue === null).map((p) => p.symbol);
+
+  return {
+    positions,
+    marketValue: Math.round(marketValue * 100) / 100,
+    costBasis: Math.round(costBasis * 100) / 100,
+    unrealisedPnl: Math.round((marketValue - costBasis) * 100) / 100,
+    unrealisedPct:
+      costBasis > 0 && unpriced.length === 0 ? ((marketValue - costBasis) / costBasis) * 100 : null,
+    realisedPnl: Math.round(mine.reduce((n, p) => n + p.realisedPnl, 0) * 100) / 100,
+    feesPaid: Math.round(mine.reduce((n, p) => n + p.feesPaid, 0) * 100) / 100,
+    currency,
+    unpriced,
+    excludedCurrencies: excluded,
+    method: state.preferences.costBasisMethod === 'average' ? 'average' : 'fifo',
+  };
+}
 
 let newsFeeds: NewsFeed[] = defaultFeeds();
 let feedSeq = 0;
@@ -740,6 +838,48 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
         .filter((n) => filter.category === 'all' || n.category === filter.category)
         .slice(0, filter.limit ?? 20);
       return envelope<NewsArticle[]>(rows, []);
+    }
+
+    case 'get_portfolio':
+      return harnessPortfolio();
+
+    case 'list_transactions': {
+      const rows = args.assetId
+        ? portfolioTx.filter((t) => t.assetId === args.assetId)
+        : [...portfolioTx];
+      return rows.sort((a, b) => b.executedAt - a.executedAt).map((t) => ({ ...t }));
+    }
+
+    case 'add_transaction': {
+      const input = args.transaction as Transaction;
+      if (!(input.quantity > 0)) {
+        throw { kind: 'validation', message: 'Quantity must be a positive number.' };
+      }
+      if (!(input.unitPrice >= 0)) {
+        throw { kind: 'validation', message: 'Price cannot be negative.' };
+      }
+      txSeq += 1;
+      const created: Transaction = { ...input, id: `tx-${txSeq}`, createdAt: input.executedAt };
+      portfolioTx = [...portfolioTx, created];
+      return { ...created };
+    }
+
+    case 'update_transaction': {
+      const input = args.transaction as Transaction;
+      if (!portfolioTx.some((t) => t.id === input.id)) {
+        throw { kind: 'not_found', message: 'That transaction no longer exists.' };
+      }
+      portfolioTx = portfolioTx.map((t) => (t.id === input.id ? { ...input } : t));
+      return { ...input };
+    }
+
+    case 'delete_transaction': {
+      const before = portfolioTx.length;
+      portfolioTx = portfolioTx.filter((t) => t.id !== args.id);
+      if (portfolioTx.length === before) {
+        throw { kind: 'not_found', message: 'That transaction no longer exists.' };
+      }
+      return null;
     }
 
     case 'get_local_models':
@@ -1232,6 +1372,8 @@ export function __resetHarness(): void {
   newsFeeds = defaultFeeds();
   feedSeq = 0;
   localModels = defaultLocalModels();
+  portfolioTx = [];
+  txSeq = 0;
   harnessFiles.clear();
   try {
     localStorage.removeItem(STORAGE_KEY);

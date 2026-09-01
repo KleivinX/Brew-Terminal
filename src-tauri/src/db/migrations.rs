@@ -14,6 +14,7 @@ const MIGRATIONS: &[(i64, &str)] = &[
         include_str!("../../migrations/0002_ai_prompt_version.sql"),
     ),
     (3, include_str!("../../migrations/0003_news_feeds.sql")),
+    (4, include_str!("../../migrations/0004_portfolio.sql")),
 ];
 
 pub fn latest_version() -> i64 {
@@ -191,28 +192,92 @@ mod tests {
     /// The schema must not grow a place to record holdings — that is an explicit non-goal,
     /// and this test is what stops it arriving by accident.
     #[test]
-    fn schema_has_no_portfolio_or_secret_columns() {
+    fn no_credential_material_is_ever_stored_in_the_database() {
+        // THREAT_MODEL.md §4: API keys live in the OS keychain and nowhere else. Asserted over
+        // column names rather than the raw SQL, because the raw SQL contains the word
+        // "credential" in `provider_config.has_credential` — which is a boolean recording
+        // *whether* a key exists, and is exactly the design this test protects rather than a
+        // violation of it. Matching on prose would have failed on a comment.
         let mut conn = memory_db();
         run(&mut conn, None).unwrap();
 
-        let sql: String = conn
-            .query_row(
-                "SELECT group_concat(sql, ' ') FROM sqlite_master WHERE sql IS NOT NULL",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap();
-        let sql = sql.to_lowercase();
+        let tables: Vec<String> = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+            .unwrap()
+            .query_map([], |row| row.get::<_, String>(0))
+            .unwrap()
+            .map(|t| t.unwrap())
+            .collect();
 
-        for banned in [
-            "cost_basis",
-            "quantity",
-            "holdings",
-            "api_key",
-            "secret",
-            "password",
-        ] {
-            assert!(!sql.contains(banned), "schema must not contain `{banned}`");
+        // Flags that record presence are fine; anything that could hold the value is not.
+        const PRESENCE_FLAGS: &[&str] = &["has_credential"];
+
+        for table in tables {
+            let columns: Vec<String> = conn
+                .prepare(&format!("SELECT name FROM pragma_table_info('{table}')"))
+                .unwrap()
+                .query_map([], |row| row.get::<_, String>(0))
+                .unwrap()
+                .map(|c| c.unwrap().to_lowercase())
+                .collect();
+
+            for column in columns {
+                if PRESENCE_FLAGS.contains(&column.as_str()) {
+                    continue;
+                }
+                for banned in [
+                    "api_key",
+                    "apikey",
+                    "secret",
+                    "password",
+                    "token",
+                    "credential",
+                ] {
+                    assert!(
+                        !column.contains(banned),
+                        "{table}.{column} looks like it could hold credential material"
+                    );
+                }
+            }
         }
+    }
+
+    /// The other half of that test asserted the schema had no `quantity` or `holdings`, because
+    /// portfolio tracking was an explicit non-goal in v0.1. That non-goal was reversed
+    /// deliberately in v0.2 — `portfolio_transactions` exists and is the point of the feature —
+    /// so the assertion is replaced rather than deleted, to record that the change was a
+    /// decision and not an oversight.
+    #[test]
+    fn the_portfolio_table_holds_trades_and_nothing_personal() {
+        let mut conn = memory_db();
+        run(&mut conn, None).unwrap();
+
+        let columns: Vec<String> = conn
+            .prepare("SELECT name FROM pragma_table_info('portfolio_transactions')")
+            .unwrap()
+            .query_map([], |row| row.get::<_, String>(0))
+            .unwrap()
+            .map(|c| c.unwrap())
+            .collect();
+
+        // Exactly the trade, and nothing identifying its owner: no account number, no broker
+        // login, no exchange key.
+        let mut expected = vec![
+            "id",
+            "asset_id",
+            "symbol",
+            "kind",
+            "quantity",
+            "unit_price",
+            "fee",
+            "currency",
+            "executed_at",
+            "note",
+            "created_at",
+        ];
+        let mut actual: Vec<&str> = columns.iter().map(String::as_str).collect();
+        expected.sort_unstable();
+        actual.sort_unstable();
+        assert_eq!(actual, expected);
     }
 }

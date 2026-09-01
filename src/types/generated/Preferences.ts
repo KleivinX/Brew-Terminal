@@ -12,4 +12,9 @@ reducedMotion: "system" | "always" | "never", communityEnabled: boolean, aiEnabl
 /**
  * Which configured AI provider the Model Desk uses. Both can be set up; one is active.
  */
-aiMode: "local" | "cloud", navRailExpanded: boolean, onboardingCompleted: boolean, };
+aiMode: "local" | "cloud", 
+/**
+ * How sales are matched against purchases. Jurisdictional, so the user chooses — see
+ * `models::portfolio::CostBasisMethod`.
+ */
+costBasisMethod: "fifo" | "average", navRailExpanded: boolean, onboardingCompleted: boolean, };

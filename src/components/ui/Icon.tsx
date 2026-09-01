@@ -8,6 +8,7 @@ import type { SVGProps } from 'react';
 
 export type IconName =
   | 'pulse'
+  | 'portfolio'
   | 'research'
   | 'learn'
   | 'desk'
@@ -30,6 +31,7 @@ export type IconName =
 
 const PATHS: Record<IconName, string> = {
   pulse: 'M2 12h4l3-8 4 16 3-8h4',
+  portfolio: 'M3 19V9l5-4 5 4 5-3v13M3 19h18M8 19v-5h4v5',
   research: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5 21 21',
   learn: 'M3 6.5 12 3l9 3.5-9 3.5-9-3.5zM6 10v5.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V10',
   desk: 'M4 5h16v11H4zM9 20h6M12 16v4M8 9h5M8 12h8',

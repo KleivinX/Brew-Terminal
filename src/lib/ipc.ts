@@ -28,9 +28,11 @@ import type {
   NewsFilter,
   Note,
   ProgressStatus,
+  PortfolioSummary,
   Preferences,
   ProviderInfo,
   Quote,
+  Transaction,
   UpdateCheck,
   ExportResult,
   ImportMode,
@@ -146,6 +148,14 @@ export interface IpcContract {
    * launch or on a timer, and it downloads nothing.
    */
   check_for_updates: { args: undefined; result: UpdateCheck };
+
+  // --- portfolio ---
+  /** Positions derived from the transaction history, priced where a provider can price them. */
+  get_portfolio: { args: undefined; result: PortfolioSummary };
+  list_transactions: { args: { assetId: string | null }; result: Transaction[] };
+  add_transaction: { args: { transaction: Transaction }; result: Transaction };
+  update_transaction: { args: { transaction: Transaction }; result: Transaction };
+  delete_transaction: { args: { id: string }; result: void };
 
   // --- local models ---
   get_local_models: { args: undefined; result: LocalModelOverview };

@@ -14,6 +14,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/pulse', label: 'Pulse', icon: 'pulse', hint: 'Market overview' },
+  { to: '/portfolio', label: 'Portfolio', icon: 'portfolio', hint: 'What you hold' },
   { to: '/research', label: 'Research Lab', icon: 'research', hint: 'Asset deep dive' },
   { to: '/learn', label: 'Learn', icon: 'learn', hint: 'Glossary and paths' },
   { to: '/desk', label: 'Model Desk', icon: 'desk', hint: 'Optional AI' },

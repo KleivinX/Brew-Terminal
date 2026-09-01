@@ -73,6 +73,12 @@ pub fn run() {
             commands::local_models::delete_local_model,
             commands::local_models::start_local_model,
             commands::local_models::stop_local_model,
+            // portfolio
+            commands::portfolio::get_portfolio,
+            commands::portfolio::list_transactions,
+            commands::portfolio::add_transaction,
+            commands::portfolio::update_transaction,
+            commands::portfolio::delete_transaction,
             // community
             commands::community::get_community_posts,
             // learn

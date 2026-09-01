@@ -118,6 +118,39 @@ export function MarketsPanel() {
         </div>
       </Panel>
 
+      <Panel title="Portfolio">
+        <div className={styles.body}>
+          <p className={styles.intro}>
+            How a sale is matched against the purchases that came before it. The two methods give
+            different realised-gain figures for the same trades, and which one is correct depends on
+            where you file — the app does not know that, so it does not choose for you.
+          </p>
+
+          <label className={styles.label} htmlFor="cost-basis">
+            Cost basis method
+          </label>
+          <select
+            id="cost-basis"
+            className={styles.select}
+            value={preferences?.costBasisMethod ?? 'fifo'}
+            onChange={(event) =>
+              setPreference.mutate({
+                key: 'costBasisMethod',
+                // Narrowed rather than cast: the select's options are the only two values, and
+                // if that ever stops being true this falls back to the documented default.
+                value: event.target.value === 'average' ? 'average' : 'fifo',
+              })
+            }
+          >
+            <option value="fifo">FIFO — oldest units sold first</option>
+            <option value="average">Average cost — every unit cost the running average</option>
+          </select>
+          <p className={styles.hint}>
+            Changing this recomputes every position. It does not alter your recorded trades.
+          </p>
+        </div>
+      </Panel>
+
       <Panel title="Currency">
         <div className={styles.body}>
           <p className={styles.intro}>

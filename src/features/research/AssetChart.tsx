@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import {
   createChart,
   AreaSeries,
+  LineSeries,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { formatAbsoluteTime, formatPercent, formatPrice } from '@/lib/format';
 import { summarizeChart, tableRows } from './chartSummary';
+import { bollinger, closes, ema, rsi, sma, type IndicatorSeries } from './indicators';
 import type { ChartPoint } from '@/types/domain';
 import styles from './AssetChart.module.css';
 
@@ -20,6 +22,52 @@ interface AssetChartProps {
   label: string;
   height?: number;
 }
+
+/**
+ * Overlays the reader can switch on. Each is arithmetic over the closes already on screen —
+ * turning one on makes no request and reveals nothing new about the asset, only a different view
+ * of the same numbers.
+ *
+ * There is deliberately no crossover marker, no shaded "overbought" zone and no alert. Those
+ * would be the app drawing a conclusion; the line is where its job ends.
+ */
+type OverlayId = 'sma50' | 'sma200' | 'ema20' | 'bollinger';
+
+interface Overlay {
+  id: OverlayId;
+  label: string;
+  /** What it is, in a sentence, for the reader who has not met it before. */
+  describe: string;
+  /** Minimum closes needed before it can be drawn at all. */
+  minimum: number;
+}
+
+const OVERLAYS: Overlay[] = [
+  {
+    id: 'sma50',
+    label: 'SMA 50',
+    describe: 'The average close of the last 50 points.',
+    minimum: 50,
+  },
+  {
+    id: 'sma200',
+    label: 'SMA 200',
+    describe: 'The average close of the last 200 points.',
+    minimum: 200,
+  },
+  {
+    id: 'ema20',
+    label: 'EMA 20',
+    describe: 'A 20-point average that weights recent closes more heavily.',
+    minimum: 20,
+  },
+  {
+    id: 'bollinger',
+    label: 'Bollinger',
+    describe: 'A 20-point average with a band two standard deviations either side.',
+    minimum: 20,
+  },
+];
 
 /** Reads a CSS custom property so the chart follows the active theme. */
 function token(name: string, fallback: string): string {

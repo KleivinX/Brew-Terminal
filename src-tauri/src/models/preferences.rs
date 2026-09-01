@@ -24,6 +24,10 @@ pub struct Preferences {
     /// Which configured AI provider the Model Desk uses. Both can be set up; one is active.
     #[cfg_attr(test, ts(type = "\"local\" | \"cloud\""))]
     pub ai_mode: String,
+    /// How sales are matched against purchases. Jurisdictional, so the user chooses — see
+    /// `models::portfolio::CostBasisMethod`.
+    #[cfg_attr(test, ts(type = "\"fifo\" | \"average\""))]
+    pub cost_basis_method: String,
     pub nav_rail_expanded: bool,
     pub onboarding_completed: bool,
 }
@@ -43,6 +47,8 @@ impl Default for Preferences {
             ai_enabled: false,
             // Local is the default because it is the mode that sends nothing anywhere.
             ai_mode: "local".into(),
+            // FIFO is the more commonly mandated of the two.
+            cost_basis_method: "fifo".into(),
             nav_rail_expanded: false,
             onboarding_completed: false,
         }
@@ -61,6 +67,7 @@ pub const KNOWN_PREFERENCE_KEYS: &[&str] = &[
     "communityEnabled",
     "aiEnabled",
     "aiMode",
+    "costBasisMethod",
     "navRailExpanded",
     "onboardingCompleted",
 ];
@@ -68,6 +75,7 @@ pub const KNOWN_PREFERENCE_KEYS: &[&str] = &[
 pub const VALID_THEMES: &[&str] = &["dark", "light", "soft"];
 pub const VALID_MOTION: &[&str] = &["system", "always", "never"];
 pub const VALID_AI_MODES: &[&str] = &["local", "cloud"];
+pub const VALID_COST_BASIS: &[&str] = &["fifo", "average"];
 
 /// Validates a single preference write. Values arrive JSON-encoded from the frontend.
 pub fn validate_preference(key: &str, value: &serde_json::Value) -> Result<(), String> {
@@ -83,6 +91,10 @@ pub fn validate_preference(key: &str, value: &serde_json::Value) -> Result<(), S
         "aiMode" => match value.as_str() {
             Some(v) if VALID_AI_MODES.contains(&v) => Ok(()),
             _ => Err("aiMode must be local or cloud".into()),
+        },
+        "costBasisMethod" => match value.as_str() {
+            Some(v) if VALID_COST_BASIS.contains(&v) => Ok(()),
+            _ => Err("costBasisMethod must be fifo or average".into()),
         },
         "reducedMotion" => match value.as_str() {
             Some(v) if VALID_MOTION.contains(&v) => Ok(()),

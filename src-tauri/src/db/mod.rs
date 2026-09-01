@@ -5,6 +5,7 @@ pub mod repo_assets;
 pub mod repo_cache;
 pub mod repo_news_feeds;
 pub mod repo_notes;
+pub mod repo_portfolio;
 pub mod repo_preferences;
 pub mod repo_profile;
 pub mod repo_progress;

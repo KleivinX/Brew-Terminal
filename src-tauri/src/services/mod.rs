@@ -15,6 +15,7 @@ pub mod local_models;
 pub mod market;
 pub mod news_feeds;
 pub mod notes;
+pub mod portfolio;
 pub mod profile;
 pub mod settings;
 pub mod updates;
