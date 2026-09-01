@@ -32,6 +32,9 @@ import styles from './ResearchRoute.module.css';
  * this route uses it, so it loads on demand rather than in the Research Lab chunk. See ADR-006.
  */
 const AssetChart = lazy(() => import('./AssetChart').then((m) => ({ default: m.AssetChart })));
+const BacktestPanel = lazy(() =>
+  import('./BacktestPanel').then((m) => ({ default: m.BacktestPanel })),
+);
 
 export function ResearchRoute() {
   const { assetId } = useParams<{ assetId?: string }>();
@@ -206,6 +209,17 @@ export function ResearchRoute() {
             )}
           </div>
         </Panel>
+
+        {/* Only offered where there is history to work through. */}
+        {(chartQuery.data?.data.length ?? 0) > 1 ? (
+          <Suspense fallback={<SkeletonRows rows={3} columns={3} label="Loading" />}>
+            <BacktestPanel
+              points={chartQuery.data?.data ?? []}
+              currency={quote?.currency ?? 'USD'}
+              symbol={asset.symbol}
+            />
+          </Suspense>
+        ) : null}
 
         <ContextPanel assetType={asset.assetType} symbol={asset.symbol} />
 

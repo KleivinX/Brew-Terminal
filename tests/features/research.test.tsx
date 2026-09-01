@@ -247,3 +247,47 @@ describe('Safety copy', () => {
     expect(violations, describeViolations(violations)).toHaveLength(0);
   });
 });
+
+describe('backtest panel', () => {
+  /**
+   * The framing is the feature. This is arithmetic on history, and the panel has to say so —
+   * the shape of the output is the shape of a forecast, and it would be easy to read as one.
+   */
+  it('says it is arithmetic on the past, not a projection', async () => {
+    renderAsset();
+
+    const panel = await screen.findByRole(
+      'region',
+      { name: /If you had been buying/i },
+      { timeout: 5000 },
+    );
+    expect(within(panel).getByText(/not a projection/i)).toBeInTheDocument();
+    expect(within(panel).getByText(/not a claim about what happens next/i)).toBeInTheDocument();
+  });
+
+  it('shows what a regular contribution would have produced', async () => {
+    renderAsset();
+
+    const panel = await screen.findByRole(
+      'region',
+      { name: /If you had been buying/i },
+      { timeout: 5000 },
+    );
+    expect(within(panel).getByText('Put in')).toBeInTheDocument();
+    expect(within(panel).getByText('Worth now')).toBeInTheDocument();
+    expect(within(panel).getByText('Average paid')).toBeInTheDocument();
+    // The comparison that makes averaging legible rather than merely favourable.
+    expect(within(panel).getByText(/All at once instead/i)).toBeInTheDocument();
+  });
+
+  it('states the period the figures cover', async () => {
+    renderAsset();
+
+    const panel = await screen.findByRole(
+      'region',
+      { name: /If you had been buying/i },
+      { timeout: 5000 },
+    );
+    expect(within(panel).getByText(/contributions between/i)).toBeInTheDocument();
+  });
+});

@@ -28,6 +28,10 @@ pub struct Preferences {
     /// `models::portfolio::CostBasisMethod`.
     #[cfg_attr(test, ts(type = "\"fifo\" | \"average\""))]
     pub cost_basis_method: String,
+    /// The one setting that lets the app make a request the user did not directly cause. Off by
+    /// default, and the settings copy says exactly what turning it on changes. See
+    /// `services::alerts`.
+    pub alerts_enabled: bool,
     pub nav_rail_expanded: bool,
     pub onboarding_completed: bool,
 }
@@ -49,6 +53,7 @@ impl Default for Preferences {
             ai_mode: "local".into(),
             // FIFO is the more commonly mandated of the two.
             cost_basis_method: "fifo".into(),
+            alerts_enabled: false,
             nav_rail_expanded: false,
             onboarding_completed: false,
         }
@@ -68,6 +73,7 @@ pub const KNOWN_PREFERENCE_KEYS: &[&str] = &[
     "aiEnabled",
     "aiMode",
     "costBasisMethod",
+    "alertsEnabled",
     "navRailExpanded",
     "onboardingCompleted",
 ];
@@ -95,6 +101,10 @@ pub fn validate_preference(key: &str, value: &serde_json::Value) -> Result<(), S
         "costBasisMethod" => match value.as_str() {
             Some(v) if VALID_COST_BASIS.contains(&v) => Ok(()),
             _ => Err("costBasisMethod must be fifo or average".into()),
+        },
+        "alertsEnabled" => match value.as_bool() {
+            Some(_) => Ok(()),
+            None => Err("alertsEnabled must be true or false".into()),
         },
         "reducedMotion" => match value.as_str() {
             Some(v) if VALID_MOTION.contains(&v) => Ok(()),

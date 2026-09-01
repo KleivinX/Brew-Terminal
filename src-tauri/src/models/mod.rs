@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod alert;
 pub mod asset;
 pub mod community;
 pub mod envelope;
@@ -14,6 +15,7 @@ pub mod screener;
 pub mod watchlist;
 
 pub use ai::*;
+pub use alert::*;
 pub use asset::*;
 pub use community::*;
 pub use envelope::*;

@@ -167,7 +167,8 @@ when the request is sent. A resolver answering differently between the two would
 - Lockfiles committed; `npm ci` and `cargo build --locked` in CI.
 - `cargo audit` / `cargo deny` and `npm audit` run in CI; advisories block merge at high severity.
 - No `postinstall` scripts from direct dependencies without review; Dependabot updates are reviewed, not auto-merged.
-- No analytics, session-replay, or font/CDN loads at runtime — the app makes no requests the user did not cause.
+- No analytics, session-replay, or font/CDN loads at runtime. Typefaces are bundled and served from the app's own origin.
+- **One background request path exists, and only one: the alert poller.** It is off by default, makes no request at all unless the user has both switched it on and armed an alert, and fetches only the assets those alerts name. Everything else in the app still traces to a direct user action. The exception is bounded in `services::alerts` and the setting that enables it says what it does — an undocumented exception would be the more serious problem than the requests.
 
 ---
 

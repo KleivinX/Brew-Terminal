@@ -5,6 +5,7 @@
 //! exercise the real path — provider, cache, database, envelope — without a Tauri runtime.
 
 pub mod ai;
+pub mod alerts;
 pub mod cache;
 pub mod community;
 pub mod learn;

@@ -27,7 +27,7 @@ market data easier to read and financial language easier to learn, without prete
 trading platform.
 
 - **Local-first and account-free.** No sign-up, no server, no cloud sync. Your watchlists, notes and preferences live in a SQLite file on your computer.
-- **No telemetry.** The app makes no request you did not cause.
+- **No telemetry.** The app makes no request you did not cause — with one exception, stated plainly: price alerts poll in the background, and they are off until you turn them on.
 - **Honest about its data.** Every number shows which provider it came from and how old it is.
 - **Optional AI, off by default.** Bring a local model or your own API key, or use none at all.
 - **You see what leaves.** Before anything is sent to a model you get an itemised list of exactly what goes with it, and every send is recorded in a local log you can read and clear.

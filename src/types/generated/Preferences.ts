@@ -17,4 +17,10 @@ aiMode: "local" | "cloud",
  * How sales are matched against purchases. Jurisdictional, so the user chooses — see
  * `models::portfolio::CostBasisMethod`.
  */
-costBasisMethod: "fifo" | "average", navRailExpanded: boolean, onboardingCompleted: boolean, };
+costBasisMethod: "fifo" | "average", 
+/**
+ * The one setting that lets the app make a request the user did not directly cause. Off by
+ * default, and the settings copy says exactly what turning it on changes. See
+ * `services::alerts`.
+ */
+alertsEnabled: boolean, navRailExpanded: boolean, onboardingCompleted: boolean, };

@@ -14,6 +14,7 @@ import type {
   AssetSearchResult,
   ChartPoint,
   ChartRange,
+  Alert,
   CommunityPost,
   LocalModelOverview,
   PortfolioSummary,
@@ -29,6 +30,7 @@ import type {
   ProviderInfo,
   Quote,
   ScreenerFilter,
+  TriggeredAlert,
   Watchlist,
   WatchlistItem,
 } from '@/types/domain';
@@ -163,6 +165,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   aiEnabled: false,
   aiMode: 'local',
   costBasisMethod: 'fifo',
+  alertsEnabled: false,
   navRailExpanded: false,
   onboardingCompleted: false,
 };
@@ -300,6 +303,9 @@ let localModels: LocalModelOverview = defaultLocalModels();
  * consumes, so positions and totals here are computed with a deliberately simple average-cost
  * pass rather than a second copy of the FIFO engine.
  */
+let harnessAlerts: Alert[] = [];
+let alertSeq = 0;
+
 let portfolioTx: Transaction[] = [];
 let txSeq = 0;
 
@@ -839,6 +845,69 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
         .filter((n) => filter.category === 'all' || n.category === filter.category)
         .slice(0, filter.limit ?? 20);
       return envelope<NewsArticle[]>(rows, []);
+    }
+
+    case 'list_alerts':
+      return harnessAlerts.map((a) => ({ ...a }));
+
+    case 'create_alert': {
+      const input = args.alert as Alert;
+      if (!Number.isFinite(input.threshold)) {
+        throw { kind: 'validation', message: 'That threshold is not a number.' };
+      }
+      if (!input.kind.startsWith('change') && input.threshold < 0) {
+        throw { kind: 'validation', message: 'A price threshold cannot be negative.' };
+      }
+      alertSeq += 1;
+      const created: Alert = { ...input, id: `alert-${alertSeq}`, createdAt: 1_760_000_000 };
+      harnessAlerts = [...harnessAlerts, created];
+      return { ...created };
+    }
+
+    case 'delete_alert':
+      harnessAlerts = harnessAlerts.filter((a) => a.id !== args.id);
+      return null;
+
+    case 'set_alert_enabled':
+      harnessAlerts = harnessAlerts.map((a) =>
+        a.id === args.id ? { ...a, enabled: Boolean(args.enabled) } : a,
+      );
+      return null;
+
+    case 'rearm_alert':
+      harnessAlerts = harnessAlerts.map((a) =>
+        a.id === args.id ? { ...a, triggeredAt: null, triggeredValue: null } : a,
+      );
+      return null;
+
+    case 'check_alerts': {
+      // Mirrors the Rust rule: nothing happens while the preference is off, and an alert that
+      // has already fired stays quiet.
+      if (!state.preferences.alertsEnabled) return [];
+
+      const fired: TriggeredAlert[] = [];
+      harnessAlerts = harnessAlerts.map((alert) => {
+        if (!alert.enabled || alert.triggeredAt !== null) return alert;
+        const quote = allQuotes.find((q) => q.assetId === alert.assetId);
+        if (!quote) return alert;
+
+        const value =
+          alert.kind === 'change-above' || alert.kind === 'change-below'
+            ? quote.changePct24h
+            : quote.price;
+        if (value === null || !Number.isFinite(value)) return alert;
+
+        const tripped =
+          alert.kind === 'price-above' || alert.kind === 'change-above'
+            ? value >= alert.threshold
+            : value <= alert.threshold;
+        if (!tripped) return alert;
+
+        const triggered = { ...alert, triggeredAt: 1_760_000_500, triggeredValue: value };
+        fired.push({ alert: triggered, message: `${alert.symbol} reached ${value}` });
+        return triggered;
+      });
+      return fired;
     }
 
     case 'run_screen': {
@@ -1440,6 +1509,8 @@ export function __resetHarness(): void {
   localModels = defaultLocalModels();
   portfolioTx = [];
   txSeq = 0;
+  harnessAlerts = [];
+  alertSeq = 0;
   harnessFiles.clear();
   try {
     localStorage.removeItem(STORAGE_KEY);

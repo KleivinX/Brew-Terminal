@@ -47,6 +47,14 @@ pub fn run() {
             });
 
             app.manage(state);
+
+            /*
+             * The alert poller. It is started unconditionally but does nothing until the user
+             * switches alerts on *and* has an armed alert — it re-reads the preference on every
+             * tick, so this costs a sleeping task and no requests. See `services::alerts` for
+             * why this is the one place the app makes a request nobody asked for.
+             */
+            services::alerts::spawn_poller(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -73,6 +81,13 @@ pub fn run() {
             commands::local_models::delete_local_model,
             commands::local_models::start_local_model,
             commands::local_models::stop_local_model,
+            // alerts
+            commands::alerts::list_alerts,
+            commands::alerts::create_alert,
+            commands::alerts::delete_alert,
+            commands::alerts::set_alert_enabled,
+            commands::alerts::rearm_alert,
+            commands::alerts::check_alerts,
             // screener
             commands::screener::run_screen,
             // portfolio

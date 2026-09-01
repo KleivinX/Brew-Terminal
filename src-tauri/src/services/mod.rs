@@ -8,6 +8,7 @@
 //! command → service → governor → adapter → validator → normalizer → domain model.
 
 pub mod ai;
+pub mod alerts;
 pub mod cache;
 pub mod community;
 pub mod learn;

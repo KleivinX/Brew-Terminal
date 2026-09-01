@@ -6,6 +6,7 @@ import { ProvidersPanel } from './ProvidersPanel';
 import { NewsFeedsPanel } from './NewsFeedsPanel';
 import { AiPanel } from './AiPanel';
 import { LocalModelsPanel } from './LocalModelsPanel';
+import { AlertsPanel } from './AlertsPanel';
 import { ProfilePanel } from './ProfilePanel';
 import { PrivacyPanel } from './PrivacyPanel';
 import { AboutPanel } from './AboutPanel';
@@ -16,6 +17,7 @@ const SECTIONS = [
   { to: '/settings/markets', label: 'Markets' },
   { to: '/settings/providers', label: 'Data providers' },
   { to: '/settings/news', label: 'News feeds' },
+  { to: '/settings/alerts', label: 'Alerts' },
   { to: '/settings/ai', label: 'AI providers' },
   { to: '/settings/models', label: 'Local models' },
   { to: '/settings/privacy', label: 'Privacy and data' },
@@ -53,6 +55,7 @@ export function SettingsRoute() {
             <Route path="markets" element={<MarketsPanel />} />
             <Route path="providers" element={<ProvidersPanel />} />
             <Route path="news" element={<NewsFeedsPanel />} />
+            <Route path="alerts" element={<AlertsPanel />} />
             <Route path="ai" element={<AiPanel />} />
             <Route path="models" element={<LocalModelsPanel />} />
             <Route path="privacy" element={<PrivacyPanel />} />

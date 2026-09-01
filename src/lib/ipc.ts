@@ -9,6 +9,7 @@ import type {
   AiSendPreview,
   AiSendResult,
   AiStatus,
+  Alert,
   AppInfo,
   Asset,
   AssetSearchResult,
@@ -32,6 +33,7 @@ import type {
   Preferences,
   ProviderInfo,
   Quote,
+  TriggeredAlert,
   ScreenerFilter,
   Transaction,
   UpdateCheck,
@@ -149,6 +151,16 @@ export interface IpcContract {
    * launch or on a timer, and it downloads nothing.
    */
   check_for_updates: { args: undefined; result: UpdateCheck };
+
+  // --- alerts ---
+  list_alerts: { args: undefined; result: Alert[] };
+  create_alert: { args: { alert: Alert }; result: Alert };
+  delete_alert: { args: { id: string }; result: void };
+  set_alert_enabled: { args: { id: string; enabled: boolean }; result: void };
+  /** Puts a fired alert back on watch. */
+  rearm_alert: { args: { id: string }; result: void };
+  /** Runs a check now rather than waiting for the background tick. */
+  check_alerts: { args: undefined; result: TriggeredAlert[] };
 
   // --- screener ---
   /** Filters the cached market list. Adjusting a filter costs no provider request. */

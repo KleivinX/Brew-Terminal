@@ -84,6 +84,12 @@ export type { ScreenerSort } from './generated/ScreenerSort';
 
 export type { Range } from './generated/Range';
 
+export type { Alert } from './generated/Alert';
+
+export type { AlertKind } from './generated/AlertKind';
+
+export type { TriggeredAlert } from './generated/TriggeredAlert';
+
 // --- Frontend narrowings ---
 
 /**
