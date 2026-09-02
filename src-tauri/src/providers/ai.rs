@@ -485,7 +485,7 @@ fn build_client(reach: EndpointReach) -> AppResult<reqwest::Client> {
         .timeout(REQUEST_TIMEOUT)
         .connect_timeout(CONNECT_TIMEOUT)
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent(concat!("BrewTerminal/", env!("CARGO_PKG_VERSION")));
+        .user_agent(crate::providers::http::USER_AGENT);
 
     // `https_only` stays on for anything that leaves the machine; it is relaxed only where
     // `resolve_reach` has already proven the traffic cannot.

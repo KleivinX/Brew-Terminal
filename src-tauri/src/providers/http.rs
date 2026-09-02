@@ -22,12 +22,32 @@ const MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 
 const MAX_REDIRECTS: usize = 3;
 
+/// How the app identifies itself to every provider.
+///
+/// The contact URL is not decoration. FRED sits behind a WAF that **drops the connection** for
+/// a bare `Name/Version` agent — no status code, no body, just a hang until the timeout, which
+/// surfaces as "could not reach the provider" and sends you looking at the network rather than
+/// at the header. Adding the `(+url)` comment, the long-standing convention for identifying an
+/// automated client, is what makes the request acceptable. Verified against FRED directly:
+/// `BrewTerminal/0.2.0` is refused three times out of three, this string succeeds three out of
+/// three.
+///
+/// Note what this is *not*: a browser string. A Chrome user agent is also refused by that same
+/// WAF, and pretending to be a browser to get past a bot policy would be the sort of thing
+/// ADR-008 rules out on purpose. This says exactly what the client is and where to complain
+/// about it.
+pub(crate) const USER_AGENT: &str = concat!(
+    "BrewTerminal/",
+    env!("CARGO_PKG_VERSION"),
+    " (+https://github.com/KleivinX/Brew-Terminal)"
+);
+
 pub fn build_client() -> AppResult<reqwest::Client> {
     reqwest::Client::builder()
         .timeout(REQUEST_TIMEOUT)
         .connect_timeout(CONNECT_TIMEOUT)
         .redirect(reqwest::redirect::Policy::limited(MAX_REDIRECTS))
-        .user_agent(concat!("BrewTerminal/", env!("CARGO_PKG_VERSION")))
+        .user_agent(USER_AGENT)
         .https_only(true)
         .build()
         .map_err(|error| {
@@ -59,13 +79,46 @@ pub fn build_download_client() -> AppResult<reqwest::Client> {
         .connect_timeout(CONNECT_TIMEOUT)
         .read_timeout(DOWNLOAD_STALL_TIMEOUT)
         .redirect(reqwest::redirect::Policy::limited(MAX_REDIRECTS))
-        .user_agent(concat!("BrewTerminal/", env!("CARGO_PKG_VERSION")))
+        .user_agent(USER_AGENT)
         .https_only(true)
         .build()
         .map_err(|error| {
             tracing::error!(?error, "could not build the download client");
             AppError::Storage("The download client could not be created.".into())
         })
+}
+
+#[cfg(test)]
+mod user_agent_tests {
+    use super::USER_AGENT;
+
+    #[test]
+    fn the_agent_names_the_app_and_where_to_reach_it() {
+        // Both halves matter: the name is how a provider identifies the traffic, and the
+        // contact URL is what FRED's WAF requires before it will answer at all.
+        assert!(USER_AGENT.starts_with("BrewTerminal/"));
+        assert!(
+            USER_AGENT.contains("(+https://"),
+            "dropping the contact URL silently breaks every FRED request: {USER_AGENT}"
+        );
+    }
+
+    #[test]
+    fn the_agent_does_not_impersonate_a_browser() {
+        // Getting past a bot policy by pretending to be Chrome is the kind of thing ADR-008
+        // exists to prevent, and it does not even work on the provider that prompted this.
+        for token in ["Mozilla", "AppleWebKit", "Chrome", "Safari", "Gecko"] {
+            assert!(
+                !USER_AGENT.contains(token),
+                "the user agent must identify the app, not imitate a browser"
+            );
+        }
+    }
+
+    #[test]
+    fn the_agent_carries_the_running_version() {
+        assert!(USER_AGENT.contains(env!("CARGO_PKG_VERSION")));
+    }
 }
 
 /// A header that carries a credential. The value is never logged.
