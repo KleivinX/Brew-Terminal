@@ -107,8 +107,62 @@ pub const SERIES: &[MacroSeries] = &[
     },
 ];
 
+/// Series fetched only as inputs to the computed stock sentiment index.
+///
+/// Deliberately separate from `SERIES`: that list is the macro picker, chosen to be short and
+/// legible, and a credit-spread option-adjusted spread is not something to put in a dropdown
+/// next to the unemployment rate. These are still allowlisted the same way, so the request
+/// builder's guarantee — no user-supplied text ever reaches the query string — is unchanged.
+///
+/// Every one is daily. A weekly series mixed into a daily composite would make the index jump
+/// on whichever weekday that series updates, which reads as a market event and is not one.
+pub const INDEX_INPUTS: &[MacroSeries] = &[
+    MacroSeries {
+        id: "SP500",
+        name: "S&P 500",
+        description: "The S&P 500 index level.",
+        unit: "index",
+        frequency: "Daily",
+    },
+    MacroSeries {
+        id: "VIXCLS",
+        name: "VIX",
+        description: "The CBOE volatility index — the option market's expectation of how much \
+                      the S&P 500 will move over the next 30 days.",
+        unit: "index",
+        frequency: "Daily",
+    },
+    MacroSeries {
+        id: "BAMLH0A0HYM2",
+        name: "High-yield spread",
+        description: "The extra yield investors demand to lend to below-investment-grade US \
+                      companies, over Treasuries.",
+        unit: "%",
+        frequency: "Daily",
+    },
+    MacroSeries {
+        id: "BAMLC0A0CM",
+        name: "Investment-grade spread",
+        description: "The same measure for investment-grade US companies.",
+        unit: "%",
+        frequency: "Daily",
+    },
+    MacroSeries {
+        id: "BAMLCC0A0CMTRIV",
+        name: "Corporate bond total return",
+        description: "Total return index for US investment-grade corporate bonds — price and \
+                      coupon together, which is what a bondholder actually earns.",
+        unit: "index",
+        frequency: "Daily",
+    },
+];
+
+/// Looks up any series this app is allowed to request, offered or internal.
 pub fn series_by_id(id: &str) -> Option<&'static MacroSeries> {
-    SERIES.iter().find(|s| s.id == id)
+    SERIES
+        .iter()
+        .chain(INDEX_INPUTS.iter())
+        .find(|s| s.id == id)
 }
 
 pub struct FredProvider {
@@ -252,6 +306,54 @@ mod tests {
             assert!(!series.frequency.is_empty());
         }
         assert!(SERIES.len() >= 5);
+    }
+
+    #[test]
+    fn the_index_inputs_are_described_and_do_not_collide_with_the_picker() {
+        // Two lists, one namespace. A duplicate id would make `series_by_id` return whichever
+        // list came first, and the picker would quietly gain or lose an entry.
+        let offered: Vec<&str> = SERIES.iter().map(|s| s.id).collect();
+        for input in INDEX_INPUTS {
+            assert!(!input.description.is_empty(), "{}", input.id);
+            assert!(!input.name.is_empty(), "{}", input.id);
+            assert!(
+                !offered.contains(&input.id),
+                "{} appears in both the picker and the index inputs",
+                input.id
+            );
+        }
+
+        let mut ids: Vec<&str> = INDEX_INPUTS.iter().map(|s| s.id).collect();
+        ids.sort_unstable();
+        let count = ids.len();
+        ids.dedup();
+        assert_eq!(ids.len(), count, "duplicate id among the index inputs");
+    }
+
+    #[test]
+    fn index_inputs_are_fetchable_but_stay_out_of_the_picker() {
+        // The whole point of the second list: requestable, not offered. If these leaked into
+        // `catalogue()` the macro dropdown would start offering option-adjusted spreads.
+        for input in INDEX_INPUTS {
+            assert!(
+                series_by_id(input.id).is_some(),
+                "{} must be requestable",
+                input.id
+            );
+        }
+        assert!(
+            !SERIES.iter().any(|s| s.id == "BAMLC0A0CM"),
+            "an index input reached the offered catalogue"
+        );
+    }
+
+    #[test]
+    fn every_index_input_is_daily() {
+        // A weekly series in a daily composite makes the index step on whichever weekday that
+        // series updates, which reads as a market event and is not one.
+        for input in INDEX_INPUTS {
+            assert_eq!(input.frequency, "Daily", "{} is not a daily series", input.id);
+        }
     }
 
     #[tokio::test]

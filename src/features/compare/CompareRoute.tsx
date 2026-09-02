@@ -13,6 +13,7 @@ import { MAX_COMPARE } from './constants';
 import { ComparisonChart } from './ComparisonChart';
 import { CorrelationMatrix } from './CorrelationMatrix';
 import { MacroPanel } from './MacroPanel';
+import { SentimentPanel } from './SentimentPanel';
 import type { ChartRange } from '@/types/domain';
 import styles from './CompareRoute.module.css';
 
@@ -141,6 +142,8 @@ export function CompareRoute() {
             </Panel>
           </>
         ) : null}
+
+        <SentimentPanel />
 
         <MacroPanel range={range} />
 

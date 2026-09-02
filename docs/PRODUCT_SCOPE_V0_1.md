@@ -4,6 +4,26 @@
 **Tagline:** Markets, minus the gatekeeping.
 **What it is not:** a trading platform, a broker, a portfolio tracker, or a financial adviser.
 
+> **This document describes v0.1. The app is past it.**
+>
+> Four items in the §3 non-goals list have since shipped, each as a deliberate decision rather
+> than by drift:
+>
+> | Was a v0.1 non-goal                          | Now                                                              |
+> | -------------------------------------------- | ---------------------------------------------------------------- |
+> | Portfolio accounting, cost basis, P&L        | Shipped — FIFO and average cost, local only, no broker connection |
+> | Price alerts                                 | Shipped — local, polled, no notification-driven prompts           |
+> | Technical indicators beyond price (`no RSI`) | Shipped — RSI and moving averages in the research chart           |
+> | Sentiment classification                     | Shipped — the two Fear & Greed indices, see ADR-037               |
+>
+> The positioning above is unchanged, and so is everything in §3 that has *not* shipped: no
+> order placement, no accounts or telemetry, no buy/sell/hold recommendations, no price targets,
+> no scam scores or coin-legitimacy verdicts. What moved was the line on what counts as
+> research, not the line on giving advice.
+>
+> This file is kept as the v0.1 record rather than edited in place, so the original scope stays
+> readable next to what was actually built.
+
 ---
 
 ## 1. Product interpretation

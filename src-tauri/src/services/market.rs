@@ -47,6 +47,39 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = AppResult<Vec<T>>>,
 {
+    let envelope =
+        cached_value_or_degraded(state, kind, key, provider_id, provider_name, source, fetch)
+            .await?;
+
+    // A list has an honest empty value, so step 4's `None` becomes the empty table every
+    // caller here already expects. The degraded reason on the meta is untouched.
+    Ok(Envelope {
+        data: envelope.data.unwrap_or_default(),
+        meta: envelope.meta,
+    })
+}
+
+/// The same read-through cache, for a payload that is one value rather than a list.
+///
+/// Returns `Option` because step 4 has no honest answer for a scalar. An empty list is a real
+/// result; a Fear & Greed index of zero is *maximum fear*, and falling back to `T::default()`
+/// on a network error would be the most alarming possible way to report that a provider is
+/// unreachable. `None` alongside the degraded reason says it correctly, and the UI renders the
+/// reason instead of a number nobody measured.
+pub(crate) async fn cached_value_or_degraded<T, F, Fut>(
+    state: &AppState,
+    kind: CacheKind,
+    key: String,
+    provider_id: &str,
+    provider_name: &str,
+    source: EnvelopeSource,
+    fetch: F,
+) -> AppResult<Envelope<Option<T>>>
+where
+    T: Serialize + DeserializeOwned + Send + 'static,
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = AppResult<T>>,
+{
     let now = now_epoch_secs();
 
     match fetch().await {
@@ -77,7 +110,12 @@ where
                 }
             }
 
-            Ok(Envelope::fresh(data, provider_id, provider_name, source))
+            Ok(Envelope::fresh(
+                Some(data),
+                provider_id,
+                provider_name,
+                source,
+            ))
         }
 
         Err(error) => {
@@ -92,14 +130,14 @@ where
             let cached = with_db(pool, move |conn| repo_cache::get(conn, &lookup_key)).await?;
 
             let (data, fetched_at) = match cached {
-                Some(entry) => match serde_json::from_str::<Vec<T>>(&entry.payload_json) {
-                    Ok(data) => (data, entry.fetched_at),
+                Some(entry) => match serde_json::from_str::<T>(&entry.payload_json) {
+                    Ok(data) => (Some(data), entry.fetched_at),
                     Err(parse_error) => {
                         tracing::warn!(?parse_error, "cached payload could not be read");
-                        (Vec::new(), now)
+                        (None, now)
                     }
                 },
-                None => (Vec::new(), now),
+                None => (None, now),
             };
 
             let fetched_at =

@@ -6,6 +6,19 @@
   overflow-y: auto;
 }
 
+/*
+ * Panels keep their natural height and the column scrolls.
+ *
+ * Without this they inherit `flex-shrink: 1`, and a flex column with a bounded height resolves
+ * an overflow by compressing its children instead of scrolling. Every panel here sets
+ * `overflow: hidden`, so the compression was silent: the Assets panel rendered 69px of its
+ * 163px of content with the rest simply cut off, and the column's scrollHeight stayed equal to
+ * its height, so there was nothing to scroll to reach it.
+ */
+.layout > * {
+  flex-shrink: 0;
+}
+
 .picker,
 .macro {
   display: flex;

@@ -30,6 +30,7 @@ import type {
   ProviderInfo,
   Quote,
   ScreenerFilter,
+  SentimentIndex,
   TriggeredAlert,
   Watchlist,
   WatchlistItem,
@@ -663,6 +664,22 @@ function harnessSummary(): ProfileSummary {
   };
 }
 
+/**
+ * Ninety days of readings that drift into `latest`.
+ *
+ * Deterministic, so a snapshot of the panel does not change between runs, and bounded to the
+ * 0–100 scale the same way the Rust side bounds it.
+ */
+function sentimentHistory(latest: number): { time: number; value: number }[] {
+  const end = 1_788_177_600;
+  return Array.from({ length: 90 }, (_, i) => {
+    const drift = Math.sin(i / 11) * 14 + Math.sin(i / 3.7) * 4;
+    const pull = ((i / 89) * (latest - 50)) / 1;
+    const value = Math.round(Math.min(100, Math.max(0, 50 + drift * (1 - i / 120) + pull)));
+    return { time: end - (89 - i) * 86_400, value: i === 89 ? latest : value };
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the typed contract is enforced at the `ipc()` call site; this is the untyped seam.
 export async function browserInvoke(command: string, args?: any): Promise<unknown> {
   callCounts.set(command, (callCounts.get(command) ?? 0) + 1);
@@ -955,6 +972,121 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
         unavailable: ids.filter((id) => !known.has(id)),
       };
     }
+
+    case 'get_crypto_sentiment':
+      return envelope<SentimentIndex | null>(
+        {
+          market: 'crypto',
+          basis: 'published',
+          value: 69,
+          band: 'greed',
+          asOf: 1_788_220_800,
+          publisherLabel: 'Greed',
+          components: [],
+          history: sentimentHistory(69),
+          methodology:
+            'Published daily by Alternative.me from Bitcoin volatility (25%), market momentum ' +
+            'and volume (25%), social media activity (15%), BTC dominance (10%) and Google ' +
+            'Trends (10%). It describes Bitcoin, which the rest of the crypto market usually ' +
+            'but does not always follow.',
+        },
+        null,
+      );
+
+    case 'get_stock_sentiment':
+      return envelope<SentimentIndex | null>(
+        {
+          market: 'stocks',
+          basis: 'computed',
+          value: 68,
+          band: 'greed',
+          asOf: 1_788_177_600,
+          publisherLabel: null,
+          // Real values from a live run, so the panel is laid out against numbers of the
+          // shape it will actually meet rather than round ones.
+          components: [
+            {
+              id: 'momentum',
+              name: 'Market momentum',
+              description:
+                'Where the S&P 500 sits against its own recent average. Well above it, buyers ' +
+                'have been paying up.',
+              score: 52,
+              band: 'neutral',
+              rawValue: 5.576,
+              rawUnit: '%',
+              reading: 'The S&P 500 is 5.6% above its 125-session average.',
+              sourceSeries: ['SP500'],
+              method:
+                'S&P 500 divided by its 125-session average, then ranked against the last 252 ' +
+                'sessions.',
+              inverted: false,
+            },
+            {
+              id: 'volatility',
+              name: 'Market volatility',
+              description:
+                'How much movement the options market expects, against its own recent normal. ' +
+                'Calm markets are confident ones.',
+              score: 68,
+              band: 'greed',
+              rawValue: -9.293,
+              rawUnit: '%',
+              reading: 'The VIX is 9.3% below its 50-session average.',
+              sourceSeries: ['VIXCLS'],
+              method:
+                'VIX divided by its 50-session average, ranked against the last 252 sessions, ' +
+                'then inverted — a high VIX is fear.',
+              inverted: true,
+            },
+            {
+              id: 'safe-haven',
+              name: 'Safe-haven demand',
+              description:
+                'Whether money has been going into stocks or into bonds. Bonds beating stocks ' +
+                'is the classic flight to safety.',
+              score: 53,
+              band: 'neutral',
+              rawValue: 1.003,
+              rawUnit: 'pp',
+              reading:
+                'Over 20 sessions stocks returned 1.0 percentage points more than ' +
+                'investment-grade bonds.',
+              sourceSeries: ['SP500', 'BAMLCC0A0CMTRIV'],
+              method:
+                '20-session return on the S&P 500 minus the 20-session total return on ' +
+                'investment-grade corporate bonds, ranked against the last 252 sessions.',
+              inverted: false,
+            },
+            {
+              id: 'junk-bond-demand',
+              name: 'Junk bond demand',
+              description:
+                'The extra yield demanded to lend to the riskiest companies. When that ' +
+                'premium is thin, lenders are relaxed about risk.',
+              score: 99,
+              band: 'extreme-greed',
+              rawValue: 1.83,
+              rawUnit: 'pp',
+              reading:
+                'Riskier borrowers are paying 1.83 percentage points more than ' +
+                'investment-grade ones.',
+              sourceSeries: ['BAMLH0A0HYM2', 'BAMLC0A0CM'],
+              method:
+                'High-yield spread minus investment-grade spread, ranked against the last 252 ' +
+                'sessions, then inverted — a wide premium is fear.',
+              inverted: true,
+            },
+          ],
+          history: sentimentHistory(68),
+          methodology:
+            'Computed here from 5 public Federal Reserve series. Each of the four components ' +
+            'is scored by where today\'s reading falls among the last 252 sessions, and the ' +
+            'index is their equal-weighted average. Nobody publishes this number — it is this ' +
+            "app's arithmetic, and every step of it is shown above.",
+        },
+        null,
+      );
 
     case 'run_screen': {
       // Mirrors the Rust filter semantics closely enough for the UI to be exercised; the

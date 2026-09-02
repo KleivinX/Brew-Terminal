@@ -20,6 +20,7 @@ pub mod notes;
 pub mod portfolio;
 pub mod profile;
 pub mod screener;
+pub mod sentiment;
 pub mod settings;
 pub mod updates;
 pub mod watchlist;

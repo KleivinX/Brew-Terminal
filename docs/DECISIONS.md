@@ -654,3 +654,52 @@ The panel says this in the UI rather than showing an empty list. See PROVIDERS.m
 See ADR-032. The same reasoning applies to the community provider: the app does not put a
 third party's name on a settings page while being unable to describe how that party handles the
 data it receives.
+
+---
+
+## ADR-037 — A market sentiment index is allowed; a verdict about an asset is still not
+
+**Status:** accepted.
+
+Brew Terminal ships two Fear & Greed indices: the published crypto one from Alternative.me, and
+an equity one computed here from Federal Reserve series.
+
+This needs recording because it sits against three earlier statements. ADR-022 says "anything
+that adds up is a verdict". ADR-035 says "aggregating opinion into a number is a verdict, and
+the app has no basis for one". `PRODUCT_SCOPE_V0_1.md` §3 lists "sentiment classification"
+among the explicit non-goals. A reader who meets those first and then finds a 0–100 gauge is
+entitled to ask what happened.
+
+**Where the line actually falls.** Those three are about the app passing judgement on *a thing
+the user might buy*, or on *what a group of people believe*:
+
+- A risk checklist that tallies ticks scores **an asset's legitimacy**.
+- Ranking community posts scores **whose opinion matters**.
+- A "scam score" is both at once.
+
+A market sentiment index does neither. It describes **conditions across a whole market** from
+published measurements — where the S&P 500 sits against its own average, where the VIX sits
+against its own, what lenders charge the riskiest borrowers. It attaches to no asset, so it
+cannot function as a legitimacy score for one. It aggregates measurements, not opinions. And it
+recommends nothing: a reading of 68 is not a reason to buy or sell anything, and the app says so.
+
+**What keeps it on the right side.** Three properties, all enforced in code rather than
+promised in prose:
+
+1. **Every component is shown** — its input series, its raw reading, the arithmetic, and whether
+   it was inverted. The number can be recomputed by hand from public data. The rule this feature
+   actually follows is not "no scores" but "no score whose inputs are hidden".
+2. **The basis is declared in the payload.** `SentimentBasis` distinguishes a figure reported
+   from a publisher from one computed here, and the UI cannot render one without saying which.
+3. **The computed index says nobody publishes it.** Its own methodology text states that it is
+   this app's arithmetic.
+
+**What this does not license.** No per-asset sentiment score, no ranking of assets by any
+composite, no "signal" derived from the index, and no sentiment on community content — ADR-035
+stands unchanged. The distinction is the asset-level verdict, not the arithmetic.
+
+**Alternatives:** report the well-known equity index instead of computing one (rejected: it has
+no documented API, only an endpoint its own site calls, which ADR-008 rules out). Ship the
+crypto index alone (rejected: it would leave the equities half of the app with no equivalent,
+and the components are the teaching content). Hide the components behind a disclosure (rejected:
+the components are the point; the composite alone is the thing these ADRs are wary of).

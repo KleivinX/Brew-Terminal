@@ -1,0 +1,303 @@
+/*
+ * Market mood.
+ *
+ * Band colour comes from the diverging correlation pair in tokens.css — blue for fear, orange
+ * for greed — not from red/green. Two reasons, both recorded there: red and green are reserved
+ * for status, and red-green is the pair a deuteranope cannot separate. Every band is also
+ * written out in text, so colour never carries meaning on its own.
+ */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+
+/*
+ * One column below 900px. The two cards each carry a gauge, a trend line and four component
+ * rows; side by side under about 420px apiece the component readings wrap to three lines and
+ * stop being scannable.
+ */
+@media (width <= 900px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.cardHead {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+/*
+ * Whether the number was reported or derived here. Deliberately prominent rather than a
+ * footnote: it is the single most important thing about how much weight to put on the figure.
+ */
+.basisPublished,
+.basisComputed {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.basisPublished {
+  color: var(--text-secondary);
+}
+
+.basisComputed {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.figure {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+
+.value {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.band {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.band[data-band='extreme-fear'],
+.band[data-band='fear'] {
+  color: var(--chart-corr-negative);
+}
+
+.band[data-band='neutral'] {
+  color: var(--text-secondary);
+}
+
+.band[data-band='greed'],
+.band[data-band='extreme-greed'] {
+  color: var(--chart-corr-positive);
+}
+
+/* ---- Gauge ---- */
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gaugeTrack {
+  position: relative;
+  height: 8px;
+  background: linear-gradient(
+    to right,
+    var(--chart-corr-negative),
+    var(--chart-corr-neutral) 50%,
+    var(--chart-corr-positive)
+  );
+  border-radius: var(--radius-full);
+}
+
+.gaugeMarker {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 14px;
+  background: var(--text-primary);
+  border-radius: var(--radius-sm);
+  /* The marker is centred on its value; without this, 100 would sit past the track's end. */
+  transform: translateX(-50%);
+}
+
+.gaugeScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ---- Trend ---- */
+
+.trend {
+  width: 100%;
+  height: 34px;
+}
+
+/* ---- Text ---- */
+
+.asOf,
+.note,
+.reading,
+.unavailable,
+.methodBody {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.note,
+.reading {
+  color: var(--text-muted);
+}
+
+.inverted {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* ---- Components ---- */
+
+.componentsHeading {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.components {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.component {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.componentHead {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.componentName {
+  font-size: var(--text-base);
+}
+
+.componentScore {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.componentTrack {
+  height: 4px;
+  overflow: hidden;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full);
+}
+
+.componentFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.componentFill[data-band='extreme-fear'],
+.componentFill[data-band='fear'] {
+  background: var(--chart-corr-negative);
+}
+
+.componentFill[data-band='neutral'] {
+  background: var(--neutral);
+}
+
+.componentFill[data-band='greed'],
+.componentFill[data-band='extreme-greed'] {
+  background: var(--chart-corr-positive);
+}
+
+/* ---- Method disclosure ---- */
+
+.method {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.summary {
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.methodBody {
+  margin-top: var(--space-3);
+}
+
+.methodList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  list-style: none;
+}
+
+.series {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ---- Unavailable ---- */
+
+.retry {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.retry:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.badge {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}

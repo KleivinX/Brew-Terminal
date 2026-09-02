@@ -37,6 +37,7 @@ import type {
   Quote,
   TriggeredAlert,
   ScreenerFilter,
+  SentimentIndex,
   Transaction,
   UpdateCheck,
   ExportResult,
@@ -170,6 +171,14 @@ export interface IpcContract {
   get_macro_series: { args: { id: string; range: ChartRange }; result: Envelope<ChartPoint[]> };
   /** History for several assets at once, for comparison and correlation. */
   get_multi_series: { args: { assetIds: string[]; range: ChartRange }; result: MultiSeries };
+
+  /*
+   * `null` inside the envelope means no reading was obtainable and nothing was cached — the
+   * envelope's `degraded` field says why. It is never a zero, which on this scale would read
+   * as maximum fear.
+   */
+  get_crypto_sentiment: { args: undefined; result: Envelope<SentimentIndex | null> };
+  get_stock_sentiment: { args: undefined; result: Envelope<SentimentIndex | null> };
 
   // --- screener ---
   /** Filters the cached market list. Adjusting a filter costs no provider request. */

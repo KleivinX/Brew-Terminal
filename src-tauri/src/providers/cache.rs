@@ -14,6 +14,7 @@ pub enum CacheKind {
     News,
     Community,
     Search,
+    Sentiment,
 }
 
 impl CacheKind {
@@ -26,6 +27,7 @@ impl CacheKind {
             Self::News => "news",
             Self::Community => "community",
             Self::Search => "search",
+            Self::Sentiment => "sentiment",
         }
     }
 
@@ -42,6 +44,9 @@ impl CacheKind {
             // Explicitly not real-time. Community volume is not a signal to chase.
             Self::Community => 30 * 60,
             Self::Search => 24 * 60 * 60,
+            // Both Fear & Greed indices are daily figures. Refetching them every few minutes
+            // would spend a provider's goodwill to redraw the same number.
+            Self::Sentiment => 3 * 60 * 60,
         }
     }
 
@@ -98,6 +103,32 @@ mod tests {
             CacheKind::for_chart(ChartRange::Day).ttl_seconds()
                 < CacheKind::for_chart(ChartRange::Year).ttl_seconds()
         );
+    }
+
+    #[test]
+    fn a_daily_index_is_not_refetched_on_a_quote_cadence() {
+        assert!(CacheKind::Sentiment.ttl_seconds() >= 60 * 60);
+    }
+
+    #[test]
+    fn every_kind_has_a_distinct_cache_bucket() {
+        // The kind string is what `clear_cache(kind)` filters on; a duplicate would make one
+        // bucket impossible to clear on its own.
+        let kinds = [
+            CacheKind::Quote,
+            CacheKind::ChartIntraday,
+            CacheKind::ChartHistorical,
+            CacheKind::Profile,
+            CacheKind::News,
+            CacheKind::Community,
+            CacheKind::Search,
+            CacheKind::Sentiment,
+        ];
+        let mut seen: Vec<&str> = kinds.iter().map(|k| k.as_str()).collect();
+        seen.sort_unstable();
+        let count = seen.len();
+        seen.dedup();
+        assert_eq!(seen.len(), count, "two cache kinds share a bucket name");
     }
 
     #[test]

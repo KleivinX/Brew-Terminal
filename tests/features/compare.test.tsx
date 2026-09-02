@@ -26,6 +26,16 @@ beforeEach(() => {
   createChart.mockClear();
 });
 
+/**
+ * Headroom for the Compare route's panels.
+ *
+ * `waitFor` defaults to one second, which was comfortable when this route mounted a chart and
+ * a correlation table. It now also mounts the market-mood panel, and on a loaded machine that
+ * extra work is enough to push a bare one-second wait over — intermittently, and only in a
+ * full parallel run, which is the worst way for a test to fail.
+ */
+const PANEL_TIMEOUT = { timeout: 4000 } as const;
+
 async function correlation(): Promise<HTMLElement> {
   return waitFor(
     () => within(screen.getByRole('region', { name: 'Correlation' })).getByRole('table'),
@@ -36,7 +46,7 @@ async function correlation(): Promise<HTMLElement> {
 describe('compare', () => {
   it('starts with two assets on one axis', async () => {
     renderWithProviders(<CompareRoute />);
-    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
     expect(within(chart).getByText('BITCOIN')).toBeInTheDocument();
     expect(within(chart).getByText('ETHEREUM')).toBeInTheDocument();
   });
@@ -47,14 +57,14 @@ describe('compare', () => {
    */
   it('explains that every line starts from its own base', async () => {
     renderWithProviders(<CompareRoute />);
-    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
     expect(within(chart).getByText(/Each line starts at 100/)).toBeInTheDocument();
     expect(within(chart).getByText(/not against each other in currency/)).toBeInTheDocument();
   });
 
   it('gives every series a legend entry, so identity is never colour alone', async () => {
     renderWithProviders(<CompareRoute />);
-    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
     const legend = within(chart).getAllByRole('list')[0] as HTMLElement;
     expect(within(legend).getAllByRole('listitem')).toHaveLength(2);
   });
@@ -62,7 +72,7 @@ describe('compare', () => {
   it('offers the numbers behind the chart', async () => {
     const user = userEvent.setup();
     renderWithProviders(<CompareRoute />);
-    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    const chart = await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
 
     await user.click(within(chart).getByRole('button', { name: /show the numbers/i }));
     expect(within(chart).getByRole('table')).toBeInTheDocument();
@@ -90,7 +100,7 @@ describe('compare', () => {
   it('adds and removes an asset', async () => {
     const user = userEvent.setup();
     renderWithProviders(<CompareRoute />);
-    await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
 
     await user.type(screen.getByLabelText('Asset id to add'), 'crypto:cg:solana');
     await user.click(screen.getByRole('button', { name: 'Add' }));
@@ -110,7 +120,7 @@ describe('compare', () => {
   it('names an asset it could not fetch rather than dropping it silently', async () => {
     const user = userEvent.setup();
     renderWithProviders(<CompareRoute />);
-    await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }));
+    await waitFor(() => screen.getByRole('region', { name: /Indexed to 100/ }), PANEL_TIMEOUT);
 
     await user.type(screen.getByLabelText('Asset id to add'), 'crypto:cg:not-real-at-all');
     await user.click(screen.getByRole('button', { name: 'Add' }));
@@ -120,7 +130,7 @@ describe('compare', () => {
 
   it('shows macro context without needing a key', async () => {
     renderWithProviders(<CompareRoute />);
-    const macro = await waitFor(() => screen.getByRole('region', { name: /Macro backdrop/ }));
+    const macro = await waitFor(() => screen.getByRole('region', { name: /Macro backdrop/ }), PANEL_TIMEOUT);
     expect(within(macro).getByText(/No key needed/i)).toBeInTheDocument();
     expect(within(macro).getByLabelText('Series')).toBeInTheDocument();
   });

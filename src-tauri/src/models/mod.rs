@@ -12,6 +12,7 @@ pub mod progress;
 pub mod provider;
 pub mod quote;
 pub mod screener;
+pub mod sentiment;
 pub mod watchlist;
 
 pub use ai::*;
@@ -28,4 +29,5 @@ pub use progress::*;
 pub use provider::*;
 pub use quote::*;
 pub use screener::*;
+pub use sentiment::*;
 pub use watchlist::*;

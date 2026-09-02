@@ -37,14 +37,20 @@ trading platform.
 
 ## 🚫 What this is not
 
-Not a broker. Not a portfolio tracker. Not a financial adviser. It will not tell you what to
-buy, when to sell, where a price is going, or whether something is a good investment. Those are
-not missing features — they are deliberate exclusions, documented in
-[`docs/PRODUCT_SCOPE_V0_1.md`](docs/PRODUCT_SCOPE_V0_1.md).
+Not a broker. Not a financial adviser. It will not tell you what to buy, when to sell, where a
+price is going, or whether something is a good investment. Those are not missing features —
+they are deliberate exclusions, documented in
+[`docs/PRODUCT_SCOPE_V0_1.md`](docs/PRODUCT_SCOPE_V0_1.md) and the decision log.
 
-There is no sentiment score, no "trending", no scam score and no legitimacy verdict anywhere in
-the app. Anything that aggregates opinion into a number is a judgement, and this project has no
-basis for one.
+It does keep a record of what you hold, typed in by you, so it can show cost basis and what a
+position has actually done. It connects to no broker, sees no account, and places no orders.
+
+There is no scam score, no legitimacy verdict, no "trending", and no ranking of anyone's
+opinions — aggregating opinion into a number is a judgement this project has no basis for. The
+two Fear & Greed indices are a different thing: they describe *market conditions* from published
+measurements, they attach to no individual asset, and the one this app computes shows every
+component with its source series and arithmetic, so it can be checked rather than believed.
+Where that line falls, and why, is [ADR-037](docs/DECISIONS.md).
 
 ## Status
 

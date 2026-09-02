@@ -261,8 +261,130 @@ the shared HTTP client's caps — HTTPS only, 2 MB body limit, 15 s timeout, 3 r
 
 ---
 
+## Alternative.me — crypto Fear & Greed Index
+
+|                 |                                                                          |
+| --------------- | ------------------------------------------------------------------------ |
+| **Status**      | Live, enabled by default (keyless)                                       |
+| **Adapter**     | `src-tauri/src/providers/live/alternative_me.rs`                         |
+| **Base URL**    | `https://api.alternative.me/fng/`                                        |
+| **Credential**  | None. No key, no account                                                 |
+| **Attribution** | **Required, next to the data** — rendered by the provider badge          |
+
+Verified against the live API and their published API section on **2026-09-01**.
+
+### Terms
+
+Their two stated rules, quoted from <https://alternative.me/crypto/fear-and-greed-index/>:
+
+- You may not use their data to impersonate them, or to create a service that could be confused
+  with their offering.
+- Commercial use is allowed **as long as the attribution is given right next to the display of
+  the data**. This applies to all of their fear and greed data, not only the API.
+
+The second is stricter than a footer credit, and it is the reason the reading renders inside a
+card carrying its own `ProviderBadge` rather than relying on a page-level attribution line. The
+first is why the app never presents the number as its own: the card is labelled *Published
+figure*, and where their classification differs from this app's band the card prints theirs too.
+
+No rate limit is published. The index updates once a day, so the adapter's cache TTL is three
+hours and a running app makes at most a handful of calls a day.
+
+### Endpoint used
+
+`GET /fng/?limit=90`
+
+Response shape verified against a real call. Three findings that shaped the adapter:
+
+1. **Every scalar is a JSON string**, numbers included — `"value": "69"`, `"timestamp": "1788220800"`. A struct typed with `i32` fails on every response.
+2. **Errors arrive with HTTP 200** and a message in `metadata.error`. The status code alone is not a success signal, so the adapter checks that field first.
+3. **`date_format` is not sent.** With it, timestamps become `MM-DD-YYYY` and `time_until_update` goes negative. The default is unix seconds, which is unambiguous.
+
+Entries are newest-first; the adapter re-sorts. Anything outside the published 0–100 scale is
+dropped rather than clamped, because clamping would invent a reading the publisher never issued.
+
+### What it actually measures
+
+Bitcoin. Their own documentation says so: the index is built from Bitcoin volatility (25%),
+market momentum and volume (25%), social media (15%), BTC dominance (10%) and Google Trends
+(10%), with a survey input (15%) listed as paused. The rest of the crypto market usually follows
+Bitcoin but does not always, and the card says this rather than presenting the number as
+whole-market sentiment.
+
+---
+
+## Stock Fear & Greed — computed here, not fetched
+
+**Not a provider.** There is no equity sentiment index this app can report: the well-known one
+publishes no documented API, only an endpoint its own site calls, and ADR-008 rules that out.
+The choice was between shipping no equity index and computing one.
+
+It is computed, from five FRED series (see below), in
+`src-tauri/src/services/sentiment.rs`. Four components — market momentum, market volatility,
+safe-haven demand and junk bond demand — each scored by percentile rank over the trailing 252
+sessions, combined as an equal-weighted mean.
+
+This sits close to a line drawn elsewhere in this codebase: `providers::live::fred` says the app
+"reports published figures rather than running models over them", and a composite sentiment
+score is a model. What makes it acceptable is that nothing is hidden. Every component ships with
+its input series, its raw reading, the arithmetic and whether it was inverted; the UI renders all
+of it, labels the card *Computed here*, and states in as many words that nobody publishes the
+number. A figure the reader can recompute is a teaching instrument. The same figure with its
+inputs withheld would be an oracle.
+
+**Provider identity:** `brew-stock-sentiment`, named "Computed by Brew Terminal from FRED".
+Deliberately not attributed to FRED — they publish the inputs, not the index, and naming them as
+the source of a composite they have never heard of would be a provenance error.
+
+**Not included:** put/call ratios, net new 52-week highs, and a breadth measure — all used by the
+published equity index, none with a free, documented, daily source that clears ADR-008. The index
+has four components and says so rather than approximating the missing three.
+
+---
+
+## FRED — macroeconomic series
+
+|                 |                                                                    |
+| --------------- | ------------------------------------------------------------------ |
+| **Status**      | Live, enabled by default (keyless)                                 |
+| **Adapter**     | `src-tauri/src/providers/live/fred.rs`                             |
+| **Base URL**    | `https://fred.stlouisfed.org/graph/fredgraph.csv`                  |
+| **Credential**  | None. The JSON API wants a key; the CSV endpoint does not          |
+| **Attribution** | Rendered by the provider badge                                     |
+
+The data is US federal government output in the public domain. This is the only provider that
+works on first run with nothing configured.
+
+### The User-Agent finding — 2026-09-01
+
+FRED sits behind a WAF that **drops the connection** for a bare `Name/Version` user agent. No
+status code, no body: the request hangs until the client's own timeout and surfaces as "could not
+reach the provider", which sends you looking at the network rather than at a header.
+
+`BrewTerminal/0.2.0` was refused three times out of three. `BrewTerminal/0.2.0
+(+https://github.com/KleivinX/Brew-Terminal)` succeeded three out of three, as did plain
+`curl/8.4.0`. A Chrome user agent was **also refused**, which is worth recording: the fix is to
+identify the client properly, not to imitate a browser — and imitating one would be the sort of
+thing ADR-008 exists to rule out.
+
+The agent is now defined once, in `providers::http::USER_AGENT`, and covered by tests that fail
+if the contact URL is dropped or a browser token is added. Every FRED request in the app —
+including the macro backdrop, which shipped in v0.2.0 — was failing before this was found.
+
+### Series requested
+
+Two allowlists, both in the adapter. Nothing user-supplied ever reaches the query string.
+
+- `SERIES` — the seven offered in the macro picker: `DGS10`, `DGS2`, `T10Y2Y`, `FEDFUNDS`, `CPIAUCSL`, `UNRATE`, `DTWEXBGS`.
+- `INDEX_INPUTS` — five fetched only as inputs to the computed sentiment index, and deliberately kept out of the picker: `SP500`, `VIXCLS`, `BAMLH0A0HYM2`, `BAMLC0A0CM`, `BAMLCC0A0CMTRIV`. All daily; a weekly series in a daily composite would make the index step on whichever weekday that series updates, which reads as a market event and is not one.
+
+Missing observations are written as `.` and are skipped rather than read as zero.
+
+---
+
 ## Deliberately not used
 
+- **The well-known equity Fear & Greed index's data endpoint.** It is reachable and it is what that site's own charts call, but it is not offered as a public API and its terms do not cover third-party use. This is why the equity index in this app is computed rather than reported — see above.
 - **Any undocumented or reverse-engineered endpoint**, including the unofficial Yahoo Finance endpoints. They work, they are widely used, and they are not offered as a public API. ADR-008 treats that as a decision about the project's standing rather than a technical question.
 - **Scraping** of any provider's website.
 - **Alpha Vantage**, for now: its free tier's daily budget is small enough that a refreshing watchlist would exhaust it and leave the UI permanently rate-limited — see ADR-013.
