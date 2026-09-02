@@ -35,6 +35,30 @@ trading platform.
 - **Your data is portable.** An encrypted `.brewprofile` moves your watchlists, notes, progress and settings to another machine. It contains no API keys.
 - **Cross-platform.** macOS, Windows and Linux, built to stay responsive on a 2016 Intel MacBook.
 
+## Screenshots
+
+<div align="center">
+
+![Pulse — the market overview, with live CoinGecko prices and RSS headlines](docs/screenshots/01-pulse.png)
+
+</div>
+
+Every number carries its provider and its age. The Pulse shot above is a live run; the rest use
+the demo fixtures the app ships with, which is why they carry a "fixtures" badge — the layout
+and the features are the same either way.
+
+| | |
+| --- | --- |
+| ![Market mood — the two Fear & Greed indices](docs/screenshots/02-market-mood.png) | ![Notes — a local research journal](docs/screenshots/03-notes.png) |
+| **Market mood.** Two Fear & Greed indices. The crypto one is a published figure, reported as-is. The equity one is computed here, and shows all four of its components with the reading, the source series and whether it was inverted — so it can be checked rather than believed. | **Notes.** A local research journal with full-text search. Notes never leave the machine on their own, and attaching one to a model prompt is a separate, explicit action. |
+| ![Portfolio — positions derived from transactions](docs/screenshots/04-portfolio.png) | ![Screener — filter the market on facts](docs/screenshots/05-screener.png) |
+| **Portfolio.** Positions are derived by replaying the transactions that produced them, never stored — so cost basis, realised gain and the position itself can only ever agree. FIFO or average cost. No broker, no orders. | **Screener.** Filters on reported facts — price, change, market cap, volume. No score, no ranking, no "opportunities". |
+
+| |
+| --- |
+| ![Research Lab — one asset in depth](docs/screenshots/06-research.png) |
+| **Research Lab.** One asset in depth: chart, indicators, news and your notes on it, with a risk checklist that has no checkboxes and no tally — [by design](docs/DECISIONS.md). |
+
 ## 🚫 What this is not
 
 Not a broker. Not a financial adviser. It will not tell you what to buy, when to sell, where a
