@@ -1,4 +1,4 @@
-import { formatPrice, formatPercent } from '@/lib/format';
+import { formatPrice, formatPercent, formatQuantity } from '@/lib/format';
 import type { Position } from '@/types/domain';
 import styles from './PortfolioRoute.module.css';
 
@@ -43,7 +43,7 @@ export function PositionsTable({ positions, currency, closed }: PositionsTablePr
               ) : null}
               {p.currency !== currency ? <span className={styles.flag}>{p.currency}</span> : null}
             </th>
-            {closed ? null : <td className="tabular">{p.quantity}</td>}
+            {closed ? null : <td className="tabular">{formatQuantity(p.quantity)}</td>}
             <td className="tabular">{formatPrice(p.costBasis, p.currency)}</td>
             {closed ? null : (
               <td className="tabular">

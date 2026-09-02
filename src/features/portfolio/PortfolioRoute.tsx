@@ -8,7 +8,7 @@ import { ErrorState } from '@/components/status/ErrorState';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { ipc } from '@/lib/ipc';
-import { formatPrice, formatPercent } from '@/lib/format';
+import { formatPrice, formatPercent, formatQuantity } from '@/lib/format';
 import type { Position } from '@/types/domain';
 import { TransactionDialog } from './TransactionDialog';
 import { PositionsTable } from './PositionsTable';
@@ -165,7 +165,7 @@ export function PortfolioRoute() {
                       {t.kind === 'buy' ? 'Buy' : 'Sell'}
                     </span>
                     <span className={styles.txSymbol}>{t.symbol}</span>
-                    <span className="tabular">{t.quantity}</span>
+                    <span className="tabular">{formatQuantity(t.quantity)}</span>
                     <span className="tabular">@ {formatPrice(t.unitPrice, t.currency)}</span>
                     <span className={styles.txDate}>
                       {new Date(t.executedAt * 1000).toLocaleDateString()}

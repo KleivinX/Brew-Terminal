@@ -4,6 +4,7 @@ import {
   directionGlyph,
   directionLabel,
   formatCompact,
+  formatQuantity,
   formatPercent,
   formatPrice,
   formatRelativeTime,
@@ -20,6 +21,19 @@ describe('formatPrice', () => {
   it('renders an em dash rather than NaN for unusable values', () => {
     expect(formatPrice(Number.NaN)).toBe('—');
     expect(formatPrice(Number.POSITIVE_INFINITY)).toBe('—');
+  });
+});
+
+describe('formatPrice at zero', () => {
+  it('renders nothing as nothing, not as eight decimals of it', () => {
+    // Decimals are chosen by magnitude, and zero has none — it used to land in the branch for
+    // sub-0.0001 prices, so an untouched position showed a realised gain of $0.00000000.
+    expect(formatPrice(0, 'USD', 'en-US')).toBe('$0.00');
+    expect(formatPrice(-0, 'USD', 'en-US')).toBe('$0.00');
+  });
+
+  it('still gives a genuinely tiny price its precision', () => {
+    expect(formatPrice(0.00001234, 'USD', 'en-US')).toBe('$0.00001234');
   });
 });
 
@@ -43,6 +57,39 @@ describe('formatCompact', () => {
 
   it('returns an em dash for null', () => {
     expect(formatCompact(null)).toBe('—');
+  });
+});
+
+describe('formatQuantity', () => {
+  /**
+   * The case that put this function here. Buying 0.25 then 0.1 leaves 0.35000000000000003 in
+   * an f64, and the positions table rendered it raw — someone's holding shown with seventeen
+   * digits of binary artefact.
+   */
+  it('does not show floating-point noise as a holding', () => {
+    expect(formatQuantity(0.25 + 0.1, 'en-US')).toBe('0.35');
+    expect(formatQuantity(2.1000000000000005, 'en-US')).toBe('2.1');
+    expect(formatQuantity(0.1 + 0.2, 'en-US')).toBe('0.3');
+  });
+
+  it('drops trailing zeros on a round quantity', () => {
+    expect(formatQuantity(18, 'en-US')).toBe('18');
+    expect(formatQuantity(120, 'en-US')).toBe('120');
+  });
+
+  it('groups large quantities', () => {
+    expect(formatQuantity(1_200_000, 'en-US')).toBe('1,200,000');
+  });
+
+  it('keeps precision down to the smallest unit Bitcoin has', () => {
+    // A satoshi is 1e-8; anything a crypto position can legitimately hold must survive.
+    expect(formatQuantity(0.00000001, 'en-US')).toBe('0.00000001');
+    expect(formatQuantity(0.12345678, 'en-US')).toBe('0.12345678');
+  });
+
+  it('refuses a non-number rather than printing NaN', () => {
+    expect(formatQuantity(Number.NaN)).toBe('—');
+    expect(formatQuantity(Number.POSITIVE_INFINITY)).toBe('—');
   });
 });
 

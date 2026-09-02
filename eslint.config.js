@@ -7,7 +7,16 @@ import local from './eslint-rules/local.js';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'src-tauri/**', 'src/types/generated/**'],
+    // '.claude/**' covers agent worktrees: each one is a full checkout, and once any of
+    // them has been built its dist/ is linted as if it were source — hundreds of errors in
+    // minified output that no one wrote.
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'src-tauri/**',
+      'src/types/generated/**',
+      '.claude/**',
+    ],
   },
 
   js.configs.recommended,

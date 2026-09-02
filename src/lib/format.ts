@@ -26,6 +26,21 @@ export function formatPrice(value: number, currency = 'USD', locale?: string): s
 
   const abs = Math.abs(value);
   let digits: number;
+  // Zero is not a small number that needs precision — it is nothing. Without this it falls
+  // through to the sub-0.0001 branch, and a realised gain of nothing renders as $0.00000000.
+  //
+  // Formatting a literal 0 rather than `value` also collapses negative zero, which arithmetic
+  // on a closed position produces easily enough and which `Intl` faithfully renders as -$0.00.
+  if (abs === 0) return formatter(
+    `price:${currency}:2:${locale ?? ''}`,
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+  ).format(0);
   if (abs >= 1000) digits = 2;
   else if (abs >= 1) digits = 2;
   else if (abs >= 0.01) digits = 4;
@@ -41,6 +56,26 @@ export function formatPrice(value: number, currency = 'USD', locale?: string): s
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
       }),
+  ).format(value);
+}
+
+/**
+ * A holding size, without the floating-point noise.
+ *
+ * Quantities are sums of what the user typed in, and binary floating point does not hold
+ * decimal fractions exactly: buying 0.25 BTC and then 0.1 more leaves 0.35000000000000003 in
+ * an f64. Rendered raw — which is what the positions table did — that lands in front of
+ * someone as their holding, and it reads as a bug in their money.
+ *
+ * Capped at eight decimals because that is the smallest unit Bitcoin has, so nothing a crypto
+ * position can legitimately hold is lost, and trailing zeros are dropped so a round 18 ETH
+ * does not render as 18.00000000.
+ */
+export function formatQuantity(value: number, locale?: string): string {
+  if (!Number.isFinite(value)) return '—';
+  return formatter(
+    `qty:${locale ?? ''}`,
+    () => new Intl.NumberFormat(locale, { maximumFractionDigits: 8 }),
   ).format(value);
 }
 
