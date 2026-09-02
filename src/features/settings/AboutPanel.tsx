@@ -4,13 +4,26 @@ import { Button } from '@/components/ui/Button';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { ipc } from '@/lib/ipc';
 import { shortcutLabel } from '@/lib/keyboard';
+import { NAV_ITEMS } from '@/components/layout/navItems';
 import styles from './AboutPanel.module.css';
 
+/*
+ * Built from the nav list rather than typed out. The hand-written version went stale as routes
+ * were added — it advertised five `g` letters and `Mod+1–5` long after the rail had nine
+ * entries, so half of what it promised did not work and the numbering pointed at the wrong
+ * screens.
+ */
 const SHORTCUTS: { keys: string; action: string }[] = [
   { keys: shortcutLabel('Mod+K'), action: 'Open the command palette' },
   { keys: shortcutLabel('Mod+R'), action: 'Refresh visible data' },
-  { keys: 'g then p / r / l / d / s', action: 'Go to Pulse, Research, Learn, Desk, Settings' },
-  { keys: `${shortcutLabel('Mod+')}1 – 5`, action: 'Jump to a navigation item' },
+  {
+    keys: `g then ${NAV_ITEMS.map((item) => item.key).join(' / ')}`,
+    action: `Go to ${NAV_ITEMS.map((item) => item.label).join(', ')}`,
+  },
+  {
+    keys: `${shortcutLabel('Mod+')}1 – ${Math.min(NAV_ITEMS.length, 9)}`,
+    action: 'Jump to a navigation item, in rail order',
+  },
   { keys: 'j / k or ↑ ↓', action: 'Move the table selection' },
   { keys: 'Enter', action: 'Open the selected asset' },
   { keys: 'Esc', action: 'Close an overlay' },
@@ -26,6 +39,58 @@ interface Credit {
   role: string;
   links: CreditLink[];
 }
+
+interface Source {
+  name: string;
+  what: string;
+  href: string;
+  note?: string;
+}
+
+/**
+ * The data sources actually in use, named.
+ *
+ * Settings → Data providers lists the adapters that can be switched on and off. The keyless
+ * ones are not in that list, because they need no configuring — which meant the app was
+ * reading from FRED and Alternative.me while naming them nowhere the user could go and look.
+ * A provider badge next to a number tells you the source of that number; this tells you what
+ * the app talks to at all. Kept in step with docs/PROVIDERS.md.
+ */
+const SOURCES: Source[] = [
+  {
+    name: 'CoinGecko',
+    what: 'Crypto prices, market lists and charts',
+    href: 'https://www.coingecko.com/en/api',
+  },
+  {
+    name: 'FRED — Federal Reserve Bank of St. Louis',
+    what: 'Macro series, and the inputs to the stock Fear & Greed index',
+    href: 'https://fred.stlouisfed.org',
+    note: 'US government data in the public domain. No key needed.',
+  },
+  {
+    name: 'Alternative.me',
+    what: 'The crypto Fear & Greed index, reported as published',
+    href: 'https://alternative.me/crypto/fear-and-greed-index/',
+  },
+  {
+    name: 'Finnhub',
+    what: 'Equity quotes and profiles',
+    href: 'https://finnhub.io',
+    note: 'Off until you add your own key.',
+  },
+  {
+    name: 'Alpha Vantage',
+    what: 'Equity charts',
+    href: 'https://www.alphavantage.co',
+    note: 'Off until you add your own key.',
+  },
+  {
+    name: 'Publisher RSS and Atom feeds',
+    what: 'News, from the feed list you control',
+    href: 'https://en.wikipedia.org/wiki/RSS',
+  },
+];
 
 /**
  * Every link here opens in the OS browser rather than the app webview, the same rule every
@@ -68,6 +133,11 @@ export function AboutPanel() {
     <div className={styles.stack}>
       <Panel title="About Brew Terminal">
         <div className={styles.prose}>
+          {/*
+            The full lockup, at a size where the wordmark is actually legible. The nav rail only
+            has room for the mark, so this is the one place the logo appears whole.
+          */}
+          <p className={styles.logo} role="img" aria-label="Brew Terminal" />
           <p className={styles.tagline}>Markets, minus the gatekeeping.</p>
           <p>
             A local-first, open-source market research and learning terminal. It is not a trading
@@ -176,6 +246,23 @@ export function AboutPanel() {
           <p className={styles.mock}>
             This build is running on development fixtures. Every number you see is synthetic.
           </p>
+
+          <ul role="list" className={styles.sources}>
+            {SOURCES.map((source) => (
+              <li key={source.name} className={styles.source}>
+                <a
+                  className={styles.sourceName}
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {source.name}
+                </a>
+                <span className={styles.sourceWhat}>{source.what}</span>
+                {source.note ? <span className={styles.sourceNote}>{source.note}</span> : null}
+              </li>
+            ))}
+          </ul>
         </div>
       </Panel>
 

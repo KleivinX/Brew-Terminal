@@ -1,24 +1,10 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { GO_TO_ROUTES, NUMBER_ROUTES } from '@/components/layout/navItems';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { isPrimaryModifier, isTypingTarget } from '@/lib/keyboard';
 import { usePaletteStore } from '@/stores/paletteStore';
 
-const GO_TO_ROUTES: Record<string, string> = {
-  p: '/pulse',
-  r: '/research',
-  l: '/learn',
-  d: '/desk',
-  s: '/settings',
-};
-
-const NUMBER_ROUTES: Record<string, string> = {
-  '1': '/pulse',
-  '2': '/research',
-  '3': '/learn',
-  '4': '/desk',
-  '5': '/settings',
-};
 
 /** How long a `g` prefix stays armed before it is forgotten. */
 const SEQUENCE_TIMEOUT_MS = 900;

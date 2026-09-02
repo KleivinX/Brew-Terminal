@@ -128,3 +128,67 @@
   font-size: var(--text-sm);
   color: var(--negative);
 }
+
+/*
+ * The full brand lockup, in the one place with room for it at a legible size.
+ *
+ * Two ink variants, picked by the surface underneath — the artwork has a transparent
+ * background, so the light-theme file is near-black and the dark-theme file is white. `soft`
+ * is a dark theme and takes the default; only `light` overrides.
+ */
+.logo {
+  width: 200px;
+  height: 40px;
+  margin: 0 0 var(--space-4);
+  background-image: url('../../assets/brand/wordmark-on-dark.png');
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+}
+
+[data-theme='light'] .logo {
+  background-image: url('../../assets/brand/wordmark-on-light.png');
+}
+
+/* ---- Data sources ---- */
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+  margin: var(--space-5) 0 0;
+  list-style: none;
+}
+
+.source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sourceName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sourceName:hover {
+  text-decoration: underline;
+}
+
+.sourceName:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.sourceWhat {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.sourceNote {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

@@ -12,6 +12,11 @@ Hash history (`#/…`), so every location is a real deep link the palette and no
 | `#/pulse`                               | Pulse dashboard                       | no (initial chunk) | default landing                         |
 | `#/pulse?tab=crypto\|stocks\|watchlist` | Pulse tab state                       | no                 | tab is a search param so it is linkable |
 | `#/research/:assetType/:assetKey`       | Research Lab                          | yes                | e.g. `#/research/crypto/cg:bitcoin`     |
+| `#/portfolio`                           | Portfolio — positions and transactions | yes               |                                         |
+| `#/screener`                            | Screener                              | yes                |                                         |
+| `#/compare`                             | Compare — several assets, correlation, market mood, macro | yes | |
+| `#/notes`                               | Notes workspace                       | yes                | list and editor                         |
+| `#/notes/:noteId`                       | A note, open                          | yes                | the open note is in the URL so it is linkable and survives a reload |
 | `#/learn`                               | Learn home — paths + glossary entry   | yes                |                                         |
 | `#/learn/glossary`                      | Glossary index                        | yes                |                                         |
 | `#/learn/glossary/:termId`              | Glossary entry                        | yes                |                                         |
@@ -82,9 +87,9 @@ broken.
 | ---------------------------- | ------------------------------------------------ |
 | `⌘K` / `Ctrl+K`              | Command palette                                  |
 | `⌘/` / `Ctrl+/`              | Shortcut cheat sheet                             |
-| `g` then `p / r / l / d / s` | Go to Pulse / Research / Learn / Desk / Settings |
+| `g` then a letter            | Go to a nav item: `p` Pulse, `o` Portfolio, `e` Screener, `r` Research, `c` Compare, `n` Notes, `l` Learn, `d` Desk, `s` Settings |
 | `/`                          | Focus the search field on the current screen     |
-| `⌘1..5` / `Ctrl+1..5`        | Jump to nav item                                 |
+| `⌘1..9` / `Ctrl+1..9`        | Jump to the Nth nav item, in rail order          |
 | `j` / `k` or arrows          | Move table selection                             |
 | `Enter`                      | Open selected row in Research Lab                |
 | `w`                          | Toggle selected asset in the default watchlist   |

@@ -21,22 +21,27 @@
 }
 
 /*
- * Placeholder wordmark. The supplied logo PNG is not used until the project owner adds it to
- * src-tauri/icons/ — see TRADEMARK.md and PRODUCT_SCOPE_V0_1.md §12.
+ * The logo mark, cut from the brand lockup in assets/brand/ and shipped in two ink variants.
+ *
+ * The artwork has a transparent background, so it needs the variant that suits the surface
+ * underneath: the dark-theme file is white-and-orange, the light-theme file is near-black and
+ * orange. Getting this backwards makes the B vanish rather than merely look wrong, which is why
+ * they are named for the background they sit on rather than for the theme.
+ *
+ * `soft` is a dark theme, so it takes the default alongside `dark`; only `light` overrides.
  */
 .mark {
-  display: flex;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  color: var(--accent-contrast-text);
-  background: var(--accent);
-  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  background-image: url('../../assets/brand/mark-on-dark.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+[data-theme='light'] .mark {
+  background-image: url('../../assets/brand/mark-on-light.png');
 }
 
 .wordmark {

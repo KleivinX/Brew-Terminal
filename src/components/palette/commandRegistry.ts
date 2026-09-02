@@ -18,6 +18,15 @@ export interface Command {
   /** Extra terms the fuzzy matcher should consider — synonyms, abbreviations. */
   keywords?: string[] | undefined;
   shortcut?: string | undefined;
+  /**
+   * Where a Navigate command goes.
+   *
+   * Declared rather than left implicit inside `run`, so the destination can be checked against
+   * the nav rail without reflecting over a closure — reading a route back out of
+   * `run.toString()` works until a build step renames or inlines something, and then fails in
+   * a way that looks like a missing command rather than a broken test.
+   */
+  route?: string | undefined;
   run: (context: CommandContext) => void;
   available?: ((context: CommandContext) => boolean) | undefined;
 }
@@ -31,93 +40,129 @@ export interface CommandContext {
   aiEnabled: boolean;
 }
 
+/** A command whose whole job is to go somewhere. */
+function goTo(
+  spec: Omit<Command, 'group' | 'run'> & { route: string },
+): Command {
+  return { ...spec, group: 'Navigate', run: (ctx) => ctx.navigate(spec.route) };
+}
+
 export const commands: Command[] = [
   // --- Navigate ---
-  {
+  goTo({
     id: 'nav.pulse',
     title: 'Go to Pulse',
-    group: 'Navigate',
     icon: 'pulse',
     keywords: ['market', 'overview', 'dashboard', 'home'],
     shortcut: 'g p',
-    run: (ctx) => ctx.navigate('/pulse'),
-  },
-  {
+    route: '/pulse',
+  }),
+  goTo({
+    id: 'nav.portfolio',
+    title: 'Go to Portfolio',
+    icon: 'portfolio',
+    keywords: ['holdings', 'positions', 'transactions', 'cost basis', 'pnl'],
+    shortcut: 'g o',
+    route: '/portfolio',
+  }),
+  goTo({
+    id: 'nav.screener',
+    title: 'Go to Screener',
+    icon: 'search',
+    keywords: ['filter', 'scan', 'find', 'criteria'],
+    shortcut: 'g e',
+    route: '/screener',
+  }),
+  goTo({
     id: 'nav.research',
     title: 'Go to Research Lab',
-    group: 'Navigate',
     icon: 'research',
     keywords: ['asset', 'detail', 'deep dive', 'chart'],
     shortcut: 'g r',
-    run: (ctx) => ctx.navigate('/research'),
-  },
-  {
+    route: '/research',
+  }),
+  goTo({
+    id: 'nav.compare',
+    title: 'Go to Compare',
+    icon: 'pulse',
+    keywords: ['correlation', 'macro', 'side by side', 'fear and greed', 'sentiment'],
+    shortcut: 'g c',
+    route: '/compare',
+  }),
+  goTo({
+    id: 'nav.notes',
+    title: 'Go to Notes',
+    icon: 'notes',
+    keywords: ['note', 'write', 'journal', 'thesis', 'diary'],
+    shortcut: 'g n',
+    route: '/notes',
+  }),
+  goTo({
+    id: 'nav.newNote',
+    title: 'Write a new note',
+    icon: 'notes',
+    keywords: ['new note', 'add note', 'jot', 'capture'],
+    route: '/notes',
+  }),
+  goTo({
     id: 'nav.learn',
     title: 'Go to Learn',
-    group: 'Navigate',
     icon: 'learn',
     keywords: ['glossary', 'terms', 'education', 'lessons'],
     shortcut: 'g l',
-    run: (ctx) => ctx.navigate('/learn'),
-  },
-  {
+    route: '/learn',
+  }),
+  goTo({
     id: 'nav.glossary',
     title: 'Open the glossary',
-    group: 'Navigate',
     icon: 'learn',
     keywords: ['define', 'definition', 'term', 'jargon'],
-    run: (ctx) => ctx.navigate('/learn/glossary'),
-  },
-  {
+    route: '/learn/glossary',
+  }),
+  goTo({
     id: 'nav.paths',
     title: 'Browse learning paths',
-    group: 'Navigate',
     icon: 'learn',
     keywords: ['lessons', 'course', 'basics', 'stocks', 'crypto', 'risk'],
-    run: (ctx) => ctx.navigate('/learn'),
-  },
-  {
+    route: '/learn',
+  }),
+  goTo({
     id: 'nav.desk',
     title: 'Go to Model Desk',
-    group: 'Navigate',
     icon: 'desk',
     keywords: ['ai', 'model', 'chat', 'explain'],
     shortcut: 'g d',
-    run: (ctx) => ctx.navigate('/desk'),
-  },
-  {
+    route: '/desk',
+  }),
+  goTo({
     id: 'nav.settings',
     title: 'Open Settings',
-    group: 'Navigate',
     icon: 'settings',
     keywords: ['preferences', 'config', 'providers', 'keys'],
     shortcut: 'g s',
-    run: (ctx) => ctx.navigate('/settings'),
-  },
-  {
+    route: '/settings',
+  }),
+  goTo({
     id: 'nav.providers',
     title: 'Open data providers',
-    group: 'Navigate',
     icon: 'settings',
     keywords: ['api', 'source', 'key', 'credential'],
-    run: (ctx) => ctx.navigate('/settings/providers'),
-  },
-  {
+    route: '/settings/providers',
+  }),
+  goTo({
     id: 'nav.markets',
     title: 'Open market settings',
-    group: 'Navigate',
     icon: 'settings',
     keywords: ['region', 'refresh', 'currency', 'interval'],
-    run: (ctx) => ctx.navigate('/settings/markets'),
-  },
-  {
+    route: '/settings/markets',
+  }),
+  goTo({
     id: 'nav.privacy',
     title: 'Open privacy settings',
-    group: 'Navigate',
     icon: 'settings',
     keywords: ['local', 'cloud', 'data', 'cache'],
-    run: (ctx) => ctx.navigate('/settings/privacy'),
-  },
+    route: '/settings/privacy',
+  }),
 
   // --- Appearance ---
   {

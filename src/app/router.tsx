@@ -21,6 +21,9 @@ const PortfolioRoute = lazy(() =>
 const ResearchRoute = lazy(() =>
   import('@/features/research/ResearchRoute').then((m) => ({ default: m.ResearchRoute })),
 );
+const NotesRoute = lazy(() =>
+  import('@/features/notes/NotesRoute').then((m) => ({ default: m.NotesRoute })),
+);
 const LearnRoute = lazy(() =>
   import('@/features/learn/LearnRoute').then((m) => ({ default: m.LearnRoute })),
 );
@@ -111,6 +114,25 @@ export function AppRoutes() {
             </ErrorBoundary>
           }
         />
+
+        {/*
+          Two paths onto one component: the index, and a note opened by id. The id in the URL is
+          what makes an open note survive a reload and be linkable, rather than living only in
+          component state.
+        */}
+        {['/notes', '/notes/:noteId'].map((path) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ErrorBoundary area="Notes">
+                <Suspense fallback={<RouteFallback label="Loading Notes" />}>
+                  <NotesRoute />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+        ))}
 
         <Route
           path="/settings/*"

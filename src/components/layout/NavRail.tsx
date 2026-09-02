@@ -1,27 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { useUiStore } from '@/stores/uiStore';
+import { NAV_ITEMS } from './navItems';
 import styles from './NavRail.module.css';
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: IconName;
-  /** Shown under the label when the rail is expanded. */
-  hint: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: '/pulse', label: 'Pulse', icon: 'pulse', hint: 'Market overview' },
-  { to: '/portfolio', label: 'Portfolio', icon: 'portfolio', hint: 'What you hold' },
-  { to: '/screener', label: 'Screener', icon: 'search', hint: 'Filter the market' },
-  { to: '/research', label: 'Research Lab', icon: 'research', hint: 'Asset deep dive' },
-  { to: '/compare', label: 'Compare', icon: 'pulse', hint: 'Side by side and macro' },
-  { to: '/learn', label: 'Learn', icon: 'learn', hint: 'Glossary and paths' },
-  { to: '/desk', label: 'Model Desk', icon: 'desk', hint: 'Optional AI' },
-  { to: '/settings', label: 'Settings', icon: 'settings', hint: 'Providers and privacy' },
-];
 
 /**
  * Icon-only by default, expandable to labels. Labels are always in the DOM for screen readers
@@ -36,12 +19,19 @@ export function NavRail() {
       className={[styles.rail, expanded ? styles.expanded : null].filter(Boolean).join(' ')}
       aria-label="Primary"
     >
-      <div className={styles.brand}>
-        <span className={styles.mark} aria-hidden="true">
-          B
-        </span>
+      {/*
+        The mark is the real logo artwork, swapped by theme in CSS. The wordmark stays as text:
+        the rail is 200px wide expanded, and the lockup's wordmark scaled to fit beside the mark
+        would set its letters at about 8px — under the legibility floor. Text renders it crisp at
+        any size and in any theme.
+
+        Labelled once on the group so a screen reader hears "Brew Terminal" rather than the mark
+        and the wordmark as two separate things.
+      */}
+      <div className={styles.brand} role="img" aria-label="Brew Terminal">
+        <span className={styles.mark} aria-hidden="true" />
         {expanded ? (
-          <span className={styles.wordmark}>
+          <span className={styles.wordmark} aria-hidden="true">
             Brew<span className={styles.wordmarkAccent}>Terminal</span>
           </span>
         ) : null}
