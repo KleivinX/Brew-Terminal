@@ -5,6 +5,12 @@ use crate::models::Note;
 use crate::services;
 use crate::state::AppState;
 
+/// Every note, newest first — the notes workspace.
+#[tauri::command]
+pub async fn list_all_notes(state: State<'_, AppState>) -> AppResult<Vec<Note>> {
+    services::notes::list_all_notes(&state).await
+}
+
 #[tauri::command]
 pub async fn list_notes(state: State<'_, AppState>, asset_id: String) -> AppResult<Vec<Note>> {
     services::notes::list_notes(&state, asset_id).await

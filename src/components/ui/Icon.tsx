@@ -27,6 +27,7 @@ export type IconName =
   | 'sidebar'
   | 'command'
   | 'plus'
+  | 'notes'
   | 'trash';
 
 const PATHS: Record<IconName, string> = {
@@ -51,6 +52,10 @@ const PATHS: Record<IconName, string> = {
   sidebar: 'M4 5h16v14H4zM10 5v14',
   command: 'M6 3a3 3 0 1 1 3 3v12a3 3 0 1 1-3-3h12a3 3 0 1 1-3 3V6a3 3 0 1 1 3 3H6z',
   plus: 'M12 5v14M5 12h14',
+  // A page with a folded corner and three ruled lines. Drawn on the same 24px grid and with
+  // the same open-path, stroked construction as the rest of the set — an imported icon from
+  // another family reads as foreign at 18px even when nobody can say why.
+  notes: 'M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4M9 12h6M9 16h6',
   trash: 'M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6',
 };
 

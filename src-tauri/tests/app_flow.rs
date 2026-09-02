@@ -440,6 +440,113 @@ async fn notes_survive_a_restart_and_stay_searchable() {
 }
 
 #[tokio::test]
+async fn the_notes_workspace_shows_notes_with_and_without_an_asset() {
+    // The path the Notes route takes. `list_notes` is scoped to an asset and can never return
+    // a general note, so before `list_all_notes` existed a note attached to nothing could be
+    // written through this same service and then never read back.
+    let dir = tempfile::tempdir().unwrap();
+    let state = boot(dir.path());
+
+    services::watchlist::add_watchlist_item(&state, "wl-default".into(), "crypto:cg:bitcoin".into())
+        .await
+        .unwrap();
+
+    services::notes::upsert_note(
+        &state,
+        None,
+        Some("crypto:cg:bitcoin".into()),
+        "Attached".into(),
+        "about bitcoin".into(),
+    )
+    .await
+    .unwrap();
+    services::notes::upsert_note(
+        &state,
+        None,
+        None,
+        "Free standing".into(),
+        "about nothing in particular".into(),
+    )
+    .await
+    .unwrap();
+
+    let all = services::notes::list_all_notes(&state).await.unwrap();
+    assert_eq!(all.len(), 2);
+    assert!(all.iter().any(|n| n.title == "Free standing" && n.asset_id.is_none()));
+    assert!(all.iter().any(|n| n.title == "Attached" && n.asset_id.is_some()));
+
+    // The per-asset view is unchanged: it still shows only what belongs to that asset.
+    let for_asset = services::notes::list_notes(&state, "crypto:cg:bitcoin".into())
+        .await
+        .unwrap();
+    assert_eq!(for_asset.len(), 1);
+    assert_eq!(for_asset[0].title, "Attached");
+}
+
+#[tokio::test]
+async fn the_notes_workspace_survives_a_restart() {
+    let dir = tempfile::tempdir().unwrap();
+
+    {
+        let state = boot(dir.path());
+        services::notes::upsert_note(&state, None, None, "Kept".into(), "on disk".into())
+            .await
+            .unwrap();
+    }
+
+    let state = boot(dir.path());
+    let all = services::notes::list_all_notes(&state).await.unwrap();
+    assert_eq!(all.len(), 1);
+    assert_eq!(all[0].title, "Kept");
+}
+
+#[tokio::test]
+async fn the_workspace_lists_the_most_recently_edited_note_first() {
+    // The list is what the user scans; an unstable or arbitrary order makes it unusable.
+    let dir = tempfile::tempdir().unwrap();
+    let state = boot(dir.path());
+
+    let first = services::notes::upsert_note(&state, None, None, "First".into(), "a".into())
+        .await
+        .unwrap();
+    services::notes::upsert_note(&state, None, None, "Second".into(), "b".into())
+        .await
+        .unwrap();
+
+    // Editing the older note should move it to the top.
+    services::notes::upsert_note(
+        &state,
+        Some(first.id.clone()),
+        None,
+        "First, edited".into(),
+        "a again".into(),
+    )
+    .await
+    .unwrap();
+
+    let all = services::notes::list_all_notes(&state).await.unwrap();
+    assert_eq!(all.len(), 2);
+    assert_eq!(
+        all[0].title, "First, edited",
+        "editing a note must bring it to the front of the workspace list"
+    );
+}
+
+#[tokio::test]
+async fn a_deleted_note_leaves_the_workspace_list() {
+    let dir = tempfile::tempdir().unwrap();
+    let state = boot(dir.path());
+
+    let note = services::notes::upsert_note(&state, None, None, "Temp".into(), "x".into())
+        .await
+        .unwrap();
+    assert_eq!(services::notes::list_all_notes(&state).await.unwrap().len(), 1);
+
+    services::notes::delete_note(&state, note.id).await.unwrap();
+    assert!(services::notes::list_all_notes(&state).await.unwrap().is_empty());
+}
+
+#[tokio::test]
 async fn editing_a_note_updates_what_search_finds() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());

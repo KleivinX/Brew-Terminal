@@ -123,6 +123,7 @@ export interface IpcContract {
   reset_progress: { args: { pathId: string | null }; result: null };
 
   // --- notes ---
+  list_all_notes: { args: undefined; result: Note[] };
   list_notes: { args: { assetId: string }; result: Note[] };
   upsert_note: {
     args: {

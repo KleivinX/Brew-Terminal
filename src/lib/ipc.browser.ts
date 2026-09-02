@@ -1397,6 +1397,9 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       saveState(state);
       return null;
 
+    case 'list_all_notes':
+      return [...state.notes].sort((a, b) => b.updatedAt - a.updatedAt || b.createdAt - a.createdAt);
+
     case 'list_notes':
       return state.notes
         .filter((note) => note.assetId === args.assetId)

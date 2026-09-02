@@ -3,6 +3,21 @@ use crate::error::AppResult;
 use crate::models::{now_epoch_secs, Note};
 use crate::state::{with_db, AppState};
 
+/// The most notes the workspace will load at once.
+pub const MAX_NOTES: usize = 500;
+
+/// Every note, for the notes workspace.
+///
+/// Distinct from `list_notes`, which is the per-asset view in the research panel. A note with
+/// no asset attached is invisible to that query by construction, so without this one there is
+/// no way to reach a general note after writing it.
+pub async fn list_all_notes(state: &AppState) -> AppResult<Vec<Note>> {
+    with_db(state.pool.clone(), move |conn| {
+        repo_notes::list_all(conn, MAX_NOTES)
+    })
+    .await
+}
+
 pub async fn list_notes(state: &AppState, asset_id: String) -> AppResult<Vec<Note>> {
     with_db(state.pool.clone(), move |conn| {
         repo_notes::list_for_asset(conn, &asset_id)

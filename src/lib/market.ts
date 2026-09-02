@@ -217,8 +217,35 @@ export function useSupportedRanges(assetType: AssetType | null): ChartRange[] {
 }
 
 export const noteKeys = {
+  /** Every note, for the notes workspace. */
+  all: ['notes', 'all'] as const,
   forAsset: (assetId: string) => ['notes', assetId] as const,
+  search: (query: string) => ['notes', 'search', query] as const,
 };
+
+export function useAllNotes() {
+  return useQuery({
+    queryKey: noteKeys.all,
+    queryFn: () => ipc('list_all_notes'),
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * Full-text search across every note.
+ *
+ * Disabled below two characters: a single letter matches most of a corpus, so the result is a
+ * slower way of showing the list that is already on screen.
+ */
+export function useNoteSearch(query: string) {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: noteKeys.search(trimmed),
+    queryFn: () => ipc('search_notes', { query: trimmed, limit: 50 }),
+    enabled: trimmed.length >= 2,
+    staleTime: 30_000,
+  });
+}
 
 export function useNotes(assetId: string | undefined) {
   return useQuery({
@@ -242,6 +269,7 @@ export function useUpsertNote(assetId: string | undefined) {
       bodyMd: string;
     }) => ipc('upsert_note', { noteId, assetId: assetId ?? null, title, bodyMd }),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
       if (assetId) {
         void queryClient.invalidateQueries({ queryKey: noteKeys.forAsset(assetId) });
       }
@@ -254,6 +282,12 @@ export function useDeleteNote(assetId: string | undefined) {
   return useMutation({
     mutationFn: (noteId: string) => ipc('delete_note', { noteId }),
     onSuccess: () => {
+      /*
+       * Every notes query, not only this asset's. A note edited in the research panel also
+       * appears in the notes workspace and in any open search result; invalidating one key
+       * left the others showing a note that no longer exists.
+       */
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
       if (assetId) {
         void queryClient.invalidateQueries({ queryKey: noteKeys.forAsset(assetId) });
       }

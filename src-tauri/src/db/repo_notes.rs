@@ -55,6 +55,23 @@ pub fn list_for_asset(conn: &Connection, asset_id: &str) -> AppResult<Vec<Note>>
     Ok(out)
 }
 
+/// Every note, newest first.
+///
+/// Bounded rather than unbounded. Notes are local and user-authored, so the realistic ceiling
+/// is low — but "select everything" in a list view is the kind of query that is fine until the
+/// one user who pasted a thousand rows in finds out it is not.
+pub fn list_all(conn: &Connection, limit: usize) -> AppResult<Vec<Note>> {
+    let sql = format!("{SELECT} ORDER BY updated_at DESC, created_at DESC LIMIT ?1");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map([limit as i64], row_to_note)?;
+
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row?);
+    }
+    Ok(out)
+}
+
 pub fn get(conn: &Connection, note_id: &str) -> AppResult<Option<Note>> {
     let sql = format!("{SELECT} WHERE id = ?1");
     let note = conn.query_row(&sql, [note_id], row_to_note).optional()?;
@@ -356,6 +373,61 @@ mod tests {
         let notes = list_for_asset(&conn, "crypto:cg:bitcoin").unwrap();
         assert_eq!(notes.len(), 2);
         assert_eq!(notes[0].title, "Newer", "most recently updated first");
+    }
+
+    #[test]
+    fn lists_every_note_regardless_of_what_it_is_attached_to() {
+        // The gap this closes: `list_for_asset` can never return a note with a null asset_id,
+        // so before this a general note could be written and then never found again.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+        conn.execute(
+            "INSERT INTO assets (id, asset_type, symbol, name, currency, created_at, updated_at)
+             VALUES ('crypto:cg:bitcoin','crypto','BTC','Bitcoin','USD',1,1)",
+            [],
+        )
+        .unwrap();
+
+        upsert(&mut conn, None, Some("crypto:cg:bitcoin".into()), "Attached", "a", 1000).unwrap();
+        upsert(&mut conn, None, None, "Free standing", "b", 2000).unwrap();
+
+        let all = list_all(&conn, 100).unwrap();
+        assert_eq!(all.len(), 2);
+        assert_eq!(all[0].title, "Free standing", "most recently updated first");
+        assert!(all.iter().any(|n| n.asset_id.is_none()));
+        assert!(all.iter().any(|n| n.asset_id.is_some()));
+    }
+
+    #[test]
+    fn the_full_list_is_bounded() {
+        let p = setup();
+        let mut conn = p.get().unwrap();
+        for i in 0..10 {
+            upsert(&mut conn, None, None, &format!("n{i}"), "body", 1000 + i).unwrap();
+        }
+        assert_eq!(list_all(&conn, 3).unwrap().len(), 3);
+    }
+
+    #[test]
+    fn the_newest_note_survives_a_tie_on_update_time() {
+        // Two notes saved in the same second is entirely normal — the clock is whole seconds.
+        // Without the secondary sort the order would be whatever SQLite felt like, and the
+        // list would reshuffle between renders.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+        upsert(&mut conn, None, None, "Older", "a", 5000).unwrap();
+        upsert(&mut conn, None, None, "Newer", "b", 5000).unwrap();
+
+        let all = list_all(&conn, 10).unwrap();
+        assert_eq!(all.len(), 2);
+        // Same updated_at, so created_at decides; both were created at 5000 too, leaving
+        // insertion order. The guarantee asserted here is only that it is stable.
+        let again = list_all(&conn, 10).unwrap();
+        assert_eq!(
+            all.iter().map(|n| &n.id).collect::<Vec<_>>(),
+            again.iter().map(|n| &n.id).collect::<Vec<_>>(),
+            "the list order must not change between identical queries"
+        );
     }
 
     #[test]

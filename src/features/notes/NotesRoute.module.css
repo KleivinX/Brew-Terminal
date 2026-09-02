@@ -1,0 +1,262 @@
+/*
+ * Two panes: a list to scan and an editor to type in.
+ *
+ * The list is fixed-width and the editor takes the rest. A proportional split would make the
+ * editor's line length swing with the window, and a note is prose — text that reflows from 40
+ * to 140 characters per line as you resize is harder to read than text that does not.
+ */
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/*
+ * Below 1000px the list moves above the editor. Narrower than 320px the snippets wrap to four
+ * lines each and the list stops being scannable, which is the only thing it is for.
+ */
+@media (width <= 1000px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    /*
+     * Natural heights, with the page scrolling — not fractional rows. A `1fr` row here gave the
+     * editor less height than its own contents needed, and because the pane did not scroll the
+     * save button ended up drawn on top of the help text.
+     */
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
+
+  .list {
+    max-height: 320px;
+  }
+}
+
+.list,
+.editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/*
+ * The editor scrolls inside its own pane rather than spilling out of it. Its content has a
+ * floor — a 200px textarea plus a label, a help line and a row of buttons — so in a short
+ * window there is a height below which something has to give, and scrolling is the only
+ * option that does not overlap.
+ */
+.editor {
+  overflow-y: auto;
+}
+
+.listHeader {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.listBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-4);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.item:hover {
+  background: var(--bg-hover);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+/*
+ * The selected row carries a left bar as well as a background tint. The tint alone is a colour
+ * difference of a few percent — real, but not something to rely on as the only signal of which
+ * note is open.
+ */
+.itemActive {
+  background: var(--bg-active);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.itemTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemSnippet {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.itemMeta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.tag {
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-full);
+}
+
+/* ---- Editor ---- */
+
+.form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/*
+ * Grows into spare height, but never shrinks below what it contains.
+ *
+ * `min-height: 0` here — the usual incantation for a scrollable flex child — was the bug: it
+ * let this box shrink to less than the 200px textarea plus its label and help line, and the
+ * overflow was drawn straight over the buttons underneath. Keeping the default `min-height:
+ * auto` means the content sets the floor, and `.editor` scrolls when the window is shorter
+ * than that floor.
+ */
+.bodyField {
+  flex: 1 1 auto;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.textarea {
+  flex: 1;
+  min-height: 200px;
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-primary);
+  resize: none;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.textarea:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -1px;
+}
+
+.help {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.overLimit {
+  font-variant-numeric: tabular-nums;
+  color: var(--negative);
+  white-space: nowrap;
+}
+
+.timestamps {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--negative);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.delete {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-left: auto;
+  color: var(--negative);
+}
+
+.saveState {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
