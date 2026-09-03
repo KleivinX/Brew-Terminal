@@ -29,6 +29,7 @@ If you think one of these should change, open an issue and argue the case. Do no
 
 ```bash
 npm install
+git config core.hooksPath .githooks   # enables the formatting pre-commit hook
 npm run tauri:dev
 ```
 
@@ -38,13 +39,36 @@ need a Rust rebuild.
 ## Before you push
 
 ```bash
-npm run check                  # format, lint, typecheck, frontend tests
-cd src-tauri && cargo test     # Rust tests
-cd src-tauri && cargo clippy --all-targets -- -D warnings
-cd src-tauri && cargo fmt --check
+npm run verify
 ```
 
+That runs every gate CI runs, in CI's order, across both languages: prettier, eslint, tsc, the
+Learn content check, the frontend tests, the production build, the bundle budget, `cargo fmt`,
+clippy, the Rust tests, and the generated-type drift check. It prints a pass/fail summary and
+exits non-zero if CI would be red, so there is one command to remember rather than four.
+
+```bash
+npm run verify:fast            # skips the two test suites and the build
+node scripts/verify.mjs --frontend   # skip Rust entirely
+node scripts/verify.mjs --rust       # only Rust
+```
+
+`npm run check` still exists and is the frontend-only subset.
+
 CI runs all of this on macOS, Windows and Linux.
+
+### The formatting hook
+
+`.githooks/pre-commit` refuses a commit whose staged files prettier or `cargo fmt` would
+reject. Formatting is cheap to fix and, historically, the thing that actually broke the build —
+so it is checked at commit time, and everything slower is left to `npm run verify`. Enable it
+once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Skip it for a single commit with `git commit --no-verify`.
 
 ## Standards
 

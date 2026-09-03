@@ -10,13 +10,7 @@ export default tseslint.config(
     // '.claude/**' covers agent worktrees: each one is a full checkout, and once any of
     // them has been built its dist/ is linted as if it were source — hundreds of errors in
     // minified output that no one wrote.
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'src-tauri/**',
-      'src/types/generated/**',
-      '.claude/**',
-    ],
+    ignores: ['dist/**', 'node_modules/**', 'src-tauri/**', 'src/types/generated/**', '.claude/**'],
   },
 
   js.configs.recommended,
@@ -104,9 +98,10 @@ export default tseslint.config(
     },
   },
 
-  // Config files run in Node.
+  // Config files, the local lint rules and the repo scripts all run in Node, not in the
+  // webview — so they get Node's globals and are exempt from the browser-facing rules above.
   {
-    files: ['*.config.{js,ts}', 'eslint-rules/**/*.js', 'vitest.setup.ts'],
+    files: ['*.config.{js,ts}', 'eslint-rules/**/*.js', 'vitest.setup.ts', 'scripts/**/*.{js,mjs}'],
     languageOptions: { globals: { ...globals.node } },
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },

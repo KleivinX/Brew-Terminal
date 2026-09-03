@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Blocks a commit whose formatting CI would reject.
+#
+# Formatting is the one gate that is both trivially fixable and, historically, the one that
+# actually broke the build: v0.2.1..HEAD went red on GitHub across all four jobs purely because
+# `prettier --check` and `cargo fmt --check` had never been run locally. Every other gate here
+# is either slow (the two test suites, the Tauri build) or already hard to get wrong, so this
+# hook deliberately checks formatting only — it has to stay fast enough that nobody is tempted
+# to disable it.
+#
+# For everything else, run `npm run verify` before pushing.
+#
+# Skip once with:  git commit --no-verify
+# Uninstall with:  git config --unset core.hooksPath
+
+set -e
+
+fail=0
+
+# Only what is staged, and only files that still exist (a rename or delete has nothing to
+# format). -z/xargs -0 so paths with spaces survive — the repo directory has one.
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# A fresh clone can reach this hook before `npm install` has run. Without this probe the
+# missing binary would exit non-zero and be reported as a formatting failure, which is both
+# wrong and impossible to act on.
+if ! npx --no-install prettier --version >/dev/null 2>&1; then
+  echo "• Prettier not installed yet — skipping the format check. Run: npm install"
+  staged=""
+fi
+
+if [ -n "$staged" ]; then
+  if ! printf '%s\n' "$staged" | tr '\n' '\0' \
+    | xargs -0 npx --no-install prettier --check --ignore-unknown >/dev/null 2>&1; then
+    echo "✖ Prettier: staged files are not formatted."
+    printf '%s\n' "$staged" | tr '\n' '\0' \
+      | xargs -0 npx --no-install prettier --list-different --ignore-unknown 2>/dev/null \
+      | sed 's/^/    /'
+    echo "  fix: npx prettier --write <the files above>"
+    fail=1
+  fi
+fi
+
+# Cheap: rustfmt parses, it does not compile. Repo-wide rather than per-file because rustfmt
+# resolves module trees, and checking one file in isolation misreports.
+if [ -d src-tauri ] && command -v cargo >/dev/null 2>&1; then
+  if ! cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check >/dev/null 2>&1; then
+    echo "✖ cargo fmt: Rust sources are not formatted."
+    echo "  fix: cargo fmt --manifest-path src-tauri/Cargo.toml --all"
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "Commit blocked — CI checks formatting before anything else."
+  exit 1
+fi
