@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
 import { LearnRoute } from '@/features/learn/LearnRoute';
 import { GlossaryIndex } from '@/features/learn/GlossaryIndex';
-import { ExplainWithModel } from '@/features/learn/ExplainWithModel';
+import { ExplainWithModel } from '@/components/ai/ExplainWithModel';
 import { searchGlossary, glossary, learningPaths } from '@/features/learn/content';
 import { renderWithProviders } from '../setup/renderWithProviders';
 import { findAccessibilityViolations, describeViolations } from '../setup/axe';
@@ -191,7 +191,13 @@ describe('Learn — Explain this', () => {
      * first — itemised, not summarised.
      */
     const user = userEvent.setup();
-    renderWithProviders(<ExplainWithModel term="Spread" short="The gap between bid and ask." />);
+    renderWithProviders(
+      <ExplainWithModel
+        kind="glossary-term"
+        label="Spread"
+        text="Spread: The gap between bid and ask."
+      />,
+    );
 
     await user.click(screen.getByRole('button', { name: /explain this/i }));
 
@@ -201,7 +207,13 @@ describe('Learn — Explain this', () => {
 
   it('says the model is off rather than pretending to send', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ExplainWithModel term="Spread" short="The gap between bid and ask." />);
+    renderWithProviders(
+      <ExplainWithModel
+        kind="glossary-term"
+        label="Spread"
+        text="Spread: The gap between bid and ask."
+      />,
+    );
 
     await user.click(screen.getByRole('button', { name: /explain this/i }));
 
@@ -214,7 +226,9 @@ describe('Learn — Explain this', () => {
 
   it('carries the standing disclaimer', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ExplainWithModel term="Spread" short="The gap." />);
+    renderWithProviders(
+      <ExplainWithModel kind="glossary-term" label="Spread" text="Spread: The gap." />,
+    );
 
     await user.click(screen.getByRole('button', { name: /explain this/i }));
     await waitFor(() => expect(screen.getByText(DISCLAIMER_TEXT)).toBeInTheDocument());

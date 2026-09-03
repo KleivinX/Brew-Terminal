@@ -3,7 +3,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { GLOSSARY_CATEGORY_LABELS, glossaryEntry } from './content';
-import { ExplainWithModel } from './ExplainWithModel';
+import { ExplainWithModel } from '@/components/ai/ExplainWithModel';
 import styles from './GlossaryEntryView.module.css';
 
 interface GlossaryEntryViewProps {
@@ -33,7 +33,13 @@ export function GlossaryEntryView({ termId }: GlossaryEntryViewProps) {
     <Panel
       title={entry.term}
       meta={<span className={styles.category}>{GLOSSARY_CATEGORY_LABELS[entry.category]}</span>}
-      actions={<ExplainWithModel term={entry.term} short={entry.short} />}
+      actions={
+        <ExplainWithModel
+          kind="glossary-term"
+          label={entry.term}
+          text={`${entry.term}: ${entry.short}`}
+        />
+      }
     >
       <article className={styles.body}>
         <p className={styles.short}>{entry.short}</p>

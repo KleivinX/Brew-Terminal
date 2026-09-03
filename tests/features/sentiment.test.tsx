@@ -262,3 +262,66 @@ describe('valueDaysAgo', () => {
     expect(valueDaysAgo(index([], 0), 30)).toBeNull();
   });
 });
+
+describe('asking a model about a reading', () => {
+  async function enableAi(): Promise<void> {
+    const { ipc: real } = await import('@/lib/ipc');
+    await real('set_preference', { key: 'aiEnabled', value: JSON.stringify(true) });
+  }
+
+  it('offers to hand the reading to the Model Desk', async () => {
+    renderWithProviders(<SentimentPanel />);
+    await panel();
+
+    // One per card: the crypto reading and the computed equity one.
+    expect(screen.getAllByRole('button', { name: 'Ask about this' })).toHaveLength(2);
+  });
+
+  /**
+   * Model Desk is off by default, and the honest behaviour is to say so rather than offer a
+   * button that silently does nothing — while still showing exactly what *would* be sent.
+   */
+  it('says the desk is switched off, and still shows the payload', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SentimentPanel />);
+    await panel();
+
+    await user.click(within(card('Stocks')).getByRole('button', { name: 'Ask about this' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/Model Desk is switched off/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Market volatility: 68\/100/)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Set up a model' })).toBeInTheDocument();
+  });
+
+  /**
+   * AI_POLICY.md §2: nothing is sent without a direct action, and the exact text that would
+   * leave the device is shown first — itemised, not summarised. So the button opens a consent
+   * dialog showing the payload, never a request.
+   */
+  it('shows the exact text before anything could leave the device', async () => {
+    const user = userEvent.setup();
+    await enableAi();
+    renderWithProviders(<SentimentPanel />, { resetHarness: false });
+    await panel();
+
+    await user.click(within(card('Stocks')).getByRole('button', { name: 'Ask about this' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/everything that would be sent/)).toBeInTheDocument();
+    // The components travel with the reading — that is the point of attaching it at all.
+    expect(within(dialog).getByText(/Market volatility: 68\/100/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/a higher reading means more fear/)).toBeInTheDocument();
+  });
+
+  it('names what stays behind, specifically', async () => {
+    const user = userEvent.setup();
+    await enableAi();
+    renderWithProviders(<SentimentPanel />, { resetHarness: false });
+    await panel();
+
+    await user.click(within(card('Crypto')).getByRole('button', { name: 'Ask about this' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/no watchlist, no portfolio, no notes/)).toBeInTheDocument();
+  });
+});

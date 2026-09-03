@@ -40,11 +40,35 @@ is who installed it.
 ## 2. Privacy boundary
 
 1. **Nothing is sent without a direct user action.** No background summarization, no prefetch, no auto-context, no "we noticed you opened BTC" calls.
-2. **Context attachment is explicit and itemized.** The pre-send panel lists each item — glossary term, note title, article excerpt — with a character count, and the user confirms. Attaching a note requires selecting that note by hand.
+2. **Context attachment is explicit and itemized.** The pre-send panel lists each item — glossary term, note title, article excerpt, asset snapshot, sentiment reading — with a character count, and the user confirms. Attaching a note requires selecting that note by hand.
 3. **Cloud sends show a warning before the first send of a session**, naming the provider and what will be transmitted.
 4. **Every send is logged locally** in `ai_outbound_log`: provider, mode, character count, kinds of context. Never prompt text. Settings → Privacy renders this history and can clear it.
 5. **Keys never reach the webview.** The request is assembled and sent in Rust; the frontend passes messages, not credentials.
 6. **History is local only**, with per-conversation and clear-all deletion, and is excluded from `.brewprofile` exports in v0.1.
+
+### 2a. What can be attached, and what each attachment contains
+
+Every producer routes through the same consent dialog (`components/ai/ExplainWithModel`), which
+shows the exact text before it moves and names what is staying behind. The summarisers are pure
+functions in `src/lib/aiContext.ts`, tested directly, so the payload can be read rather than
+inferred from a component tree.
+
+| Kind                | Produced by              | Contains                                                                                                                                                                                           |
+| ------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `glossary-term`     | Learn → a glossary entry | The term and its short definition                                                                                                                                                                  |
+| `asset-snapshot`    | Research Lab             | Symbol, name, type, price, 24h/7d change, market cap, volume — **and the provider and retrieval time**                                                                                             |
+| `sentiment-reading` | Compare → Market mood    | The index value and band, whether it was published or computed here, every component with its raw reading, method and source series, and the methodology — **and the provider and retrieval time** |
+
+Two rules the summarisers follow, both enforced by tests:
+
+- **No figure travels without its provenance.** A price with no provider and no timestamp
+  invites a model to treat it as current and authoritative, which is the failure this whole app
+  is built to avoid. Staleness and degraded state travel with it too.
+- **No series data.** An asset snapshot carries the figures already on screen, not the chart.
+  A model handed several hundred price points will describe a shape and call it a trend.
+
+A summariser reaching for data the user did not already have in front of them would break rule
+1 above regardless of what the dialog then displayed, so none of them does.
 
 ---
 

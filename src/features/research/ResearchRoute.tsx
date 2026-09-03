@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { ChangeValue } from '@/components/data/ChangeValue';
 import { PriceValue } from '@/components/data/PriceValue';
 import { ProviderBadge } from '@/components/status/ProviderBadge';
+import { ExplainWithModel } from '@/components/ai/ExplainWithModel';
 import { StatusPill } from '@/components/status/StatusPill';
 import { StaleBanner } from '@/components/status/StaleBanner';
 import { EmptyState } from '@/components/status/EmptyState';
@@ -18,6 +19,7 @@ import { formatCompact } from '@/lib/format';
 import { derivePanelStatus } from '@/lib/freshness';
 import { ipc } from '@/lib/ipc';
 import { useChart, useQuotes, useSupportedRanges } from '@/lib/market';
+import { describeQuote } from '@/lib/aiContext';
 import { usePaletteStore } from '@/stores/paletteStore';
 import { RangeSelector } from './RangeSelector';
 import { NotesPanel } from './NotesPanel';
@@ -127,6 +129,22 @@ export function ResearchRoute() {
       <WorkspaceHeader
         title={`${asset.symbol} · ${asset.name}`}
         subtitle={asset.exchange ? `${asset.assetType} · ${asset.exchange}` : asset.assetType}
+        actions={
+          /*
+            Only offered once there is a quote to describe. Attaching an asset with no figures
+            would hand a model a name and invite it to fill in the rest from memory, which is
+            the one thing this app has no interest in doing.
+          */
+          quote && quoteQuery.data ? (
+            <ExplainWithModel
+              kind="asset-snapshot"
+              label={`${quote.symbol} snapshot`}
+              text={describeQuote(quote, quoteQuery.data.meta)}
+              buttonLabel="Ask about this"
+              excludes="no watchlist, no portfolio, no notes, no price history"
+            />
+          ) : null
+        }
       />
 
       <div className={styles.body}>

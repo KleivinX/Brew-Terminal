@@ -8,8 +8,16 @@ import type { AiContextItem } from '@/types/domain';
 import styles from './ExplainWithModel.module.css';
 
 interface ExplainWithModelProps {
-  term: string;
-  short: string;
+  /** Categorises the attachment in the pre-send panel and the outbound log. */
+  kind: string;
+  /** Names it in both panels and in the log. Never the content itself. */
+  label: string;
+  /** The exact text that would leave the device. Shown verbatim before it does. */
+  text: string;
+  /** Button wording, where "Explain this" is not what the reader is asking for. */
+  buttonLabel?: string | undefined;
+  /** Names what stays behind, so the assurance is specific rather than generic. */
+  excludes?: string | undefined;
 }
 
 /**
@@ -19,26 +27,37 @@ interface ExplainWithModelProps {
  * the exact text that would leave the device is shown before it does — itemised, not
  * summarised. So this is a consent dialog rather than a button that fires a request.
  *
- * With a model configured, confirming hands the term to the Model Desk as an attached context
+ * With a model configured, confirming hands the text to the Model Desk as an attached context
  * item — which puts it in the desk's own pre-send panel, itemised again, before anything moves.
  * Two confirmations for one send is deliberate: this dialog confirms *what* is attached, the
  * desk's confirms *that it is being sent*, and the user types their actual question in between.
  *
  * Without one configured this still routes there, and that route explains it is switched off —
  * the honest behaviour rather than a button that silently does nothing.
+ *
+ * It lives in `components/` rather than in a feature slice because several features now hand
+ * things to the desk, and feature slices may not import each other. Callers pass the finished
+ * text: this component's job is consent, not summarising, and a component that both built the
+ * payload and asked permission for it would be the wrong place to check either.
  */
-export function ExplainWithModel({ term, short }: ExplainWithModelProps) {
+export function ExplainWithModel({
+  kind,
+  label,
+  text,
+  buttonLabel = 'Explain this',
+  excludes = 'no watchlist, no notes, no browsing',
+}: ExplainWithModelProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: preferences } = usePreferences();
 
   const aiEnabled = preferences?.aiEnabled ?? false;
-  const contextText = `${term}: ${short}`;
+  const contextText = text;
 
   return (
     <>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-        Explain this
+        {buttonLabel}
       </Button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Explain this with a model" size="md">
@@ -46,8 +65,9 @@ export function ExplainWithModel({ term, short }: ExplainWithModelProps) {
           {aiEnabled ? (
             <>
               <p className={styles.intro}>
-                This is everything that would be sent. Nothing else from Brew Terminal — no
-                watchlist, no notes, no browsing — goes with it.
+                {/* One string, not interleaved nodes: a sentence split across text nodes is
+                    one a screen reader and a test both have to reassemble. */}
+                {`This is everything that would be sent. Nothing else from Brew Terminal — ${excludes} — goes with it.`}
               </p>
               <pre className={styles.payload}>{contextText}</pre>
               <p className={styles.count}>{contextText.length} characters</p>
@@ -81,9 +101,7 @@ export function ExplainWithModel({ term, short }: ExplainWithModelProps) {
                 void navigate('/desk', {
                   state: aiEnabled
                     ? {
-                        context: [
-                          { kind: 'glossary-term', label: term, text: contextText },
-                        ] satisfies AiContextItem[],
+                        context: [{ kind, label, text: contextText }] satisfies AiContextItem[],
                       }
                     : null,
                 });

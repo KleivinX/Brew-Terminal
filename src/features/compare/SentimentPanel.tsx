@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Panel } from '@/components/ui/Panel';
 import { ProviderBadge } from '@/components/status/ProviderBadge';
+import { ExplainWithModel } from '@/components/ai/ExplainWithModel';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { ipc } from '@/lib/ipc';
 import { formatAbsoluteTime } from '@/lib/format';
+import { describeSentiment } from '@/lib/aiContext';
 import type { Envelope } from '@/types/envelope';
 import type { SentimentBand, SentimentComponent, SentimentIndex } from '@/types/domain';
 import styles from './SentimentPanel.module.css';
@@ -191,6 +193,19 @@ function IndexCard({ heading, envelope, error, onRetry }: IndexCardProps) {
       {envelope ? (
         <div className={styles.badge}>
           <ProviderBadge meta={envelope.meta} />
+          {/*
+            The components are what makes this worth asking about. A model handed "68" can only
+            paraphrase it; handed the four inputs and their arithmetic it has something to
+            explain — which is the same reason the panel shows them rather than the composite
+            alone.
+          */}
+          <ExplainWithModel
+            kind="sentiment-reading"
+            label={`${heading} Fear & Greed: ${index.value}`}
+            text={describeSentiment(index, envelope.meta)}
+            buttonLabel="Ask about this"
+            excludes="no watchlist, no portfolio, no notes"
+          />
         </div>
       ) : null}
     </article>
