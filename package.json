@@ -1,9 +1,9 @@
 {
   "name": "brew-terminal",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Local-first, open-source market research and learning terminal. Educational information only — not financial advice.",
+  "description": "Local-first, open-source market research and learning terminal. Educational information only \u2014 not financial advice.",
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": ">=20.19"

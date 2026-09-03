@@ -1,6 +1,6 @@
 [package]
 name = "brew-terminal"
-version = "0.2.1"
+version = "0.3.0"
 description = "Local-first market research and learning terminal"
 authors = ["Brew Terminal contributors"]
 license = "AGPL-3.0-or-later"

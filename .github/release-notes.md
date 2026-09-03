@@ -2,61 +2,68 @@ Local-first market research and learning terminal for crypto and stocks.
 
 **A research tool, not an adviser. Your decisions, and their consequences, are your own.**
 
-## What is new since v0.2.0
+## What is new since v0.2.1
 
-A patch release. No new features — this fixes rendering faults that shipped in v0.2.0.
+Two new screens, one new way to use the optional model, and a provider that turned out to have
+been broken since v0.2.0.
 
-Five CSS custom properties were read by the stylesheets but defined nowhere. CSS discards such
-a declaration rather than reporting it, so the styles were simply absent and the result looked
-like a deliberately flat design rather than a bug.
+### Market mood — two Fear & Greed indices
 
-- **The screener's column headers are opaque again.** Its sticky header had no background, so
-  result rows scrolled straight through the column labels. This was the only one of the five
-  that broke behaviour rather than appearance.
-- **Raised surfaces are raised.** Thirteen places across the portfolio, screener, compare,
-  backtest and settings panels rendered transparent instead of on their own background: the
-  portfolio totals and allocation bars, the correlation matrix, the compare chips, the dropdown
-  controls, and the inline notices throughout settings.
-- **Badge weights.** Four badges inherited their container's medium weight instead of resetting
-  to regular.
+The crypto one is a **published figure**, fetched from Alternative.me and reported as it stands.
+It describes Bitcoin, which the rest of the market usually but does not always follow, and the
+card says so.
 
-Checked in all three themes. Two further undefined properties carried fallbacks, so they
-rendered correctly while naming nothing any theme could override; they now use real tokens.
+The equity one is **computed here**, from five public Federal Reserve series, because no free and
+documented equity index exists to report. Four components — market momentum, market volatility,
+safe-haven demand and junk bond demand — each scored by where today's reading falls among the
+last 252 sessions, combined as an equal-weighted mean.
 
-A test parses the stylesheets and fails the build on any `var()` naming a property nothing
-defines, and on any token present in one theme but missing from another. Both faults are
-invisible at runtime by construction, which is how they reached a release.
+Every component is shown with its raw reading, the arithmetic that produced it, the source series
+and whether it was inverted. The composite can be recomputed by hand from the same public data.
+The rule this follows is not "no scores" but **no score whose inputs are hidden** — the reasoning
+is recorded in ADR-037.
 
-## Downloads
+### Notes — a workspace for what you wrote down
 
-| Platform                        | File                          |
-| ------------------------------- | ----------------------------- |
-| macOS (Intel and Apple Silicon) | `.dmg`                        |
-| Windows                         | `.msi` or `-setup.exe`        |
-| Linux                           | `.AppImage`, `.deb` or `.rpm` |
+Notes existed before, but only attached to an asset, which meant a note about nothing in
+particular was unreachable the moment it was written. There is now a route for all of them: a
+list to scan, an editor to type in, full-text search across titles and bodies, and the open note
+in the URL so it survives a reload and can be linked to.
 
-## Opening it the first time
+Notes stay on this computer. Attaching one to a model prompt remains a separate, explicit action.
 
-The app is **not code-signed**, so both macOS and Windows will warn you.
+### Ask a model about what you are looking at
 
-- **macOS** — right-click the app and choose **Open**, then **Open** again. Double-clicking will not offer the option.
-- **Windows** — SmartScreen shows "Windows protected your PC". Click **More info** → **Run anyway**.
-- **Linux** — `chmod +x` the AppImage before running it.
+The Model Desk could previously only be handed a glossary term. The Research Lab and the market
+mood panel can now hand it what is on screen — an asset snapshot, or a sentiment reading with all
+four of its components.
 
-Signing needs a paid Apple Developer ID and a Windows code-signing certificate. Until those exist the warnings are expected and are not a sign anything is wrong.
+The consent flow is unchanged: one dialog showing the exact text before it moves, the desk's own
+pre-send panel itemising it again, and a local log of what was sent. Two rules the attachments
+follow, both enforced by tests — **no figure travels without its provider and its age**, and no
+price history goes with it.
 
-## One promise that has an exception
+Off by default, like the rest of the desk.
 
-Everywhere else the app makes no request you did not cause. **Price alerts poll in the background**, because an alert that only fires while you are looking at the screen is not an alert. It is off by default, makes no request at all until you both switch it on and arm an alert, and fetches only the assets those alerts name.
+### Fixes
 
-## Known limits
+- **FRED was unreachable, and had been since v0.2.0.** It sits behind a filter that drops the
+  connection for a bare `Name/Version` user agent — no status code, no error, just a hang until
+  the timeout. Every macro series and every input to the equity sentiment index was failing this
+  way. The app now identifies itself with a contact URL, which is the convention such filters
+  ask for.
+- **Positions no longer show floating-point noise.** Buying 0.25 of something and then 0.1 more
+  left `0.35000000000000003` in the quantity column. A realised gain of nothing rendered as
+  `$0.00000000`.
+- **The real logo** replaces the placeholder letter in the sidebar.
+- **Navigation matches the sidebar again.** `Cmd/Ctrl+1`–`9` had drifted to the five routes that
+  existed when the shortcut map was written, and Portfolio, Screener and Compare were reachable
+  only by mouse — no shortcut and no command palette entry.
+- **Compare stopped clipping its panels.** Its layout let them shrink below their own content
+  instead of scrolling, silently cutting off the bottom of each one.
 
-- **No live community provider.** The pipeline is complete and opt-in; only a fixture adapter ships, because no discussion platform's terms have been read.
-- **Alpha Vantage's free tier is 25 requests a day.** That is why it is used for charts only, never quotes. Cached history makes it go further than it sounds.
-- **No hosted AI request has been made with a real key.** A local model has been run end to end and answered; the cloud adapter shares most of that path but has never made a live call.
-- **The portfolio has not been reconciled against a broker statement.** The arithmetic is tested, including eight-decimal crypto quantities; agreeing with your exchange's own figures is a different claim and is not made.
-- **Guardrails reduce advice-shaped output; they do not eliminate it.** You choose the model, and your model may ignore its instructions.
+### Under the hood
 
-New to Brew Terminal? The [v0.2.0 notes](https://github.com/KleivinX/Brew-Terminal/releases/tag/v0.2.0) list what the app actually does.
-
-Full detail: [`docs/PRODUCT_SCOPE_V0_1.md`](docs/PRODUCT_SCOPE_V0_1.md), [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`docs/PROVIDERS.md`](docs/PROVIDERS.md).
+- Screenshots in the README.
+- One command (`npm run check`) that runs what CI runs, plus a pre-commit hook that catches
+  formatting before the build does.
