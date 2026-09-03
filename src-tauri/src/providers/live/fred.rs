@@ -352,7 +352,11 @@ mod tests {
         // A weekly series in a daily composite makes the index step on whichever weekday that
         // series updates, which reads as a market event and is not one.
         for input in INDEX_INPUTS {
-            assert_eq!(input.frequency, "Daily", "{} is not a daily series", input.id);
+            assert_eq!(
+                input.frequency, "Daily",
+                "{} is not a daily series",
+                input.id
+            );
         }
     }
 

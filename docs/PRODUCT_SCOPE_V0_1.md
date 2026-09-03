@@ -9,14 +9,14 @@
 > Four items in the §3 non-goals list have since shipped, each as a deliberate decision rather
 > than by drift:
 >
-> | Was a v0.1 non-goal                          | Now                                                              |
-> | -------------------------------------------- | ---------------------------------------------------------------- |
+> | Was a v0.1 non-goal                          | Now                                                               |
+> | -------------------------------------------- | ----------------------------------------------------------------- |
 > | Portfolio accounting, cost basis, P&L        | Shipped — FIFO and average cost, local only, no broker connection |
 > | Price alerts                                 | Shipped — local, polled, no notification-driven prompts           |
 > | Technical indicators beyond price (`no RSI`) | Shipped — RSI and moving averages in the research chart           |
 > | Sentiment classification                     | Shipped — the two Fear & Greed indices, see ADR-037               |
 >
-> The positioning above is unchanged, and so is everything in §3 that has *not* shipped: no
+> The positioning above is unchanged, and so is everything in §3 that has _not_ shipped: no
 > order placement, no accounts or telemetry, no buy/sell/hold recommendations, no price targets,
 > no scam scores or coin-legitimacy verdicts. What moved was the line on what counts as
 > research, not the line on giving advice.

@@ -5,7 +5,6 @@ import { useUiStore } from '@/stores/uiStore';
 import { NAV_ITEMS } from './navItems';
 import styles from './NavRail.module.css';
 
-
 /**
  * Icon-only by default, expandable to labels. Labels are always in the DOM for screen readers
  * — collapsing is a visual affordance, not an accessibility trade.

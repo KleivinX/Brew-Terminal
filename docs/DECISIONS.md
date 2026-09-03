@@ -670,8 +670,8 @@ the app has no basis for one". `PRODUCT_SCOPE_V0_1.md` §3 lists "sentiment clas
 among the explicit non-goals. A reader who meets those first and then finds a 0–100 gauge is
 entitled to ask what happened.
 
-**Where the line actually falls.** Those three are about the app passing judgement on *a thing
-the user might buy*, or on *what a group of people believe*:
+**Where the line actually falls.** Those three are about the app passing judgement on _a thing
+the user might buy_, or on _what a group of people believe_:
 
 - A risk checklist that tallies ticks scores **an asset's legitimacy**.
 - Ranking community posts scores **whose opinion matters**.

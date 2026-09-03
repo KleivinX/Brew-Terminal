@@ -6,31 +6,31 @@
 
 Hash history (`#/…`), so every location is a real deep link the palette and notes can point at.
 
-| Route                                   | Screen                                | Lazy               | Notes                                   |
-| --------------------------------------- | ------------------------------------- | ------------------ | --------------------------------------- |
-| `#/`                                    | → redirect to `#/pulse`               | —                  |                                         |
-| `#/pulse`                               | Pulse dashboard                       | no (initial chunk) | default landing                         |
-| `#/pulse?tab=crypto\|stocks\|watchlist` | Pulse tab state                       | no                 | tab is a search param so it is linkable |
-| `#/research/:assetType/:assetKey`       | Research Lab                          | yes                | e.g. `#/research/crypto/cg:bitcoin`     |
-| `#/portfolio`                           | Portfolio — positions and transactions | yes               |                                         |
-| `#/screener`                            | Screener                              | yes                |                                         |
-| `#/compare`                             | Compare — several assets, correlation, market mood, macro | yes | |
-| `#/notes`                               | Notes workspace                       | yes                | list and editor                         |
-| `#/notes/:noteId`                       | A note, open                          | yes                | the open note is in the URL so it is linkable and survives a reload |
-| `#/learn`                               | Learn home — paths + glossary entry   | yes                |                                         |
-| `#/learn/glossary`                      | Glossary index                        | yes                |                                         |
-| `#/learn/glossary/:termId`              | Glossary entry                        | yes                |                                         |
-| `#/learn/path/:pathId`                  | Learning path overview                | yes                |                                         |
-| `#/learn/path/:pathId/:lessonId`        | Lesson                                | yes                |                                         |
-| `#/desk`                                | Model Desk                            | yes                | empty/not-configured state until set up |
-| `#/desk/:conversationId`                | A conversation                        | yes                |                                         |
-| `#/settings`                            | Settings → Appearance                 | yes                |                                         |
-| `#/settings/providers`                  | Data providers                        | yes                |                                         |
-| `#/settings/ai`                         | AI providers                          | yes                |                                         |
-| `#/settings/privacy`                    | Privacy, cache, outbound log          | yes                |                                         |
-| `#/settings/profile`                    | Encrypted export/import               | yes                |                                         |
-| `#/settings/about`                      | About, licence, attributions          | yes                |                                         |
-| `*`                                     | Not-found, with a route back to Pulse | no                 |                                         |
+| Route                                   | Screen                                                    | Lazy               | Notes                                                               |
+| --------------------------------------- | --------------------------------------------------------- | ------------------ | ------------------------------------------------------------------- |
+| `#/`                                    | → redirect to `#/pulse`                                   | —                  |                                                                     |
+| `#/pulse`                               | Pulse dashboard                                           | no (initial chunk) | default landing                                                     |
+| `#/pulse?tab=crypto\|stocks\|watchlist` | Pulse tab state                                           | no                 | tab is a search param so it is linkable                             |
+| `#/research/:assetType/:assetKey`       | Research Lab                                              | yes                | e.g. `#/research/crypto/cg:bitcoin`                                 |
+| `#/portfolio`                           | Portfolio — positions and transactions                    | yes                |                                                                     |
+| `#/screener`                            | Screener                                                  | yes                |                                                                     |
+| `#/compare`                             | Compare — several assets, correlation, market mood, macro | yes                |                                                                     |
+| `#/notes`                               | Notes workspace                                           | yes                | list and editor                                                     |
+| `#/notes/:noteId`                       | A note, open                                              | yes                | the open note is in the URL so it is linkable and survives a reload |
+| `#/learn`                               | Learn home — paths + glossary entry                       | yes                |                                                                     |
+| `#/learn/glossary`                      | Glossary index                                            | yes                |                                                                     |
+| `#/learn/glossary/:termId`              | Glossary entry                                            | yes                |                                                                     |
+| `#/learn/path/:pathId`                  | Learning path overview                                    | yes                |                                                                     |
+| `#/learn/path/:pathId/:lessonId`        | Lesson                                                    | yes                |                                                                     |
+| `#/desk`                                | Model Desk                                                | yes                | empty/not-configured state until set up                             |
+| `#/desk/:conversationId`                | A conversation                                            | yes                |                                                                     |
+| `#/settings`                            | Settings → Appearance                                     | yes                |                                                                     |
+| `#/settings/providers`                  | Data providers                                            | yes                |                                                                     |
+| `#/settings/ai`                         | AI providers                                              | yes                |                                                                     |
+| `#/settings/privacy`                    | Privacy, cache, outbound log                              | yes                |                                                                     |
+| `#/settings/profile`                    | Encrypted export/import                                   | yes                |                                                                     |
+| `#/settings/about`                      | About, licence, attributions                              | yes                |                                                                     |
+| `*`                                     | Not-found, with a route back to Pulse                     | no                 |                                                                     |
 
 ---
 
@@ -83,19 +83,19 @@ broken.
 
 ## 4. Keyboard map
 
-| Keys                         | Action                                           |
-| ---------------------------- | ------------------------------------------------ |
-| `⌘K` / `Ctrl+K`              | Command palette                                  |
-| `⌘/` / `Ctrl+/`              | Shortcut cheat sheet                             |
-| `g` then a letter            | Go to a nav item: `p` Pulse, `o` Portfolio, `e` Screener, `r` Research, `c` Compare, `n` Notes, `l` Learn, `d` Desk, `s` Settings |
-| `/`                          | Focus the search field on the current screen     |
-| `⌘1..9` / `Ctrl+1..9`        | Jump to the Nth nav item, in rail order          |
-| `j` / `k` or arrows          | Move table selection                             |
-| `Enter`                      | Open selected row in Research Lab                |
-| `w`                          | Toggle selected asset in the default watchlist   |
-| `⌘R` / `Ctrl+R`              | Refresh visible data (never a full-app reload)   |
-| `Esc`                        | Close overlay, clear selection                   |
-| `?`                          | Shortcut cheat sheet                             |
+| Keys                  | Action                                                                                                                            |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `⌘K` / `Ctrl+K`       | Command palette                                                                                                                   |
+| `⌘/` / `Ctrl+/`       | Shortcut cheat sheet                                                                                                              |
+| `g` then a letter     | Go to a nav item: `p` Pulse, `o` Portfolio, `e` Screener, `r` Research, `c` Compare, `n` Notes, `l` Learn, `d` Desk, `s` Settings |
+| `/`                   | Focus the search field on the current screen                                                                                      |
+| `⌘1..9` / `Ctrl+1..9` | Jump to the Nth nav item, in rail order                                                                                           |
+| `j` / `k` or arrows   | Move table selection                                                                                                              |
+| `Enter`               | Open selected row in Research Lab                                                                                                 |
+| `w`                   | Toggle selected asset in the default watchlist                                                                                    |
+| `⌘R` / `Ctrl+R`       | Refresh visible data (never a full-app reload)                                                                                    |
+| `Esc`                 | Close overlay, clear selection                                                                                                    |
+| `?`                   | Shortcut cheat sheet                                                                                                              |
 
 Single-letter shortcuts are suppressed while a text input has focus. Focus is trapped in
 modals and restored to the trigger on close.

@@ -149,7 +149,11 @@ fn change_over(series: &[ChartPoint], lookback: usize) -> Vec<ChartPoint> {
 /// Treasury and corporate-bond calendars differ from the equity calendar by a handful of days
 /// a year (Good Friday, for one). Lining these up by index would silently compare a Thursday
 /// with a Friday for the rest of the series after the first divergence.
-fn join_with(a: &[ChartPoint], b: &[ChartPoint], combine: impl Fn(f64, f64) -> f64) -> Vec<ChartPoint> {
+fn join_with(
+    a: &[ChartPoint],
+    b: &[ChartPoint],
+    combine: impl Fn(f64, f64) -> f64,
+) -> Vec<ChartPoint> {
     let mut out = Vec::new();
     let (mut i, mut j) = (0, 0);
 
@@ -671,14 +675,29 @@ mod tests {
         // The bug this prevents: two daily series that differ by one holiday. Zipping by index
         // compares Thursday with Friday for the whole remainder of the series.
         let a = vec![
-            ChartPoint { time: 1, close: 10.0 },
-            ChartPoint { time: 2, close: 20.0 },
-            ChartPoint { time: 3, close: 30.0 },
+            ChartPoint {
+                time: 1,
+                close: 10.0,
+            },
+            ChartPoint {
+                time: 2,
+                close: 20.0,
+            },
+            ChartPoint {
+                time: 3,
+                close: 30.0,
+            },
         ];
         let b = vec![
-            ChartPoint { time: 1, close: 1.0 },
+            ChartPoint {
+                time: 1,
+                close: 1.0,
+            },
             // No observation on day 2 — a holiday on this calendar only.
-            ChartPoint { time: 3, close: 3.0 },
+            ChartPoint {
+                time: 3,
+                close: 3.0,
+            },
         ];
 
         let joined = join_with(&a, &b, |x, y| x - y);
@@ -694,8 +713,14 @@ mod tests {
 
     #[test]
     fn a_join_with_no_shared_dates_is_empty() {
-        let a = vec![ChartPoint { time: 1, close: 1.0 }];
-        let b = vec![ChartPoint { time: 2, close: 2.0 }];
+        let a = vec![ChartPoint {
+            time: 1,
+            close: 1.0,
+        }];
+        let b = vec![ChartPoint {
+            time: 2,
+            close: 2.0,
+        }];
         assert!(join_with(&a, &b, |x, y| x + y).is_empty());
     }
 
@@ -909,7 +934,14 @@ mod tests {
 
     #[test]
     fn a_flat_market_sits_near_the_middle() {
-        let source = source_from(|_| 100.0, |_| 18.0, |_| 3.0, |_| 1.0, |_| 100.0, LONG_ENOUGH);
+        let source = source_from(
+            |_| 100.0,
+            |_| 18.0,
+            |_| 3.0,
+            |_| 1.0,
+            |_| 100.0,
+            LONG_ENOUGH,
+        );
         let index = compute(&source).unwrap();
         assert_eq!(
             index.value, 50,
@@ -1055,8 +1087,14 @@ mod tests {
 
     #[test]
     fn a_missing_input_series_fails_instead_of_dropping_a_component() {
-        let mut source =
-            source_from(|_| 100.0, |_| 18.0, |_| 3.0, |_| 1.0, |_| 100.0, LONG_ENOUGH);
+        let mut source = source_from(
+            |_| 100.0,
+            |_| 18.0,
+            |_| 3.0,
+            |_| 1.0,
+            |_| 100.0,
+            LONG_ENOUGH,
+        );
         source.bond_total_return.clear();
 
         assert!(
@@ -1076,7 +1114,9 @@ mod tests {
             |i| 100.0 + (i as f64) * 0.01,
             LONG_ENOUGH + 60,
         );
-        source.bond_total_return.retain(|p| p.time % (7 * 86_400) != 0);
+        source
+            .bond_total_return
+            .retain(|p| p.time % (7 * 86_400) != 0);
 
         let index = compute(&source).expect("a differing holiday calendar is not a failure");
         assert!((0..=100).contains(&index.value));
@@ -1088,12 +1128,22 @@ mod tests {
         // composite it has never heard of would be a provenance error, not a label choice.
         assert_ne!(STOCK_INDEX_ID, crate::providers::live::fred::FRED_ID);
         assert!(STOCK_INDEX_NAME.contains("Brew Terminal"));
-        assert!(STOCK_INDEX_NAME.contains("FRED"), "the name must still credit the source");
+        assert!(
+            STOCK_INDEX_NAME.contains("FRED"),
+            "the name must still credit the source"
+        );
     }
 
     #[test]
     fn the_methodology_admits_who_computed_it() {
-        let source = source_from(|_| 100.0, |_| 18.0, |_| 3.0, |_| 1.0, |_| 100.0, LONG_ENOUGH);
+        let source = source_from(
+            |_| 100.0,
+            |_| 18.0,
+            |_| 3.0,
+            |_| 1.0,
+            |_| 100.0,
+            LONG_ENOUGH,
+        );
         let index = compute(&source).unwrap();
         assert!(
             index.methodology.contains("Nobody publishes this number"),
@@ -1150,7 +1200,10 @@ mod tests {
         // "3.0% below its average" reads correctly; "-3.0% below" does not.
         for id in ["momentum", "volatility", "safe-haven"] {
             let text = reading_for(id, -3.0);
-            assert!(!text.contains("-3.0"), "{id} printed a doubled negative: {text}");
+            assert!(
+                !text.contains("-3.0"),
+                "{id} printed a doubled negative: {text}"
+            );
         }
     }
 }

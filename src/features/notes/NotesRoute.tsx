@@ -287,7 +287,10 @@ function NoteEditor({ note, saving, failed, saved, onSave, onDelete }: NoteEdito
     if (note === null) titleRef.current?.focus();
   }, [note]);
 
-  const dirty = note === null ? title.trim() !== '' || body.trim() !== '' : title !== note.title || body !== note.bodyMd;
+  const dirty =
+    note === null
+      ? title.trim() !== '' || body.trim() !== ''
+      : title !== note.title || body !== note.bodyMd;
   const empty = title.trim() === '' && body.trim() === '';
   const tooLong = body.length > MAX_NOTE_BODY || title.length > MAX_NOTE_TITLE;
 

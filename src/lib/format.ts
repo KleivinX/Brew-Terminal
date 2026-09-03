@@ -31,16 +31,17 @@ export function formatPrice(value: number, currency = 'USD', locale?: string): s
   //
   // Formatting a literal 0 rather than `value` also collapses negative zero, which arithmetic
   // on a closed position produces easily enough and which `Intl` faithfully renders as -$0.00.
-  if (abs === 0) return formatter(
-    `price:${currency}:2:${locale ?? ''}`,
-    () =>
-      new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-  ).format(0);
+  if (abs === 0)
+    return formatter(
+      `price:${currency}:2:${locale ?? ''}`,
+      () =>
+        new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+    ).format(0);
   if (abs >= 1000) digits = 2;
   else if (abs >= 1) digits = 2;
   else if (abs >= 0.01) digits = 4;

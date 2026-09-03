@@ -92,8 +92,12 @@ describe('fear and greed', () => {
     await panel();
     const stocks = card('Stocks');
 
-    expect(within(stocks).getByText(/The S&P 500 is 5.6% above its 125-session average/)).toBeInTheDocument();
-    expect(within(stocks).getByText(/The VIX is 9.3% below its 50-session average/)).toBeInTheDocument();
+    expect(
+      within(stocks).getByText(/The S&P 500 is 5.6% above its 125-session average/),
+    ).toBeInTheDocument();
+    expect(
+      within(stocks).getByText(/The VIX is 9.3% below its 50-session average/),
+    ).toBeInTheDocument();
   });
 
   /**

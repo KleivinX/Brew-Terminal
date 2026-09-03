@@ -62,7 +62,10 @@ describe('notes workspace', () => {
   it('starts empty and says what to do about it', async () => {
     renderNotes();
 
-    await waitFor(() => expect(within(list()).getByText('No notes yet')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('No notes yet')).toBeInTheDocument(),
+      SETTLE,
+    );
     await waitFor(
       () => expect(within(editor()).getByText('Nothing open')).toBeInTheDocument(),
       SETTLE,
@@ -78,7 +81,10 @@ describe('notes workspace', () => {
 
     await write('Junk spreads', 'Tightest premium in a year.');
 
-    await waitFor(() => expect(within(list()).getByText('Junk spreads')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('Junk spreads')).toBeInTheDocument(),
+      SETTLE,
+    );
     expect(within(list()).getByText('Tightest premium in a year.')).toBeInTheDocument();
     expect(within(list()).getByText('1 note')).toBeInTheDocument();
   });
@@ -93,7 +99,10 @@ describe('notes workspace', () => {
 
     await write('General thought', 'Not about any one asset.');
 
-    await waitFor(() => expect(within(list()).getByText('General thought')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('General thought')).toBeInTheDocument(),
+      SETTLE,
+    );
   });
 
   it('confirms the save rather than succeeding silently', async () => {
@@ -157,9 +166,15 @@ describe('notes workspace', () => {
     await waitFor(() => screen.getByText('No notes yet'), SETTLE);
 
     await write('Bitcoin halving', 'supply schedule');
-    await waitFor(() => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(),
+      SETTLE,
+    );
     await write('Apple margins', 'services revenue');
-    await waitFor(() => expect(within(list()).getByText('Apple margins')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('Apple margins')).toBeInTheDocument(),
+      SETTLE,
+    );
 
     const search = screen.getByLabelText('Search your notes');
     await user.type(search, 'halving');
@@ -181,7 +196,10 @@ describe('notes workspace', () => {
     await waitFor(() => screen.getByText('No notes yet'), SETTLE);
 
     await write('Bitcoin halving', 'supply schedule');
-    await waitFor(() => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(),
+      SETTLE,
+    );
 
     await user.type(screen.getByLabelText('Search your notes'), 'b');
     expect(within(list()).getByText('1 note')).toBeInTheDocument();
@@ -193,7 +211,10 @@ describe('notes workspace', () => {
     await waitFor(() => screen.getByText('No notes yet'), SETTLE);
 
     await write('Bitcoin halving', 'supply schedule');
-    await waitFor(() => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('Bitcoin halving')).toBeInTheDocument(),
+      SETTLE,
+    );
 
     await user.type(screen.getByLabelText('Search your notes'), 'zebra');
     await waitFor(
@@ -234,7 +255,10 @@ describe('notes workspace', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
-    await waitFor(() => expect(within(list()).getByText('No notes yet')).toBeInTheDocument(), SETTLE);
+    await waitFor(
+      () => expect(within(list()).getByText('No notes yet')).toBeInTheDocument(),
+      SETTLE,
+    );
     await waitFor(
       () => expect(within(editor()).getByText('Nothing open')).toBeInTheDocument(),
       SETTLE,
@@ -250,7 +274,8 @@ describe('notes workspace', () => {
 
     // Selection is announced, not only tinted — the background difference is a few percent.
     await waitFor(
-      () => expect(within(list()).getByRole('button', { current: true })).toHaveTextContent('Open one'),
+      () =>
+        expect(within(list()).getByRole('button', { current: true })).toHaveTextContent('Open one'),
       SETTLE,
     );
   });
@@ -339,10 +364,7 @@ describe('note text helpers', () => {
  * once someone has written enough to hit it.
  */
 describe('note limits match the Rust validator', () => {
-  const rust = readFileSync(
-    resolve(process.cwd(), 'src-tauri/src/db/repo_notes.rs'),
-    'utf8',
-  );
+  const rust = readFileSync(resolve(process.cwd(), 'src-tauri/src/db/repo_notes.rs'), 'utf8');
 
   function constant(name: string): number {
     const match = new RegExp(`pub const ${name}: usize = ([0-9_]+);`).exec(rust);

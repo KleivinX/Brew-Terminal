@@ -1081,7 +1081,7 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
           history: sentimentHistory(68),
           methodology:
             'Computed here from 5 public Federal Reserve series. Each of the four components ' +
-            'is scored by where today\'s reading falls among the last 252 sessions, and the ' +
+            "is scored by where today's reading falls among the last 252 sessions, and the " +
             'index is their equal-weighted average. Nobody publishes this number — it is this ' +
             "app's arithmetic, and every step of it is shown above.",
         },
@@ -1398,7 +1398,9 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       return null;
 
     case 'list_all_notes':
-      return [...state.notes].sort((a, b) => b.updatedAt - a.updatedAt || b.createdAt - a.createdAt);
+      return [...state.notes].sort(
+        (a, b) => b.updatedAt - a.updatedAt || b.createdAt - a.createdAt,
+      );
 
     case 'list_notes':
       return state.notes

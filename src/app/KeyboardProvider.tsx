@@ -5,7 +5,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isPrimaryModifier, isTypingTarget } from '@/lib/keyboard';
 import { usePaletteStore } from '@/stores/paletteStore';
 
-
 /** How long a `g` prefix stays armed before it is forgotten. */
 const SEQUENCE_TIMEOUT_MS = 900;
 

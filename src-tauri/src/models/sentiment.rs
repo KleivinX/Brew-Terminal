@@ -277,10 +277,7 @@ mod tests {
         // Friday's reading, never Monday's — a value from the future would be worse than none.
         let day = 86_400;
         let history = vec![
-            SentimentPoint {
-                time: 0,
-                value: 10,
-            },
+            SentimentPoint { time: 0, value: 10 },
             SentimentPoint {
                 time: 5 * day,
                 value: 90,

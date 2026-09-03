@@ -47,6 +47,10 @@ Every number carries its provider and its age. The Pulse shot above is a live ru
 the demo fixtures the app ships with, which is why they carry a "fixtures" badge — the layout
 and the features are the same either way.
 
+<!-- Laid out by hand. Prettier pads every cell to the width of the widest one, and these
+     captions are long enough that doing so turns each row into a single ~300-character
+     line. The rendered table is identical either way; only the source becomes unreadable. -->
+<!-- prettier-ignore -->
 | | |
 | --- | --- |
 | ![Market mood — the two Fear & Greed indices](docs/screenshots/02-market-mood.png) | ![Notes — a local research journal](docs/screenshots/03-notes.png) |
@@ -54,6 +58,10 @@ and the features are the same either way.
 | ![Portfolio — positions derived from transactions](docs/screenshots/04-portfolio.png) | ![Screener — filter the market on facts](docs/screenshots/05-screener.png) |
 | **Portfolio.** Positions are derived by replaying the transactions that produced them, never stored — so cost basis, realised gain and the position itself can only ever agree. FIFO or average cost. No broker, no orders. | **Screener.** Filters on reported facts — price, change, market cap, volume. No score, no ranking, no "opportunities". |
 
+<!-- Laid out by hand. Prettier pads every cell to the width of the widest one, and these
+     captions are long enough that doing so turns each row into a single ~300-character
+     line. The rendered table is identical either way; only the source becomes unreadable. -->
+<!-- prettier-ignore -->
 | |
 | --- |
 | ![Research Lab — one asset in depth](docs/screenshots/06-research.png) |
@@ -71,7 +79,7 @@ position has actually done. It connects to no broker, sees no account, and place
 
 There is no scam score, no legitimacy verdict, no "trending", and no ranking of anyone's
 opinions — aggregating opinion into a number is a judgement this project has no basis for. The
-two Fear & Greed indices are a different thing: they describe *market conditions* from published
+two Fear & Greed indices are a different thing: they describe _market conditions_ from published
 measurements, they attach to no individual asset, and the one this app computes shows every
 component with its source series and arithmetic, so it can be checked rather than believed.
 Where that line falls, and why, is [ADR-037](docs/DECISIONS.md).

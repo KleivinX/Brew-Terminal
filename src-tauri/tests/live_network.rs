@@ -175,7 +175,10 @@ fn assert_internally_consistent(index: &brew_terminal_lib::models::SentimentInde
         "history must be oldest-first and strictly increasing"
     );
     if let Some(last) = index.history.last() {
-        assert_eq!(last.time, index.as_of, "the newest point is not the reading");
+        assert_eq!(
+            last.time, index.as_of,
+            "the newest point is not the reading"
+        );
         assert_eq!(last.value, index.value);
     }
 
@@ -266,7 +269,11 @@ async fn stock_fear_and_greed_computes_from_live_fred_series() {
     assert_internally_consistent(&index);
     assert_eq!(index.market, SentimentMarket::Stocks);
     assert_eq!(index.basis, SentimentBasis::Computed);
-    assert_eq!(index.components.len(), 4, "all four components are required");
+    assert_eq!(
+        index.components.len(),
+        4,
+        "all four components are required"
+    );
 
     // The composite's one published claim about itself.
     let sum: i32 = index.components.iter().map(|c| c.score).sum();

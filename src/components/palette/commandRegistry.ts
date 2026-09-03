@@ -41,9 +41,7 @@ export interface CommandContext {
 }
 
 /** A command whose whole job is to go somewhere. */
-function goTo(
-  spec: Omit<Command, 'group' | 'run'> & { route: string },
-): Command {
+function goTo(spec: Omit<Command, 'group' | 'run'> & { route: string }): Command {
   return { ...spec, group: 'Navigate', run: (ctx) => ctx.navigate(spec.route) };
 }
 

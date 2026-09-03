@@ -263,13 +263,13 @@ the shared HTTP client's caps — HTTPS only, 2 MB body limit, 15 s timeout, 3 r
 
 ## Alternative.me — crypto Fear & Greed Index
 
-|                 |                                                                          |
-| --------------- | ------------------------------------------------------------------------ |
-| **Status**      | Live, enabled by default (keyless)                                       |
-| **Adapter**     | `src-tauri/src/providers/live/alternative_me.rs`                         |
-| **Base URL**    | `https://api.alternative.me/fng/`                                        |
-| **Credential**  | None. No key, no account                                                 |
-| **Attribution** | **Required, next to the data** — rendered by the provider badge          |
+|                 |                                                                 |
+| --------------- | --------------------------------------------------------------- |
+| **Status**      | Live, enabled by default (keyless)                              |
+| **Adapter**     | `src-tauri/src/providers/live/alternative_me.rs`                |
+| **Base URL**    | `https://api.alternative.me/fng/`                               |
+| **Credential**  | None. No key, no account                                        |
+| **Attribution** | **Required, next to the data** — rendered by the provider badge |
 
 Verified against the live API and their published API section on **2026-09-01**.
 
@@ -284,8 +284,8 @@ Their two stated rules, quoted from <https://alternative.me/crypto/fear-and-gree
 
 The second is stricter than a footer credit, and it is the reason the reading renders inside a
 card carrying its own `ProviderBadge` rather than relying on a page-level attribution line. The
-first is why the app never presents the number as its own: the card is labelled *Published
-figure*, and where their classification differs from this app's band the card prints theirs too.
+first is why the app never presents the number as its own: the card is labelled _Published
+figure_, and where their classification differs from this app's band the card prints theirs too.
 
 No rate limit is published. The index updates once a day, so the adapter's cache TTL is three
 hours and a running app makes at most a handful of calls a day.
@@ -328,7 +328,7 @@ This sits close to a line drawn elsewhere in this codebase: `providers::live::fr
 "reports published figures rather than running models over them", and a composite sentiment
 score is a model. What makes it acceptable is that nothing is hidden. Every component ships with
 its input series, its raw reading, the arithmetic and whether it was inverted; the UI renders all
-of it, labels the card *Computed here*, and states in as many words that nobody publishes the
+of it, labels the card _Computed here_, and states in as many words that nobody publishes the
 number. A figure the reader can recompute is a teaching instrument. The same figure with its
 inputs withheld would be an oracle.
 
@@ -344,13 +344,13 @@ has four components and says so rather than approximating the missing three.
 
 ## FRED — macroeconomic series
 
-|                 |                                                                    |
-| --------------- | ------------------------------------------------------------------ |
-| **Status**      | Live, enabled by default (keyless)                                 |
-| **Adapter**     | `src-tauri/src/providers/live/fred.rs`                             |
-| **Base URL**    | `https://fred.stlouisfed.org/graph/fredgraph.csv`                  |
-| **Credential**  | None. The JSON API wants a key; the CSV endpoint does not          |
-| **Attribution** | Rendered by the provider badge                                     |
+|                 |                                                           |
+| --------------- | --------------------------------------------------------- |
+| **Status**      | Live, enabled by default (keyless)                        |
+| **Adapter**     | `src-tauri/src/providers/live/fred.rs`                    |
+| **Base URL**    | `https://fred.stlouisfed.org/graph/fredgraph.csv`         |
+| **Credential**  | None. The JSON API wants a key; the CSV endpoint does not |
+| **Attribution** | Rendered by the provider badge                            |
 
 The data is US federal government output in the public domain. This is the only provider that
 works on first run with nothing configured.

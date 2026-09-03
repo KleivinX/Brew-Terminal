@@ -388,7 +388,15 @@ mod tests {
         )
         .unwrap();
 
-        upsert(&mut conn, None, Some("crypto:cg:bitcoin".into()), "Attached", "a", 1000).unwrap();
+        upsert(
+            &mut conn,
+            None,
+            Some("crypto:cg:bitcoin".into()),
+            "Attached",
+            "a",
+            1000,
+        )
+        .unwrap();
         upsert(&mut conn, None, None, "Free standing", "b", 2000).unwrap();
 
         let all = list_all(&conn, 100).unwrap();

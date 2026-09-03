@@ -447,9 +447,13 @@ async fn the_notes_workspace_shows_notes_with_and_without_an_asset() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());
 
-    services::watchlist::add_watchlist_item(&state, "wl-default".into(), "crypto:cg:bitcoin".into())
-        .await
-        .unwrap();
+    services::watchlist::add_watchlist_item(
+        &state,
+        "wl-default".into(),
+        "crypto:cg:bitcoin".into(),
+    )
+    .await
+    .unwrap();
 
     services::notes::upsert_note(
         &state,
@@ -472,8 +476,12 @@ async fn the_notes_workspace_shows_notes_with_and_without_an_asset() {
 
     let all = services::notes::list_all_notes(&state).await.unwrap();
     assert_eq!(all.len(), 2);
-    assert!(all.iter().any(|n| n.title == "Free standing" && n.asset_id.is_none()));
-    assert!(all.iter().any(|n| n.title == "Attached" && n.asset_id.is_some()));
+    assert!(all
+        .iter()
+        .any(|n| n.title == "Free standing" && n.asset_id.is_none()));
+    assert!(all
+        .iter()
+        .any(|n| n.title == "Attached" && n.asset_id.is_some()));
 
     // The per-asset view is unchanged: it still shows only what belongs to that asset.
     let for_asset = services::notes::list_notes(&state, "crypto:cg:bitcoin".into())
@@ -540,10 +548,16 @@ async fn a_deleted_note_leaves_the_workspace_list() {
     let note = services::notes::upsert_note(&state, None, None, "Temp".into(), "x".into())
         .await
         .unwrap();
-    assert_eq!(services::notes::list_all_notes(&state).await.unwrap().len(), 1);
+    assert_eq!(
+        services::notes::list_all_notes(&state).await.unwrap().len(),
+        1
+    );
 
     services::notes::delete_note(&state, note.id).await.unwrap();
-    assert!(services::notes::list_all_notes(&state).await.unwrap().is_empty());
+    assert!(services::notes::list_all_notes(&state)
+        .await
+        .unwrap()
+        .is_empty());
 }
 
 #[tokio::test]

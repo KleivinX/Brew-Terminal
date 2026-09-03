@@ -116,16 +116,13 @@ function IndexCard({ heading, envelope, error, onRetry }: IndexCardProps) {
    * overwriting a publisher's own word for their own number would not be reporting it.
    */
   const publisherDiffers =
-    index.publisherLabel !== null &&
-    index.publisherLabel.toLowerCase() !== bandLabel.toLowerCase();
+    index.publisherLabel !== null && index.publisherLabel.toLowerCase() !== bandLabel.toLowerCase();
 
   return (
     <article className={styles.card} aria-label={`${heading} fear and greed`}>
       <div className={styles.cardHead}>
         <h3 className={styles.heading}>{heading}</h3>
-        <span
-          className={index.basis === 'computed' ? styles.basisComputed : styles.basisPublished}
-        >
+        <span className={index.basis === 'computed' ? styles.basisComputed : styles.basisPublished}>
           {index.basis === 'computed' ? 'Computed here' : 'Published figure'}
         </span>
       </div>
@@ -157,7 +154,10 @@ function IndexCard({ heading, envelope, error, onRetry }: IndexCardProps) {
       </p>
 
       {index.history.length > 1 ? (
-        <Trend history={index.history} label={`${heading} over the last ${index.history.length} readings`} />
+        <Trend
+          history={index.history}
+          label={`${heading} over the last ${index.history.length} readings`}
+        />
       ) : null}
 
       {index.components.length > 0 ? (
@@ -181,9 +181,7 @@ function IndexCard({ heading, envelope, error, onRetry }: IndexCardProps) {
             {index.components.map((component) => (
               <li key={component.id}>
                 <strong>{component.name}</strong> — {component.method}{' '}
-                <span className={styles.series}>
-                  Source: {component.sourceSeries.join(', ')}
-                </span>
+                <span className={styles.series}>Source: {component.sourceSeries.join(', ')}</span>
               </li>
             ))}
           </ul>

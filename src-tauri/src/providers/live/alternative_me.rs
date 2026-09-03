@@ -11,7 +11,9 @@
 use serde::Deserialize;
 
 use crate::error::{AppError, AppResult};
-use crate::models::{SentimentBand, SentimentBasis, SentimentIndex, SentimentMarket, SentimentPoint};
+use crate::models::{
+    SentimentBand, SentimentBasis, SentimentIndex, SentimentMarket, SentimentPoint,
+};
 use crate::providers::http;
 
 pub const FNG_ID: &str = "alternative-me";
@@ -300,7 +302,11 @@ mod tests {
         }"#;
         let index = from_json(body).unwrap();
         assert_eq!(index.publisher_label, None);
-        assert_eq!(index.band, SentimentBand::Greed, "our own band still applies");
+        assert_eq!(
+            index.band,
+            SentimentBand::Greed,
+            "our own band still applies"
+        );
     }
 
     #[test]

@@ -94,7 +94,7 @@ pub fn run() {
             commands::macro_data::get_multi_series,
             // screener
             commands::screener::run_screen,
-
+            // sentiment
             commands::sentiment::get_crypto_sentiment,
             commands::sentiment::get_stock_sentiment,
             // portfolio
