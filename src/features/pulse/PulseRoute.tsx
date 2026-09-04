@@ -18,6 +18,7 @@ import { usePaletteStore } from '@/stores/paletteStore';
 import { isDev } from '@/lib/env';
 import { MarketTable } from './MarketTable';
 import { NewsPanel } from './NewsPanel';
+import { DigestPanel } from './DigestPanel';
 import { MockControlPanel } from '@/components/dev/MockControlPanel';
 import {
   useMarketList,
@@ -156,6 +157,8 @@ export function PulseRoute() {
       {isDev() && showDevPanel ? <MockControlPanel /> : null}
 
       <div className={styles.layout}>
+        <DigestPanel quotes={quotes} watching={tab === 'watchlist'} className={styles.digest} />
+
         <Panel
           title="Markets"
           fill

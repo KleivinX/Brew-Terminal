@@ -2,9 +2,20 @@
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 2.2fr) minmax(380px, 1fr);
+  /*
+   * Two rows, explicitly. The digest sits on the first at its natural height and the market
+   * table and news share the second — without this the digest was placed into a column cell
+   * and the auto rows squashed both it and the table to two pixels each.
+   */
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-5);
   min-height: 0;
   padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/* Full width above both columns, in the stacked layout as well. */
+.digest {
+  grid-column: 1 / -1;
 }
 
 /*
@@ -16,7 +27,8 @@
 @media (width <= 1320px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1.6fr) minmax(0, 1fr);
+    /* Digest, then table, then news — the digest still keeps its own height. */
+    grid-template-rows: auto minmax(0, 1.6fr) minmax(0, 1fr);
     overflow-y: auto;
   }
 }
