@@ -994,6 +994,12 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
           publisherLabel: 'Greed',
           components: [],
           history: sentimentHistory(69),
+          /*
+           * The published crypto window is short, so in real use the older part of this line is
+           * the app's own record. Set here so the harness exercises the provenance note; the
+           * stocks fixture leaves it null so the other branch is covered too.
+           */
+          providerHistorySince: 1_788_177_600 - 60 * 86_400,
           methodology:
             'Published daily by Alternative.me from Bitcoin volatility (25%), market momentum ' +
             'and volume (25%), social media activity (15%), BTC dominance (10%) and Google ' +
@@ -1089,6 +1095,7 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
             },
           ],
           history: sentimentHistory(68),
+          providerHistorySince: null,
           methodology:
             'Computed here from 5 public Federal Reserve series. Each of the four components ' +
             "is scored by where today's reading falls among the last 252 sessions, and the " +

@@ -139,6 +139,9 @@ fn parse(response: FngResponse) -> AppResult<SentimentIndex> {
         .filter(|label| !label.is_empty());
 
     Ok(SentimentIndex {
+        // Set by `remember_and_extend` once the stored series is merged in. At construction
+        // every point here came from this source, and `None` says exactly that.
+        provider_history_since: None,
         market: SentimentMarket::Crypto,
         basis: SentimentBasis::Published,
         value: latest.value,

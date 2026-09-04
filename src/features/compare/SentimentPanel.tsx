@@ -4,7 +4,7 @@ import { ProviderBadge } from '@/components/status/ProviderBadge';
 import { ExplainWithModel } from '@/components/ai/ExplainWithModel';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { ipc } from '@/lib/ipc';
-import { formatAbsoluteTime } from '@/lib/format';
+import { formatAbsoluteTime, formatDate } from '@/lib/format';
 import { describeSentiment } from '@/lib/aiContext';
 import type { Envelope } from '@/types/envelope';
 import type { SentimentBand, SentimentComponent, SentimentIndex } from '@/types/domain';
@@ -160,6 +160,23 @@ function IndexCard({ heading, envelope, error, onRetry }: IndexCardProps) {
           history={index.history}
           label={`${heading} over the last ${index.history.length} readings`}
         />
+      ) : null}
+
+      {/*
+        The line can reach further back than the provider does, because this app stores each
+        reading it sees. Where that is true the join is named — a series drawn from two sources
+        should say where one ends, for the same reason no figure here appears without its
+        provider and its age.
+      */}
+      {index.providerHistorySince !== null && index.history.length > 1 ? (
+        <p className={styles.provenance}>
+          Readings before{' '}
+          <time dateTime={new Date(index.providerHistorySince * 1000).toISOString()}>
+            {formatDate(index.providerHistorySince)}
+          </time>{' '}
+          are this app&rsquo;s own record of what it showed on those days. The provider does not
+          reach back that far.
+        </p>
       ) : null}
 
       {index.components.length > 0 ? (

@@ -234,6 +234,7 @@ describe('valueDaysAgo', () => {
       publisherLabel: null,
       components: [],
       history,
+      providerHistorySince: null,
       methodology: '',
     };
   }
@@ -323,5 +324,43 @@ describe('asking a model about a reading', () => {
     await user.click(within(card('Crypto')).getByRole('button', { name: 'Ask about this' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/no watchlist, no portfolio, no notes/)).toBeInTheDocument();
+  });
+});
+
+describe('history this app recorded itself', () => {
+  /**
+   * The series can reach further back than the provider does, because each reading is stored as
+   * it is seen. Where that happens the join has to be named — the same rule that stops any
+   * figure here appearing without its provider and its age.
+   */
+  it('names where the provider stops covering', async () => {
+    renderWithProviders(<SentimentPanel />);
+    await panel();
+
+    const note = within(card('Crypto')).getByText(/own record of what it showed/);
+    expect(note).toBeInTheDocument();
+    expect(note).toHaveTextContent(/does not reach back that far/);
+  });
+
+  it('dates the boundary rather than describing it vaguely', async () => {
+    renderWithProviders(<SentimentPanel />);
+    await panel();
+
+    // A day, with no time of day: a daily index has no 14:32 about it.
+    const time = within(card('Crypto'))
+      .getByText(/own record/)
+      .querySelector('time');
+    expect(time).toBeTruthy();
+    expect(time?.getAttribute('datetime')).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(time?.textContent).not.toMatch(/\d{2}:\d{2}/);
+  });
+
+  it('says nothing when the whole series came from the provider', async () => {
+    renderWithProviders(<SentimentPanel />);
+    await panel();
+
+    expect(
+      within(card('Stocks')).queryByText(/own record of what it showed/),
+    ).not.toBeInTheDocument();
   });
 });

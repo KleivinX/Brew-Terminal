@@ -50,6 +50,7 @@ const sentiment: SentimentIndex = {
     },
   ],
   history: [],
+  providerHistorySince: null,
   methodology: 'Computed here from public Federal Reserve series.',
 };
 

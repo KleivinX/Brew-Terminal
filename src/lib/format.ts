@@ -171,6 +171,19 @@ export function formatAbsoluteTime(epochSeconds: number, locale?: string): strin
   }).format(new Date(epochSeconds * 1000));
 }
 
+/**
+ * A date with no time of day.
+ *
+ * Distinct from `formatAbsoluteTime`, which is for a moment something was fetched. This is for
+ * a day something is *about* — a daily index's reading, the boundary between two sources — and
+ * appending "14:32" to one of those implies a precision the figure does not have.
+ */
+export function formatDate(epochSeconds: number, locale?: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+    new Date(epochSeconds * 1000),
+  );
+}
+
 export function formatVolume(value: number | null, locale?: string): string {
   return formatCompact(value, locale);
 }

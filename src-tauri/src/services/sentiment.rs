@@ -32,6 +32,7 @@
 //! measure. None has a free, documented, daily source that clears ADR-008, so rather than
 //! approximate them this index has four components and says so.
 
+use crate::db::repo_sentiment_history;
 use crate::error::{AppError, AppResult};
 use crate::models::{
     ChartPoint, Envelope, EnvelopeSource, SentimentBand, SentimentBasis, SentimentComponent,
@@ -40,7 +41,7 @@ use crate::models::{
 use crate::providers::cache::{cache_key, CacheKind};
 use crate::providers::live::alternative_me::{AlternativeMeProvider, FNG_ID, FNG_NAME};
 use crate::providers::live::fred::FredProvider;
-use crate::state::AppState;
+use crate::state::{with_db, AppState};
 
 /// The computed index is this app's arithmetic over FRED's data, so it gets its own identity.
 /// Attributing it to FRED would imply the Federal Reserve publishes a Fear & Greed index.
@@ -471,6 +472,9 @@ fn compute(source: &SourceData) -> AppResult<SentimentIndex> {
         .collect();
 
     Ok(SentimentIndex {
+        // Set by `remember_and_extend` once the stored series is merged in. At construction
+        // every point here came from this source, and `None` says exactly that.
+        provider_history_since: None,
         market: SentimentMarket::Stocks,
         basis: SentimentBasis::Computed,
         value,
@@ -523,11 +527,112 @@ async fn fetch_sources(state: &AppState) -> AppResult<SourceData> {
     })
 }
 
+/// Records what was just fetched, then extends its history with what was stored earlier.
+///
+/// Both indices are range-limited by whatever produces them, and neither range grows. This is
+/// what makes the trend line reach further back the longer the app is used — see
+/// `0008_sentiment_history.sql`.
+///
+/// **The provider always wins where it answers.** Stored points are only used for days that
+/// fall before the provider's earliest reading. The alternative — preferring stored values
+/// inside the provider's own window — would draw a chart that disagrees with the number printed
+/// above it the moment a publisher revised anything.
+///
+/// That does put a vintage seam at the join: everything from the provider's earliest point
+/// onwards is today's answer, everything before it is what this app recorded at the time. For a
+/// Fear & Greed trend that is the honest arrangement, and it is the only one where the visible
+/// series is internally consistent with the reading it is drawn under.
+///
+/// A database failure here is swallowed. Extended history is an enhancement; an index that
+/// arrived fine should not be turned into an error because a local write did not.
+async fn remember_and_extend(
+    state: &AppState,
+    market: SentimentMarket,
+    mut envelope: Envelope<Option<SentimentIndex>>,
+) -> Envelope<Option<SentimentIndex>> {
+    let Some(index) = envelope.data.as_mut() else {
+        return envelope;
+    };
+
+    // The current reading is not always in `history` — the crypto provider returns today's
+    // value alongside a window that may or may not include it — so it is added explicitly.
+    let mut seen = index.history.clone();
+    seen.push(SentimentPoint {
+        time: index.as_of,
+        value: index.value,
+    });
+
+    let pool = state.pool.clone();
+    if let Err(error) = with_db(pool.clone(), move |conn| {
+        repo_sentiment_history::record(conn, market, &seen)
+    })
+    .await
+    {
+        tracing::debug!(?error, "could not record the sentiment reading");
+        return envelope;
+    }
+
+    let stored = match with_db(pool, move |conn| {
+        repo_sentiment_history::history(conn, market)
+    })
+    .await
+    {
+        Ok(stored) => stored,
+        Err(error) => {
+            tracing::debug!(?error, "could not read the stored sentiment history");
+            return envelope;
+        }
+    };
+
+    // Captured before the merge: after it, the provider's own points are no longer the front
+    // of the series and the boundary cannot be recovered.
+    let provider_since = index.history.first().map(|point| point.time);
+
+    let merged = merge_history(stored, &index.history, index.as_of);
+    let extended = merged.len() > index.history.len();
+
+    index.history = merged;
+    // Only set when something local actually sits in front. A series that is entirely the
+    // provider's should say so by carrying no boundary at all.
+    index.provider_history_since = if extended {
+        provider_since.or(Some(index.as_of))
+    } else {
+        None
+    };
+
+    envelope
+}
+
+/// Stored readings in front of the provider's own, with the provider winning any overlap.
+///
+/// Split out from `remember_and_extend` because this rule is the whole feature and the rest of
+/// that function is plumbing that needs a database to exercise.
+///
+/// The cutoff is the provider's earliest point, not its latest: everything from there onwards
+/// is today's answer, and only days it no longer reaches are filled from storage. When the
+/// provider returns no history at all, everything stored before the current reading is used —
+/// that is the case where the series would otherwise be a single dot.
+fn merge_history(
+    stored: Vec<SentimentPoint>,
+    provider: &[SentimentPoint],
+    as_of: i64,
+) -> Vec<SentimentPoint> {
+    let cutoff = provider.first().map(|point| point.time).unwrap_or(as_of);
+
+    let mut merged: Vec<SentimentPoint> = stored
+        .into_iter()
+        .filter(|point| point.time < cutoff)
+        .collect();
+
+    merged.extend(provider.iter().copied());
+    merged
+}
+
 /// The computed equity index.
 pub async fn stock_index(state: &AppState) -> AppResult<Envelope<Option<SentimentIndex>>> {
     let key = cache_key(STOCK_INDEX_ID, "fear-greed", &[]);
 
-    super::market::cached_value_or_degraded(
+    let envelope = super::market::cached_value_or_degraded(
         state,
         CacheKind::Sentiment,
         key,
@@ -539,7 +644,9 @@ pub async fn stock_index(state: &AppState) -> AppResult<Envelope<Option<Sentimen
             compute(&source)
         },
     )
-    .await
+    .await?;
+
+    Ok(remember_and_extend(state, SentimentMarket::Stocks, envelope).await)
 }
 
 /// The published crypto index.
@@ -547,7 +654,7 @@ pub async fn crypto_index(state: &AppState) -> AppResult<Envelope<Option<Sentime
     let key = cache_key(FNG_ID, "fear-greed", &[]);
     let provider = AlternativeMeProvider::new(state.registry.http_client());
 
-    super::market::cached_value_or_degraded(
+    let envelope = super::market::cached_value_or_degraded(
         state,
         CacheKind::Sentiment,
         key,
@@ -556,12 +663,92 @@ pub async fn crypto_index(state: &AppState) -> AppResult<Envelope<Option<Sentime
         EnvelopeSource::Live,
         || async move { provider.fear_and_greed().await },
     )
-    .await
+    .await?;
+
+    Ok(remember_and_extend(state, SentimentMarket::Crypto, envelope).await)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn history_point(day: i64, value: i32) -> SentimentPoint {
+        SentimentPoint {
+            time: day * 86_400,
+            value,
+        }
+    }
+
+    #[test]
+    fn stored_readings_extend_the_series_backwards() {
+        let stored = vec![
+            history_point(1, 10),
+            history_point(2, 20),
+            history_point(3, 30),
+        ];
+        let provider = vec![history_point(3, 99), history_point(4, 44)];
+
+        let merged = merge_history(stored, &provider, 4 * 86_400);
+
+        assert_eq!(
+            merged.iter().map(|p| p.value).collect::<Vec<_>>(),
+            vec![10, 20, 99, 44],
+            "days before the provider's earliest come from storage; the rest is the provider's"
+        );
+    }
+
+    /// The chart must not disagree with the number printed above it. Where the provider still
+    /// answers for a day, its answer is the one drawn — a revision included.
+    #[test]
+    fn the_provider_wins_every_day_it_still_covers() {
+        let stored = vec![history_point(5, 10)];
+        let provider = vec![history_point(5, 80)];
+
+        let merged = merge_history(stored, &provider, 5 * 86_400);
+        assert_eq!(merged, vec![history_point(5, 80)]);
+    }
+
+    /// The case the feature exists for: a published index that returns only today. Without the
+    /// stored series the trend line is a single dot forever.
+    #[test]
+    fn a_provider_with_no_history_gets_the_whole_stored_series() {
+        let stored = vec![history_point(1, 10), history_point(2, 20)];
+        let merged = merge_history(stored, &[], 3 * 86_400);
+
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged[0].value, 10);
+    }
+
+    #[test]
+    fn a_stored_reading_at_or_after_the_current_one_is_not_prepended() {
+        // Guards the no-history branch: a stored point for today must not be duplicated in
+        // front of the reading it is a copy of.
+        let stored = vec![history_point(3, 50), history_point(4, 60)];
+        let merged = merge_history(stored, &[], 3 * 86_400);
+
+        assert!(
+            merged.is_empty(),
+            "nothing older than the current reading exists"
+        );
+    }
+
+    #[test]
+    fn nothing_stored_leaves_the_provider_series_untouched() {
+        let provider = vec![history_point(1, 10), history_point(2, 20)];
+        assert_eq!(merge_history(Vec::new(), &provider, 2 * 86_400), provider);
+    }
+
+    #[test]
+    fn the_merged_series_stays_in_order() {
+        let stored = vec![history_point(1, 10), history_point(2, 20)];
+        let provider = vec![history_point(3, 30), history_point(4, 40)];
+
+        let merged = merge_history(stored, &provider, 4 * 86_400);
+        assert!(
+            merged.windows(2).all(|w| w[0].time < w[1].time),
+            "a trend line drawn out of order is a scribble"
+        );
+    }
 
     fn points(values: &[f64]) -> Vec<ChartPoint> {
         values

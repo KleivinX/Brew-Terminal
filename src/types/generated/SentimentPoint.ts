@@ -2,6 +2,9 @@
 
 /**
  * One historical reading, for the trend line.
+ *
+ * `PartialEq`/`Eq` because both fields are integers and comparing two series point-for-point
+ * is what the history-merge tests assert on.
  */
 export type SentimentPoint = { 
 /**

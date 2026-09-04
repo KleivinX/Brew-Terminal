@@ -29,8 +29,23 @@ publisherLabel: string | null,
 components: Array<SentimentComponent>, 
 /**
  * Oldest first. May be empty if only the current reading is available.
+ *
+ * May reach further back than the provider does: readings this app has seen are stored
+ * and used to extend the series. `provider_history_since` marks where that join is.
  */
 history: Array<SentimentPoint>, 
+/**
+ * The timestamp from which `history` is the provider's own data.
+ *
+ * Points before it are this app's record of what it displayed on those days. `None` means
+ * the whole series came from the provider, which is the case until the local store has
+ * anything older than the provider reaches.
+ *
+ * Carried in the payload rather than inferred by the UI for the same reason every figure
+ * carries its provider and its age: a series drawn from two sources should say where one
+ * ends, and a component that renders it should not be able to render it without knowing.
+ */
+providerHistorySince: number | null, 
 /**
  * One sentence on where the number comes from, rendered next to it.
  */
