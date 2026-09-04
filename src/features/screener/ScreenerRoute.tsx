@@ -8,9 +8,11 @@ import { ProviderBadge } from '@/components/status/ProviderBadge';
 import { EmptyState } from '@/components/status/EmptyState';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
+import { ExportCsv } from '@/components/data/ExportCsv';
+import type { CsvColumn } from '@/lib/csv';
 import { ipc } from '@/lib/ipc';
 import { formatPrice, formatPercent, formatCompact } from '@/lib/format';
-import type { AssetType, ScreenerFilter, ScreenerSort } from '@/types/domain';
+import type { AssetType, Quote, ScreenerFilter, ScreenerSort } from '@/types/domain';
 import styles from './ScreenerRoute.module.css';
 
 /**
@@ -36,6 +38,25 @@ function numberOrNull(raw: string): number | null {
   const value = Number(trimmed);
   return Number.isFinite(value) ? value : null;
 }
+
+/**
+ * Raw figures rather than the formatted cells, for the same reason as the portfolio export:
+ * a CSV is opened by something that will do arithmetic on it.
+ *
+ * The sparkline is not here. It is 168 points per row, it is a picture rather than a
+ * measurement, and a column holding it would be unreadable in every tool that opens this.
+ */
+const SCREENER_COLUMNS: CsvColumn<Quote>[] = [
+  { header: 'Symbol', value: (q) => q.symbol },
+  { header: 'Name', value: (q) => q.name },
+  { header: 'Type', value: (q) => q.assetType },
+  { header: 'Currency', value: (q) => q.currency },
+  { header: 'Price', value: (q) => q.price },
+  { header: '24h %', value: (q) => q.changePct24h },
+  { header: '7d %', value: (q) => q.changePct7d },
+  { header: 'Market cap', value: (q) => q.marketCap },
+  { header: '24h volume', value: (q) => q.volume24h },
+];
 
 export function ScreenerRoute() {
   const [assetType, setAssetType] = useState<AssetType | null>(null);
@@ -209,6 +230,14 @@ export function ScreenerRoute() {
         <Panel
           title={`Results${rows.length > 0 ? ` (${rows.length})` : ''}`}
           meta={data ? <ProviderBadge meta={data.meta} /> : null}
+          actions={
+            <ExportCsv
+              subject="screen"
+              columns={SCREENER_COLUMNS}
+              rows={() => rows}
+              disabled={rows.length === 0}
+            />
+          }
           scroll
         >
           {isLoading ? <SkeletonRows rows={8} columns={5} label="Screening" /> : null}

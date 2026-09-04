@@ -8,6 +8,7 @@ pub mod ai;
 pub mod alerts;
 pub mod cache;
 pub mod community;
+pub mod csv_export;
 pub mod learn;
 pub mod local_models;
 pub mod macro_data;

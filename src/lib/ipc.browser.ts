@@ -1437,6 +1437,17 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       saveState(state);
       return null;
 
+    case 'export_csv': {
+      // No filesystem here. Reports what the real command would have written so the button's
+      // success path is exercised in the fast loop; the .csv guard is asserted in Rust.
+      const csv = String(args.csv ?? '');
+      return {
+        path: String(args.path ?? ''),
+        bytes: new TextEncoder().encode(csv).length,
+        rows: Math.max(0, csv.split(/\r?\n/).filter(Boolean).length - 1),
+      };
+    }
+
     case 'restore_note': {
       // Mirrors the Rust path: idempotent, and the living copy wins over the restored one.
       const incoming = args.note as Note;

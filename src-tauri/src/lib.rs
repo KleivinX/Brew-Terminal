@@ -116,6 +116,8 @@ pub fn run() {
             commands::notes::delete_note,
             commands::notes::search_notes,
             commands::notes::restore_note,
+            // tables
+            commands::csv_export::export_csv,
             // watchlists
             commands::watchlist::list_watchlists,
             commands::watchlist::get_watchlist_items,

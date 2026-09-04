@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from './env';
 import type {
+  CsvExportResult,
   AiContextItem,
   AiConversation,
   AiMode,
@@ -140,6 +141,10 @@ export interface IpcContract {
    * row is gone, so there is nothing left to read it back from.
    */
   restore_note: { args: { note: Note }; result: Note };
+
+  // --- tables ---
+  /** Writes a table the user is looking at to a .csv file they chose. */
+  export_csv: { args: { path: string; csv: string }; result: CsvExportResult };
   search_notes: { args: { query: string; limit: number }; result: Note[] };
 
   // --- news ---

@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/status/EmptyState';
 import { ErrorState } from '@/components/status/ErrorState';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
+import { ExportCsv } from '@/components/data/ExportCsv';
+import type { CsvColumn } from '@/lib/csv';
 import { ipc } from '@/lib/ipc';
 import { formatPrice, formatPercent, formatQuantity } from '@/lib/format';
 import type { Position } from '@/types/domain';
@@ -22,6 +24,36 @@ import styles from './PortfolioRoute.module.css';
  * suggested rebalance, no score. Allocation is shown because it is a fact about the portfolio,
  * and what to make of it is the reader's business.
  */
+/**
+ * The export mirrors the two tables on screen, with one deliberate difference: raw numbers,
+ * not the formatted strings.
+ *
+ * A CSV is opened in something that will do arithmetic on it, and "$77,431.00" is text there.
+ * The formatting exists to make a column scannable on screen and would only have to be undone
+ * by whoever opens the file. Currency travels in its own column so nothing is lost by dropping
+ * the symbol.
+ *
+ * Fees and the oversold flag are included even though the table shows them elsewhere or as an
+ * icon: an export that quietly omits the caveat attached to a figure is how a number ends up
+ * in a spreadsheet without the reason it might be wrong.
+ */
+const POSITION_COLUMNS: CsvColumn<Position>[] = [
+  { header: 'Symbol', value: (p) => p.symbol },
+  { header: 'Asset ID', value: (p) => p.assetId },
+  { header: 'Currency', value: (p) => p.currency },
+  { header: 'Quantity', value: (p) => p.quantity },
+  { header: 'Cost basis', value: (p) => p.costBasis },
+  { header: 'Average cost', value: (p) => p.averageCost },
+  { header: 'Last price', value: (p) => p.lastPrice },
+  { header: 'Market value', value: (p) => p.marketValue },
+  { header: 'Unrealised', value: (p) => p.unrealisedPnl },
+  { header: 'Unrealised %', value: (p) => p.unrealisedPct },
+  { header: 'Realised', value: (p) => p.realisedPnl },
+  { header: 'Fees paid', value: (p) => p.feesPaid },
+  { header: 'Transactions', value: (p) => p.transactionCount },
+  { header: 'History incomplete', value: (p) => (p.oversold ? 'yes' : 'no') },
+];
+
 export function PortfolioRoute() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
@@ -66,9 +98,17 @@ export function PortfolioRoute() {
         title="Portfolio"
         subtitle="What you hold, and what it has done"
         actions={
-          <Button variant="primary" size="sm" onClick={() => setAdding(true)}>
-            Record a trade
-          </Button>
+          <>
+            <ExportCsv
+              subject="portfolio"
+              columns={POSITION_COLUMNS}
+              rows={() => data?.positions ?? []}
+              disabled={!data || data.positions.length === 0}
+            />
+            <Button variant="primary" size="sm" onClick={() => setAdding(true)}>
+              Record a trade
+            </Button>
+          </>
         }
       />
 

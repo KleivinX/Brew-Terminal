@@ -17,6 +17,14 @@ import { isTauri } from './env';
 const HARNESS_PATH = '/harness/brew-terminal.brewprofile';
 
 const FILTER = { name: 'Brew Terminal profile', extensions: ['brewprofile'] };
+const CSV_FILTER = { name: 'Comma-separated values', extensions: ['csv'] };
+
+/*
+ * The harness needs a .csv path of its own: `export_csv` refuses a destination that is not one,
+ * so reusing HARNESS_PATH would make every export in the browser loop fail the extension check
+ * rather than the thing under test.
+ */
+const HARNESS_CSV_PATH = '/harness/brew-table.csv';
 
 /** Returns the chosen path, or `null` if the user cancelled. */
 export async function pickSaveLocation(defaultName: string): Promise<string | null> {
@@ -24,6 +32,14 @@ export async function pickSaveLocation(defaultName: string): Promise<string | nu
 
   const { save } = await import('@tauri-apps/plugin-dialog');
   return save({ defaultPath: defaultName, filters: [FILTER] });
+}
+
+/** Where to write a table export. Returns the chosen path, or `null` if cancelled. */
+export async function pickCsvLocation(defaultName: string): Promise<string | null> {
+  if (!isTauri()) return HARNESS_CSV_PATH;
+
+  const { save } = await import('@tauri-apps/plugin-dialog');
+  return save({ defaultPath: defaultName, filters: [CSV_FILTER] });
 }
 
 /** Returns the chosen path, or `null` if the user cancelled. */
