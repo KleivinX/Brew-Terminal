@@ -9,7 +9,8 @@ import { shortcutLabel } from '@/lib/keyboard';
 import { usePaletteStore } from '@/stores/paletteStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { usePreferences } from '@/lib/preferences';
+import { usePreferences, useSetPreference } from '@/lib/preferences';
+import { toast } from '@/stores/toastStore';
 import { availableCommands, type Command, type CommandContext } from './commandRegistry';
 import type { AssetSearchResult } from '@/types/domain';
 import styles from './CommandPalette.module.css';
@@ -47,9 +48,11 @@ export function CommandPalette() {
 
 function PaletteBody({ initialQuery, onClose }: { initialQuery: string; onClose: () => void }) {
   const toggleNavRail = useUiStore((s) => s.toggleNavRail);
+  const replayOnboarding = useUiStore((s) => s.replayOnboarding);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { setTheme } = useTheme();
+  const { setTheme, setMotion } = useTheme();
+  const setPreference = useSetPreference();
   const { data: preferences } = usePreferences();
 
   const [query, setQuery] = useState(initialQuery);
@@ -68,13 +71,46 @@ function PaletteBody({ initialQuery, onClose }: { initialQuery: string; onClose:
       navigate: (to) => void navigate(to),
       setTheme,
       toggleNavRail,
+      setMotion,
       refreshVisible: () => {
         void queryClient.invalidateQueries();
       },
+      clearCache: () => {
+        /*
+         * Clears every kind. The palette entry is the blunt instrument — Settings has the
+         * per-kind controls — and someone reaching for it in a command list wants the cache
+         * gone, not a submenu.
+         */
+        void ipc('clear_cache', { kind: null })
+          .then(() => {
+            void queryClient.invalidateQueries();
+            toast.success('Cleared the cached market data');
+          })
+          .catch(() => toast.error('The cache could not be cleared'));
+      },
+      setAlertsEnabled: (enabled) => {
+        setPreference.mutate({ key: 'alertsEnabled', value: enabled });
+        toast.info(enabled ? 'Price alerts are on' : 'Price alerts are off');
+      },
+      replayOnboarding,
       closePalette: onClose,
       aiEnabled: preferences?.aiEnabled ?? false,
+      alertsEnabled: preferences?.alertsEnabled ?? false,
+      reducedMotion: preferences?.reducedMotion ?? 'system',
     }),
-    [navigate, setTheme, toggleNavRail, queryClient, onClose, preferences?.aiEnabled],
+    [
+      navigate,
+      setTheme,
+      setMotion,
+      toggleNavRail,
+      queryClient,
+      onClose,
+      replayOnboarding,
+      setPreference,
+      preferences?.aiEnabled,
+      preferences?.alertsEnabled,
+      preferences?.reducedMotion,
+    ],
   );
 
   const { data: searchResults } = useQuery({

@@ -1,5 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
-import type { Theme } from '@/types/domain';
+import type { MotionPreference, Theme } from '@/types/domain';
 
 /**
  * The command registry.
@@ -34,10 +34,24 @@ export interface Command {
 export interface CommandContext {
   navigate: (to: string) => void;
   setTheme: (theme: Theme) => void;
+  setMotion: (motion: MotionPreference) => void;
   toggleNavRail: () => void;
   refreshVisible: () => void;
+  /** Drops cached provider responses. The next read goes to the provider. */
+  clearCache: () => void;
+  /** Flips a boolean preference and reports the new value in a toast. */
+  setAlertsEnabled: (enabled: boolean) => void;
+  replayOnboarding: () => void;
   closePalette: () => void;
   aiEnabled: boolean;
+  /**
+   * Current values, so a toggle can name what it will do rather than what it is.
+   *
+   * "Turn alerts off" when they are on is a command; "Alerts" is a place. The palette is a
+   * list of things to do, and a row that does not say which way it will move is a coin flip.
+   */
+  alertsEnabled: boolean;
+  reducedMotion: MotionPreference;
 }
 
 /** A command whose whole job is to go somewhere. */
@@ -204,7 +218,60 @@ export const commands: Command[] = [
     run: (ctx) => ctx.refreshVisible(),
   },
 
+  {
+    id: 'ui.motion.off',
+    title: 'Turn animation off',
+    group: 'Appearance',
+    keywords: ['reduce motion', 'accessibility', 'still', 'no animation', 'vestibular'],
+    available: (ctx) => ctx.reducedMotion !== 'never',
+    run: (ctx) => ctx.setMotion('never'),
+  },
+  {
+    id: 'ui.motion.on',
+    title: 'Turn animation back on',
+    group: 'Appearance',
+    keywords: ['motion', 'animation', 'transitions'],
+    available: (ctx) => ctx.reducedMotion === 'never',
+    run: (ctx) => ctx.setMotion('system'),
+  },
+
+  // --- Data ---
+  {
+    id: 'data.clearCache',
+    title: 'Clear cached market data',
+    group: 'Data',
+    icon: 'trash',
+    keywords: ['cache', 'stale', 'purge', 'empty', 'force refresh'],
+    run: (ctx) => ctx.clearCache(),
+  },
+  {
+    id: 'data.alerts.on',
+    title: 'Turn price alerts on',
+    group: 'Data',
+    icon: 'warning',
+    keywords: ['alert', 'notify', 'watch', 'threshold', 'background'],
+    available: (ctx) => !ctx.alertsEnabled,
+    run: (ctx) => ctx.setAlertsEnabled(true),
+  },
+  {
+    id: 'data.alerts.off',
+    title: 'Turn price alerts off',
+    group: 'Data',
+    icon: 'warning',
+    keywords: ['alert', 'notify', 'stop', 'silence', 'background'],
+    available: (ctx) => ctx.alertsEnabled,
+    run: (ctx) => ctx.setAlertsEnabled(false),
+  },
+
   // --- Help ---
+  {
+    id: 'help.introduction',
+    title: 'Show the introduction again',
+    group: 'Help',
+    icon: 'info',
+    keywords: ['onboarding', 'welcome', 'tour', 'first run', 'getting started'],
+    run: (ctx) => ctx.replayOnboarding(),
+  },
   {
     id: 'help.about',
     title: 'About Brew Terminal',
