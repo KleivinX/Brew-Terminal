@@ -156,6 +156,7 @@ interface HarnessState {
   notes: Note[];
   progress: LearningProgress[];
   savedViews: SavedView[];
+  readNews: string[];
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -185,6 +186,7 @@ function defaultState(): HarnessState {
     ],
     notes: [],
     savedViews: [],
+    readNews: [],
     progress: [],
   };
 }
@@ -204,6 +206,7 @@ function loadState(): HarnessState {
       // Absent in state written before saved views existed, which is the same shape as a
       // forward-only migration adding a table.
       savedViews: parsed.savedViews ?? base.savedViews,
+      readNews: parsed.readNews ?? base.readNews,
     };
   } catch {
     return defaultState();
@@ -1288,6 +1291,28 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
 
     case 'list_news_feeds':
       return newsFeeds.map((f) => ({ ...f }));
+
+    case 'list_read_news':
+      return state.readNews;
+
+    case 'mark_news_read': {
+      const urls = (args.urls as string[]) ?? [];
+      // Mirrors the Rust path: already-read URLs are not re-added, so the count is new marks.
+      const fresh = urls.filter((url) => url && !state.readNews.includes(url));
+      state = { ...state, readNews: [...fresh, ...state.readNews] };
+      saveState(state);
+      return fresh.length;
+    }
+
+    case 'mark_news_unread':
+      state = { ...state, readNews: state.readNews.filter((url) => url !== args.url) };
+      saveState(state);
+      return null;
+
+    case 'clear_news_read':
+      state = { ...state, readNews: [] };
+      saveState(state);
+      return null;
 
     case 'list_saved_views':
       return state.savedViews

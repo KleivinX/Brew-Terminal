@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,8 @@ import { SkeletonRows } from '@/components/status/Skeleton';
 import { derivePanelStatus } from '@/lib/freshness';
 import { formatRelativeTime } from '@/lib/format';
 import { useNews } from '@/lib/market';
+import { useMarkNewsRead, useMarkNewsUnread, useReadNews } from '@/lib/newsRead';
+import { IconButton } from '@/components/ui/IconButton';
 import type { NewsCategory } from '@/types/domain';
 import styles from './NewsPanel.module.css';
 
@@ -34,6 +36,20 @@ export function NewsPanel() {
     error,
   });
 
+  /*
+   * Read state arrives as one bounded list and is intersected here rather than being joined
+   * server-side. It keeps `get_news` a pure provider call — the envelope describes what the
+   * feeds returned, and a local read flag mixed into that payload would blur what has
+   * provenance and what does not.
+   */
+  const { data: readUrls } = useReadNews();
+  const read = useMemo(() => new Set(readUrls ?? []), [readUrls]);
+
+  const markRead = useMarkNewsRead();
+  const markUnread = useMarkNewsUnread();
+
+  const unread = articles.filter((article) => !read.has(article.url));
+
   return (
     <Panel
       title="Market news"
@@ -47,6 +63,15 @@ export function NewsPanel() {
             label="News category"
             panelId={(id) => `newspanel-${id}`}
           />
+          {unread.length > 0 ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => markRead.mutate(unread.map((article) => article.url))}
+            >
+              Mark {unread.length} read
+            </Button>
+          ) : null}
           <StatusPill state={status.state} label={status.label} detail={status.detail} />
         </>
       }
@@ -101,20 +126,47 @@ export function NewsPanel() {
         {articles.length > 0 ? (
           <ul className={styles.list} role="list">
             {articles.map((article) => (
-              <li key={article.id} className={styles.item}>
+              <li
+                key={article.id}
+                className={[styles.item, read.has(article.url) ? styles.read : '']
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 {/*
                 External links open in the OS browser via the Rust opener, never in the app
                 webview — no third-party origin executes inside Brew Terminal.
                 See THREAT_MODEL.md §3.
               */}
-                <a
-                  className={styles.link}
-                  href={article.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {article.title}
-                </a>
+                <div className={styles.row}>
+                  <a
+                    className={styles.link}
+                    href={article.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    // Opening a story is the ordinary way of reading it, so it counts. The
+                    // alternative — only the explicit toggle marks read — means the list never
+                    // thins out on its own, which is the whole point of tracking this.
+                    onClick={() => markRead.mutate([article.url])}
+                  >
+                    {article.title}
+                  </a>
+
+                  <IconButton
+                    icon={read.has(article.url) ? 'refresh' : 'check'}
+                    label={
+                      read.has(article.url)
+                        ? `Mark “${article.title}” unread`
+                        : `Mark “${article.title}” read`
+                    }
+                    size={14}
+                    className={styles.toggle}
+                    onClick={() =>
+                      read.has(article.url)
+                        ? markUnread.mutate(article.url)
+                        : markRead.mutate([article.url])
+                    }
+                  />
+                </div>
                 <div className={styles.meta}>
                   <span className={styles.source}>{article.sourceName}</span>
                   <span aria-hidden="true">·</span>

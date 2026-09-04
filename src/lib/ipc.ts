@@ -159,6 +159,13 @@ export interface IpcContract {
    */
   discover_feeds: { args: { input: string }; result: FeedCandidate[] };
 
+  // --- news read state ---
+  /** Every headline URL marked read, newest first. Bounded; intersect it client-side. */
+  list_read_news: { args: undefined; result: string[] };
+  mark_news_read: { args: { urls: string[] }; result: number };
+  mark_news_unread: { args: { url: string }; result: null };
+  clear_news_read: { args: undefined; result: null };
+
   // --- saved views ---
   /** A screener filter set or a compare selection, kept by name. */
   list_saved_views: { args: { kind: SavedViewKind }; result: SavedView[] };

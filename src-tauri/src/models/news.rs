@@ -73,7 +73,8 @@ pub struct NewsFeed {
 }
 
 /// The longest feed URL accepted. Well past any real one; stops a pathological paste.
-const MAX_FEED_URL_LEN: usize = 2048;
+/// Also the ceiling for a stored read mark — see `repo_news_read`.
+pub const MAX_FEED_URL_LEN: usize = 2048;
 const MAX_FEED_TITLE_LEN: usize = 120;
 
 impl NewsFeed {

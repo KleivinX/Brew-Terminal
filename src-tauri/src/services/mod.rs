@@ -18,6 +18,7 @@ pub mod local_models;
 pub mod macro_data;
 pub mod market;
 pub mod news_feeds;
+pub mod news_read;
 pub mod notes;
 pub mod portfolio;
 pub mod profile;

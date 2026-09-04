@@ -41,3 +41,48 @@
 .category {
   text-transform: capitalize;
 }
+
+/*
+ * The headline and its toggle share a row so the control sits at the end of the line rather
+ * than under it, which is what keeps a dense list dense.
+ */
+.row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/*
+ * A read story is dimmed, not hidden. Hiding it would make the panel jump under the pointer as
+ * things are marked, and the story is still the one you just opened — you may well want it
+ * again. Weight as well as colour, so the difference survives a monochrome display.
+ */
+.read .link {
+  color: var(--text-secondary);
+  font-weight: var(--weight-normal);
+}
+
+.read .meta {
+  color: var(--text-muted);
+}
+
+/*
+ * The toggle stays out of the way until the row is hovered or something in it has focus. It is
+ * a secondary action on every row of a long list, and shown always it would compete with the
+ * headline for attention on every single line.
+ */
+.toggle {
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.item:hover .toggle,
+.item:focus-within .toggle {
+  opacity: 1;
+}
+
+/* Never hidden from the keyboard: opacity 0 is still focusable, and it must be visible then. */
+.toggle:focus-visible {
+  opacity: 1;
+}
