@@ -419,6 +419,7 @@ async fn notes_survive_a_restart_and_stay_searchable() {
             Some("crypto:cg:bitcoin".into()),
             "Supply thesis".into(),
             "Issuance halves on a fixed schedule.".into(),
+            None,
         )
         .await
         .unwrap();
@@ -461,6 +462,7 @@ async fn the_notes_workspace_shows_notes_with_and_without_an_asset() {
         Some("crypto:cg:bitcoin".into()),
         "Attached".into(),
         "about bitcoin".into(),
+        None,
     )
     .await
     .unwrap();
@@ -470,6 +472,7 @@ async fn the_notes_workspace_shows_notes_with_and_without_an_asset() {
         None,
         "Free standing".into(),
         "about nothing in particular".into(),
+        None,
     )
     .await
     .unwrap();
@@ -497,7 +500,7 @@ async fn the_notes_workspace_survives_a_restart() {
 
     {
         let state = boot(dir.path());
-        services::notes::upsert_note(&state, None, None, "Kept".into(), "on disk".into())
+        services::notes::upsert_note(&state, None, None, "Kept".into(), "on disk".into(), None)
             .await
             .unwrap();
     }
@@ -514,10 +517,10 @@ async fn the_workspace_lists_the_most_recently_edited_note_first() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());
 
-    let first = services::notes::upsert_note(&state, None, None, "First".into(), "a".into())
+    let first = services::notes::upsert_note(&state, None, None, "First".into(), "a".into(), None)
         .await
         .unwrap();
-    services::notes::upsert_note(&state, None, None, "Second".into(), "b".into())
+    services::notes::upsert_note(&state, None, None, "Second".into(), "b".into(), None)
         .await
         .unwrap();
 
@@ -528,6 +531,7 @@ async fn the_workspace_lists_the_most_recently_edited_note_first() {
         None,
         "First, edited".into(),
         "a again".into(),
+        None,
     )
     .await
     .unwrap();
@@ -545,7 +549,7 @@ async fn a_deleted_note_leaves_the_workspace_list() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());
 
-    let note = services::notes::upsert_note(&state, None, None, "Temp".into(), "x".into())
+    let note = services::notes::upsert_note(&state, None, None, "Temp".into(), "x".into(), None)
         .await
         .unwrap();
     assert_eq!(
@@ -565,9 +569,10 @@ async fn editing_a_note_updates_what_search_finds() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());
 
-    let note = services::notes::upsert_note(&state, None, None, "Draft".into(), "aardvark".into())
-        .await
-        .unwrap();
+    let note =
+        services::notes::upsert_note(&state, None, None, "Draft".into(), "aardvark".into(), None)
+            .await
+            .unwrap();
 
     services::notes::upsert_note(
         &state,
@@ -575,6 +580,7 @@ async fn editing_a_note_updates_what_search_finds() {
         None,
         "Draft".into(),
         "buffalo".into(),
+        None,
     )
     .await
     .unwrap();
@@ -600,9 +606,10 @@ async fn deleting_a_note_removes_it_from_search() {
     let dir = tempfile::tempdir().unwrap();
     let state = boot(dir.path());
 
-    let note = services::notes::upsert_note(&state, None, None, "Temp".into(), "capybara".into())
-        .await
-        .unwrap();
+    let note =
+        services::notes::upsert_note(&state, None, None, "Temp".into(), "capybara".into(), None)
+            .await
+            .unwrap();
     services::notes::delete_note(&state, note.id).await.unwrap();
 
     assert!(services::notes::search_notes(&state, "capybara".into(), 10)
@@ -617,7 +624,7 @@ async fn an_empty_note_is_refused() {
     let state = boot(dir.path());
 
     assert!(
-        services::notes::upsert_note(&state, None, None, "  ".into(), "  ".into())
+        services::notes::upsert_note(&state, None, None, "  ".into(), "  ".into(), None)
             .await
             .is_err()
     );
