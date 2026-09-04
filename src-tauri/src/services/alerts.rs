@@ -231,6 +231,30 @@ mod tests {
     fn state() -> (AppState, tempfile::TempDir) {
         let dir = tempfile::tempdir().unwrap();
         let state = AppState::bootstrap(dir.path().to_path_buf()).unwrap();
+
+        /*
+         * Disable the live market provider so these tests are deterministic and offline.
+         *
+         * `check_once` fetches quotes, and CoinGecko ships enabled because it needs no
+         * credential — so without this an alert test asserts on whether a third-party API
+         * answered in time. It failed exactly that way during a run of this suite: three
+         * consecutive failures, then four passes, with nothing changed in between. A test
+         * whose result depends on someone else's uptime is worse than no test, because a red
+         * build stops meaning anything.
+         *
+         * The mock provider is already enabled in debug builds and answers once the live one
+         * steps aside, so the alert logic under test is exercised exactly as before.
+         */
+        {
+            let conn = state.pool.get().unwrap();
+            crate::db::repo_providers::set_enabled(
+                &conn,
+                crate::providers::live::coingecko::COINGECKO_ID,
+                false,
+            )
+            .unwrap();
+        }
+
         (state, dir)
     }
 
