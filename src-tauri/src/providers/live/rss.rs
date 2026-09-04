@@ -37,6 +37,12 @@ const MAX_SUMMARY_CHARS: usize = 320;
 /// cannot crowd out every other source in the merged list.
 const MAX_ENTRIES_PER_FEED: usize = 40;
 
+/// How far past an `&` to look for the `;` that would close an entity.
+///
+/// The longest thing worth decoding here is a numeric escape like `&#x1F600;`, which is nine
+/// characters. Twelve leaves room without treating half a sentence as a candidate entity.
+const ENTITY_SCAN_CHARS: usize = 12;
+
 /// The shipped default feeds.
 ///
 /// Chosen on three grounds: each publishes a public feed intended for syndication, which is
@@ -145,8 +151,22 @@ fn decode_entities(input: &str) -> String {
         out.push_str(&rest[..start]);
         let tail = &rest[start..];
 
-        // An entity is short; anything longer is a stray ampersand, not an escape.
-        let Some(end) = tail[..tail.len().min(12)].find(';') else {
+        /*
+         * An entity is short; anything longer is a stray ampersand, not an escape.
+         *
+         * The window is counted in characters rather than bytes. `tail[..12]` panics outright
+         * the moment byte 12 lands inside a multi-byte character — and the text right after an
+         * ampersand in a real feed is very often exactly that: a smart quote, an em dash, an
+         * accented name, an emoji. This crashed the whole news fetch on live CoinDesk copy,
+         * with the panic surfacing as a dead panel rather than as a parse failure against one
+         * feed, because it happened below the per-feed error handling.
+         */
+        let Some(end) = tail
+            .char_indices()
+            .take(ENTITY_SCAN_CHARS)
+            .find(|(_, ch)| *ch == ';')
+            .map(|(index, _)| index)
+        else {
             out.push('&');
             rest = &tail[1..];
             continue;
@@ -410,6 +430,44 @@ mod tests {
     fn a_stray_ampersand_survives_intact() {
         assert_eq!(to_plain_text("Profit & loss"), "Profit & loss");
         assert_eq!(to_plain_text("AT&T earnings"), "AT&T earnings");
+    }
+
+    /// The crash this closes: a stray `&` followed closely by any multi-byte character.
+    ///
+    /// The entity scan used to slice `tail[..12]` by byte offset, so byte 12 landing inside a
+    /// smart quote panicked the parse. It took the whole news fetch down rather than one feed,
+    /// because the panic happened below the per-feed error handling — a live CoinDesk headline
+    /// was enough to leave the panel dead.
+    #[test]
+    fn an_ampersand_next_to_a_multi_byte_character_does_not_panic() {
+        // Each of these puts a multi-byte character across the old byte-12 boundary.
+        for input in [
+            "Profit & loss in “markets”",
+            "Rates & the euro — again",
+            "Q&A: what café owners think",
+            "Buy & hold 🚀 forever",
+            "M&A activity in Zürich",
+            "Tech & AI—the story so far",
+        ] {
+            let out = to_plain_text(input);
+            assert!(!out.is_empty(), "{input} produced nothing");
+        }
+    }
+
+    #[test]
+    fn a_multi_byte_character_after_an_ampersand_is_preserved_not_mangled() {
+        assert_eq!(
+            to_plain_text("Profit & loss in “markets”"),
+            "Profit & loss in “markets”"
+        );
+        assert_eq!(to_plain_text("M&A in Zürich"), "M&A in Zürich");
+    }
+
+    /// The scan window is characters now, not bytes, so an entity is still found when the text
+    /// before it is wide. Byte counting would have walked past this one.
+    #[test]
+    fn an_entity_is_still_decoded_when_wide_characters_precede_it() {
+        assert_eq!(to_plain_text("“a” &amp; b"), "“a” & b");
     }
 
     /// The ordering guarantee that matters: decoding runs after tags are stripped, so an
