@@ -10,6 +10,7 @@ import { SkeletonRows } from '@/components/status/Skeleton';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { ExportCsv } from '@/components/data/ExportCsv';
 import type { CsvColumn } from '@/lib/csv';
+import { SavedViews } from '@/components/views/SavedViews';
 import { ipc } from '@/lib/ipc';
 import { formatPrice, formatPercent, formatCompact } from '@/lib/format';
 import type { AssetType, Quote, ScreenerFilter, ScreenerSort } from '@/types/domain';
@@ -58,6 +59,56 @@ const SCREENER_COLUMNS: CsvColumn<Quote>[] = [
   { header: '24h volume', value: (q) => q.volume24h },
 ];
 
+/**
+ * What a saved screen holds.
+ *
+ * The raw text of each field rather than the parsed `ScreenerFilter`. The inputs are strings —
+ * "1000000000" is what the user typed and what the box has to show again — and round-tripping
+ * through numbers would rewrite "1e9" as "1000000000" under someone who typed the first.
+ *
+ * Every field is optional on read, because a view saved by an older build predates whichever
+ * one was added last. `readScreenerView` fills the gaps rather than refusing the whole thing.
+ */
+interface ScreenerViewPayload {
+  assetType: AssetType | null;
+  query: string;
+  minPrice: string;
+  maxPrice: string;
+  minCap: string;
+  minChange: string;
+  maxChange: string;
+  sort: ScreenerSort;
+  descending: boolean;
+}
+
+const SORT_IDS = SORTS.map((s) => s.id);
+
+/** Validates a stored payload. Returns null when it is not a screen at all. */
+function readScreenerView(raw: unknown): ScreenerViewPayload | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const v = raw as Record<string, unknown>;
+
+  const text = (key: string): string => (typeof v[key] === 'string' ? (v[key] as string) : '');
+  const assetType =
+    v.assetType === 'crypto' || v.assetType === 'stock' ? (v.assetType as AssetType) : null;
+
+  // An unknown sort would leave the select with no matching option and the screen sorted by
+  // something the user cannot see. Falling back is better than rendering a lie.
+  const sort = SORT_IDS.includes(v.sort as ScreenerSort) ? (v.sort as ScreenerSort) : 'market-cap';
+
+  return {
+    assetType,
+    query: text('query'),
+    minPrice: text('minPrice'),
+    maxPrice: text('maxPrice'),
+    minCap: text('minCap'),
+    minChange: text('minChange'),
+    maxChange: text('maxChange'),
+    sort,
+    descending: typeof v.descending === 'boolean' ? v.descending : true,
+  };
+}
+
 export function ScreenerRoute() {
   const [assetType, setAssetType] = useState<AssetType | null>(null);
   const [query, setQuery] = useState('');
@@ -88,6 +139,34 @@ export function ScreenerRoute() {
   });
 
   const rows = data?.data ?? [];
+
+  const currentView = (): ScreenerViewPayload => ({
+    assetType,
+    query,
+    minPrice,
+    maxPrice,
+    minCap,
+    minChange,
+    maxChange,
+    sort,
+    descending,
+  });
+
+  const applyView = (raw: unknown): boolean => {
+    const view = readScreenerView(raw);
+    if (!view) return false;
+
+    setAssetType(view.assetType);
+    setQuery(view.query);
+    setMinPrice(view.minPrice);
+    setMaxPrice(view.maxPrice);
+    setMinCap(view.minCap);
+    setMinChange(view.minChange);
+    setMaxChange(view.maxChange);
+    setSort(view.sort);
+    setDescending(view.descending);
+    return true;
+  };
   const asked =
     assetType !== null ||
     query.trim() !== '' ||
@@ -114,6 +193,8 @@ export function ScreenerRoute() {
           className={styles.filters}
         >
           <div className={styles.form}>
+            <SavedViews kind="screener" current={currentView} onApply={applyView} />
+
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Asset type</legend>
               <div className={styles.radios}>

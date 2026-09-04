@@ -21,6 +21,7 @@ pub mod news_feeds;
 pub mod notes;
 pub mod portfolio;
 pub mod profile;
+pub mod saved_views;
 pub mod screener;
 pub mod sentiment;
 pub mod settings;

@@ -120,6 +120,10 @@ pub fn run() {
             commands::notes::restore_note,
             // tables
             commands::csv_export::export_csv,
+            // saved views
+            commands::saved_views::list_saved_views,
+            commands::saved_views::save_view,
+            commands::saved_views::delete_saved_view,
             // watchlists
             commands::watchlist::list_watchlists,
             commands::watchlist::get_watchlist_items,

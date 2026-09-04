@@ -3,6 +3,8 @@ import { isTauri } from './env';
 import type {
   CsvExportResult,
   FeedCandidate,
+  SavedView,
+  SavedViewKind,
   AiContextItem,
   AiConversation,
   AiMode,
@@ -156,6 +158,16 @@ export interface IpcContract {
    * `<link rel="alternate">` declarations; an empty list means it advertises none.
    */
   discover_feeds: { args: { input: string }; result: FeedCandidate[] };
+
+  // --- saved views ---
+  /** A screener filter set or a compare selection, kept by name. */
+  list_saved_views: { args: { kind: SavedViewKind }; result: SavedView[] };
+  /** Saving over a name that already exists on the same screen replaces it. */
+  save_view: {
+    args: { kind: SavedViewKind; name: string; payload: string };
+    result: SavedView;
+  };
+  delete_saved_view: { args: { id: string }; result: null };
   /** Fetches and parses a candidate feed without storing anything. */
   preview_news_feed: { args: { url: string }; result: FeedPreview };
   add_news_feed: {

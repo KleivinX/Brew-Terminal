@@ -5,6 +5,8 @@ import searchIndex from '@content/fixtures/search_index.json';
 import newsFixture from '@content/fixtures/news.json';
 import chartFixture from '@content/fixtures/chart_series.json';
 import type {
+  SavedView,
+  SavedViewKind,
   AiContextItem,
   AiConversation,
   AiMessage,
@@ -153,6 +155,7 @@ interface HarnessState {
   items: WatchlistItem[];
   notes: Note[];
   progress: LearningProgress[];
+  savedViews: SavedView[];
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -181,6 +184,7 @@ function defaultState(): HarnessState {
       { watchlistId: 'wl-default', assetId: 'stock:us:AAPL', position: 2, addedAt: 0 },
     ],
     notes: [],
+    savedViews: [],
     progress: [],
   };
 }
@@ -197,6 +201,9 @@ function loadState(): HarnessState {
       items: parsed.items ?? base.items,
       notes: parsed.notes ?? base.notes,
       progress: parsed.progress ?? base.progress,
+      // Absent in state written before saved views existed, which is the same shape as a
+      // forward-only migration adding a table.
+      savedViews: parsed.savedViews ?? base.savedViews,
     };
   } catch {
     return defaultState();
@@ -1281,6 +1288,54 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
 
     case 'list_news_feeds':
       return newsFeeds.map((f) => ({ ...f }));
+
+    case 'list_saved_views':
+      return state.savedViews
+        .filter((view) => view.kind === args.kind)
+        .sort((a, b) => b.updatedAt - a.updatedAt || a.name.localeCompare(b.name));
+
+    case 'save_view': {
+      const name = String(args.name ?? '').trim();
+      if (!name) throw { kind: 'validation', message: 'Give the view a name.' };
+
+      const payload = String(args.payload ?? '');
+      try {
+        JSON.parse(payload);
+      } catch {
+        throw { kind: 'validation', message: 'That view could not be stored.' };
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      // Mirrors the Rust path: same name on the same screen replaces, and keeps createdAt.
+      const existing = state.savedViews.find((v) => v.kind === args.kind && v.name === name);
+      const view: SavedView = existing
+        ? { ...existing, payload, updatedAt: now }
+        : {
+            id: `view-${now}-${Math.random().toString(36).slice(2, 8)}`,
+            kind: args.kind as SavedViewKind,
+            name,
+            payload,
+            createdAt: now,
+            updatedAt: now,
+          };
+
+      state = {
+        ...state,
+        savedViews: existing
+          ? state.savedViews.map((v) => (v.id === view.id ? view : v))
+          : [...state.savedViews, view],
+      };
+      saveState(state);
+      return view;
+    }
+
+    case 'delete_saved_view': {
+      const before = state.savedViews.length;
+      state = { ...state, savedViews: state.savedViews.filter((v) => v.id !== args.id) };
+      if (state.savedViews.length === before) throw { kind: 'not-found', message: 'Not found.' };
+      saveState(state);
+      return null;
+    }
 
     case 'discover_feeds': {
       /*

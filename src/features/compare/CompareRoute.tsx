@@ -8,6 +8,7 @@ import { Tabs, type TabItem } from '@/components/ui/Tabs';
 import { EmptyState } from '@/components/status/EmptyState';
 import { SkeletonRows } from '@/components/status/Skeleton';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
+import { SavedViews } from '@/components/views/SavedViews';
 import { ipc } from '@/lib/ipc';
 import { MAX_COMPARE } from './constants';
 import { ComparisonChart } from './ComparisonChart';
@@ -23,6 +24,39 @@ const RANGES: readonly TabItem<ChartRange>[] = [
   { id: '1Y', label: '1Y' },
   { id: 'MAX', label: 'MAX' },
 ];
+
+const RANGE_IDS = RANGES.map((r) => r.id);
+
+/**
+ * What a saved comparison holds: which assets, and over what range.
+ *
+ * Not the series data. That is provider output with an age on it, and a view that restored a
+ * cached chart from three weeks ago would be showing a number with no provenance — the one
+ * thing this app does not do. A view names the question; the answer is fetched fresh.
+ */
+interface CompareViewPayload {
+  assetIds: string[];
+  range: ChartRange;
+}
+
+/** Validates a stored payload. Returns null when it is not a comparison. */
+function readCompareView(raw: unknown): CompareViewPayload | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const v = raw as Record<string, unknown>;
+
+  if (!Array.isArray(v.assetIds)) return null;
+  const assetIds = v.assetIds
+    .filter((id): id is string => typeof id === 'string' && id.trim() !== '')
+    // Deduplicated and capped on read, not only on add: a payload can be edited by hand, and
+    // MAX_COMPARE exists because there are only six validated series colours.
+    .filter((id, index, all) => all.indexOf(id) === index)
+    .slice(0, MAX_COMPARE);
+
+  if (assetIds.length === 0) return null;
+
+  const range = RANGE_IDS.includes(v.range as ChartRange) ? (v.range as ChartRange) : '3M';
+  return { assetIds, range };
+}
 
 /**
  * Assets side by side, and the macro backdrop they move against.
@@ -51,6 +85,16 @@ export function CompareRoute() {
 
   const series = data?.series ?? [];
 
+  const applyView = (raw: unknown): boolean => {
+    const view = readCompareView(raw);
+    if (!view) return false;
+
+    setAssetIds(view.assetIds);
+    setRange(view.range);
+    setDraft('');
+    return true;
+  };
+
   return (
     <>
       <WorkspaceHeader
@@ -62,6 +106,13 @@ export function CompareRoute() {
       <div className={styles.layout}>
         <Panel title="Assets" meta={`Up to ${MAX_COMPARE} — one per validated colour.`}>
           <div className={styles.picker}>
+            <SavedViews
+              kind="compare"
+              current={() => ({ assetIds, range })}
+              onApply={applyView}
+              canSave={assetIds.length > 0}
+            />
+
             <ul role="list" className={styles.chips}>
               {assetIds.map((id, i) => (
                 <li key={id} className={styles.chip}>
