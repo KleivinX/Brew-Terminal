@@ -1282,6 +1282,38 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
     case 'list_news_feeds':
       return newsFeeds.map((f) => ({ ...f }));
 
+    case 'discover_feeds': {
+      /*
+       * No network here. Mirrors the real command's shape closely enough to drive the UI: a
+       * bare host gains https://, an address with no feed comes back empty rather than as an
+       * error, and everything else yields two candidates to choose between.
+       */
+      const raw = String(args.input ?? '').trim();
+      if (!raw) throw { kind: 'validation', message: 'Enter a site address.' };
+      if (raw.startsWith('http://')) {
+        throw { kind: 'validation', message: 'A feed address must start with https://' };
+      }
+
+      const site = raw.includes('://') ? raw : `https://${raw}`;
+      const host = site.replace(/^https:\/\//, '').replace(/\/.*$/, '');
+      if (host.includes('nofeed')) return [];
+
+      return [
+        {
+          url: `https://${host}/feed.xml`,
+          title: `${host} — Everything`,
+          itemCount: 25,
+          newestTitle: 'A recent headline',
+        },
+        {
+          url: `https://${host}/markets/feed.xml`,
+          title: `${host} — Markets`,
+          itemCount: 10,
+          newestTitle: 'Another recent headline',
+        },
+      ];
+    }
+
     case 'preview_news_feed': {
       const url = String(args.url ?? '');
       if (!url.startsWith('https://')) {

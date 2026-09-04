@@ -12,6 +12,7 @@ pub mod alerts;
 pub mod cache;
 pub mod community;
 pub mod csv_export;
+pub mod feed_discovery;
 pub mod learn;
 pub mod local_models;
 pub mod macro_data;

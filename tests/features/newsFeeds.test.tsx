@@ -127,3 +127,87 @@ describe('news feeds', () => {
     expect(violations, describeViolations(violations)).toHaveLength(0);
   });
 });
+
+describe("finding a site's feed", () => {
+  const SETTLE = { timeout: 4000 } as const;
+
+  async function findFor(site: string): Promise<void> {
+    const user = userEvent.setup();
+    renderWithProviders(<NewsFeedsPanel />);
+    await user.type(await screen.findByLabelText('Site address'), site);
+    await user.click(screen.getByRole('button', { name: 'Find feeds' }));
+  }
+
+  it('lists what a site declares, with enough evidence to pick between them', async () => {
+    await findFor('coindesk.com');
+
+    expect(await screen.findByText('coindesk.com — Everything')).toBeInTheDocument();
+    expect(screen.getByText('coindesk.com — Markets')).toBeInTheDocument();
+    // The newest headline is the part that settles which feed you meant.
+    expect(screen.getAllByText(/newest:/).length).toBeGreaterThan(0);
+  });
+
+  it('takes a bare host, because that is what people type', async () => {
+    await findFor('coindesk.com');
+    expect(await screen.findByText('https://coindesk.com/feed.xml')).toBeInTheDocument();
+  });
+
+  /**
+   * Plenty of sites publish nothing. Saying so is more use than an error implying something
+   * went wrong, and it points at the manual form underneath.
+   */
+  it('says a site has no feed rather than reporting a failure', async () => {
+    await findFor('nofeed.example');
+
+    expect(await screen.findByText(/does not advertise a feed/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('refuses a plain-http address, the same rule as everywhere else', async () => {
+    await findFor('http://example.org');
+    expect(await screen.findByRole('alert')).toHaveTextContent(/https:\/\//);
+  });
+
+  /**
+   * Discovery hands a candidate to the add form; it does not save it. The address the user is
+   * about to store stays on screen, and they still choose the category.
+   */
+  it('fills the add form rather than saving straight away', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<NewsFeedsPanel />);
+    await user.type(await screen.findByLabelText('Site address'), 'coindesk.com');
+    await user.click(screen.getByRole('button', { name: 'Find feeds' }));
+
+    await screen.findByText('coindesk.com — Everything');
+    await user.click(screen.getAllByRole('button', { name: 'Use this' })[0]!);
+
+    await waitFor(
+      () =>
+        expect(screen.getByLabelText('Feed address')).toHaveValue('https://coindesk.com/feed.xml'),
+      SETTLE,
+    );
+    expect(screen.getByLabelText('Name (optional)')).toHaveValue('coindesk.com — Everything');
+
+    // Nothing has been stored yet.
+    const list = await feedList();
+    expect(within(list).queryByText('coindesk.com — Everything')).not.toBeInTheDocument();
+  });
+
+  /** A single-field form: Enter is how anyone would expect to run it. */
+  it('runs on Enter as well as on the button', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<NewsFeedsPanel />);
+
+    await user.type(await screen.findByLabelText('Site address'), 'coindesk.com{Enter}');
+
+    expect(await screen.findByText('coindesk.com — Everything')).toBeInTheDocument();
+  });
+
+  it('has no accessibility violations with candidates on screen', async () => {
+    await findFor('coindesk.com');
+    await screen.findByText('coindesk.com — Everything');
+
+    const violations = await findAccessibilityViolations(document.body);
+    expect(violations, describeViolations(violations)).toHaveLength(0);
+  });
+});

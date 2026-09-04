@@ -158,3 +158,52 @@
   font-size: var(--text-sm);
   color: var(--text-muted);
 }
+
+/*
+ * Discovered candidates. A row is the feed's name, its address and enough evidence to tell
+ * whether it is the one you meant — the newest headline is the part that actually settles it,
+ * because two feeds on the same site often differ only in what they carry.
+ */
+.candidates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.candidate {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.candidateText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.candidateTitle {
+  font-weight: var(--weight-semibold);
+}
+
+/* The address can be long and must not push the button off the row. */
+.candidateUrl {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.candidateMeta {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

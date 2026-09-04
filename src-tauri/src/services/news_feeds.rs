@@ -34,17 +34,21 @@ pub async fn list(state: &AppState) -> AppResult<Vec<NewsFeed>> {
 
 /// Fetches and parses a feed without storing anything.
 pub async fn preview(state: &AppState, url: String) -> AppResult<FeedPreview> {
+    preview_with(&state.registry.http_client(), url).await
+}
+
+/// The same check, taking the HTTP client rather than the whole app state.
+///
+/// Split out for feed discovery, which verifies several candidates at once. `AppState` is not
+/// `Clone`, so a spawned task cannot hold one — the client is, which is the same reason the RSS
+/// provider's concurrent fetch takes a client too.
+pub async fn preview_with(client: &reqwest::Client, url: String) -> AppResult<FeedPreview> {
     let parsed_url = NewsFeed::validate_url(&url).map_err(|detail| AppError::Validation {
         field: "url".into(),
         detail,
     })?;
 
-    let bytes = http::get_bytes(
-        &state.registry.http_client(),
-        rss::RSS_PROVIDER_ID,
-        parsed_url.as_str(),
-    )
-    .await?;
+    let bytes = http::get_bytes(client, rss::RSS_PROVIDER_ID, parsed_url.as_str()).await?;
 
     let feed = feed_rs::parser::parse(bytes.as_slice()).map_err(|error| {
         // The parse error can quote the document, so it is logged and not returned.

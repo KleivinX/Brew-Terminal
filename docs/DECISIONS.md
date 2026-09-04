@@ -703,3 +703,47 @@ no documented API, only an endpoint its own site calls, which ADR-008 rules out)
 crypto index alone (rejected: it would leave the equities half of the app with no equivalent,
 and the components are the teaching content). Hide the components behind a disclosure (rejected:
 the components are the point; the composite alone is the thing these ADRs are wary of).
+
+---
+
+## ADR-038 — Reading a site's own feed declaration is not scraping
+
+**Status:** accepted.
+
+Adding a news feed used to require already knowing its URL. Feed discovery takes a site address,
+fetches the page, and reads the `<link rel="alternate" type="application/rss+xml">` elements out
+of its `<head>`.
+
+This needs recording because ADR-008 says "no scraping, and no undocumented/unofficial
+endpoints", and fetching someone's HTML and reading tags out of it is at least adjacent to the
+thing that rules out.
+
+**Why it falls on the allowed side.** Autodiscovery is a published convention, and the tag is the
+site's own machine-readable statement of where its feed is. Reading it is following a signpost
+the publisher put up for exactly this purpose — the same category as reading a documented JSON
+API, not the same category as parsing article text out of a page that never offered it. The two
+things ADR-008 is actually protecting against are both absent: there is no endpoint here that the
+publisher did not intend for programmatic use, and there is no extraction of content the site did
+not offer in a machine-readable form.
+
+**What keeps it there**, enforced in code:
+
+1. **Only `<link>` elements, only in the `<head>`.** The scan stops at `</head>`. No article
+   text, no body markup, no attempt to read content out of the page.
+2. **No path guessing.** A site that declares nothing returns an empty list. The app does not
+   probe `/feed`, `/rss`, `/index.xml` hoping something answers — that would be exactly the
+   "reachable but not offered" behaviour ADR-008 rules out.
+3. **No third-party search service.** There are feed-search APIs that would do this; using one
+   would mean sending the user's browsing interest to a company they did not choose. The site
+   itself is the only party in the request.
+4. **The same HTTPS rule as everywhere else.** A feed declared over plain `http` is not offered,
+   because the app would not fetch it.
+5. **Bounded.** At most 512KB of the page is read and at most six candidates are verified, so
+   this cannot become the most expensive request the app makes or a burst against one host.
+
+**Alternatives:** a third-party feed-search API such as feedsearch.dev (rejected: it puts a
+company between the user and the site they asked about, adds a dependency whose terms would need
+the ADR-008 review, and answers a question the site already answers itself). Ship a curated
+directory only (rejected: it goes stale, and it cannot answer "does _this_ site have a feed",
+which is the actual question). Probe conventional paths when autodiscovery finds nothing
+(rejected: see 2 — that is guessing at endpoints, which is the line).

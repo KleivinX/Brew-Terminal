@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Toggle } from '@/components/ui/Toggle';
 import { RelativeTime } from '@/components/status/RelativeTime';
 import { ipc } from '@/lib/ipc';
-import type { FeedPreview, NewsCategory, NewsFeed } from '@/types/domain';
+import type { FeedCandidate, FeedPreview, NewsCategory, NewsFeed } from '@/types/domain';
 import styles from './NewsFeedsPanel.module.css';
 
 const CATEGORIES: Array<{ value: NewsCategory; label: string }> = [
@@ -39,6 +39,16 @@ export function NewsFeedsPanel() {
   const [preview, setPreview] = useState<FeedPreview | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  /*
+   * Discovery is a separate step in front of the manual form rather than a replacement for it.
+   * What it produces is a candidate the user still confirms — they pick the category and the
+   * name, and the address they are about to save stays visible. Adding a feed straight from a
+   * search result would be the one flow here that saves something the user never read.
+   */
+  const [site, setSite] = useState('');
+  const [candidates, setCandidates] = useState<FeedCandidate[] | null>(null);
+  const [siteError, setSiteError] = useState<string | null>(null);
+
   const { data: feeds } = useQuery({
     queryKey: ['news-feeds'],
     queryFn: () => ipc('list_news_feeds'),
@@ -55,6 +65,31 @@ export function NewsFeedsPanel() {
     setTitle('');
     setPreview(null);
     setFormError(null);
+  };
+
+  const discover = useMutation({
+    mutationFn: (input: string) => ipc('discover_feeds', { input }),
+    onSuccess: (found) => {
+      setCandidates(found);
+      setSiteError(null);
+    },
+    onError: (error) => {
+      setCandidates(null);
+      setSiteError(errorMessage(error));
+    },
+  });
+
+  /** Moves a chosen candidate into the add form below, where it is confirmed. */
+  const chooseCandidate = (candidate: FeedCandidate): void => {
+    setUrl(candidate.url);
+    setTitle(candidate.title ?? '');
+    setPreview({
+      title: candidate.title,
+      itemCount: candidate.itemCount,
+      newestTitle: candidate.newestTitle,
+    });
+    setFormError(null);
+    document.getElementById('feed-url')?.scrollIntoView({ block: 'center' });
   };
 
   const check = useMutation({
@@ -156,6 +191,86 @@ export function NewsFeedsPanel() {
             ))}
           </ul>
         )}
+      </Panel>
+
+      <Panel
+        title="Find a site's feed"
+        meta="Reads what the site itself declares. No third-party search service."
+      >
+        <form
+          className={styles.form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (site.trim()) discover.mutate(site.trim());
+          }}
+        >
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="feed-site">
+              Site address
+            </label>
+            <Input
+              id="feed-site"
+              value={site}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="coindesk.com"
+              invalid={siteError !== null}
+              aria-describedby="feed-site-hint"
+              onChange={(event) => {
+                setSite(event.target.value);
+                setCandidates(null);
+                setSiteError(null);
+              }}
+            />
+            <p id="feed-site-hint" className={styles.hint}>
+              The site&rsquo;s own address is enough — <code>https://</code> is assumed.
+            </p>
+          </div>
+
+          <div className={styles.formActions}>
+            <Button type="submit" variant="secondary" disabled={!site.trim() || discover.isPending}>
+              {discover.isPending ? 'Looking…' : 'Find feeds'}
+            </Button>
+          </div>
+
+          {siteError ? (
+            <p className={styles.formError} role="alert">
+              {siteError}
+            </p>
+          ) : null}
+
+          {/*
+            An empty result is an answer, not a failure. Plenty of sites publish no feed, and
+            saying so is more use than an error that implies something went wrong.
+          */}
+          {candidates?.length === 0 ? (
+            <p className={styles.hint} role="status">
+              That site does not advertise a feed. If you know the address, enter it below.
+            </p>
+          ) : null}
+
+          {candidates && candidates.length > 0 ? (
+            <ul role="list" className={styles.candidates}>
+              {candidates.map((candidate) => (
+                <li key={candidate.url} className={styles.candidate}>
+                  <div className={styles.candidateText}>
+                    <span className={styles.candidateTitle}>
+                      {candidate.title ?? 'An untitled feed'}
+                    </span>
+                    <span className={styles.candidateUrl}>{candidate.url}</span>
+                    <span className={styles.candidateMeta}>
+                      {candidate.itemCount} {candidate.itemCount === 1 ? 'item' : 'items'}
+                      {candidate.newestTitle ? ` · newest: “${candidate.newestTitle}”` : ''}
+                    </span>
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={() => chooseCandidate(candidate)}>
+                    Use this
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </form>
       </Panel>
 
       <Panel title="Add a feed" meta="The address is checked before it is saved.">

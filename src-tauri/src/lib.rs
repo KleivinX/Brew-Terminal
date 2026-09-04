@@ -68,6 +68,7 @@ pub fn run() {
             // news feeds
             commands::news_feeds::list_news_feeds,
             commands::news_feeds::preview_news_feed,
+            commands::feed_discovery::discover_feeds,
             commands::news_feeds::add_news_feed,
             commands::news_feeds::remove_news_feed,
             commands::news_feeds::set_news_feed_enabled,

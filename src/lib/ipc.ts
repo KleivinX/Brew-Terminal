@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from './env';
 import type {
   CsvExportResult,
+  FeedCandidate,
   AiContextItem,
   AiConversation,
   AiMode,
@@ -150,6 +151,11 @@ export interface IpcContract {
   // --- news ---
   get_news: { args: { filter: NewsFilter }; result: Envelope<NewsArticle[]> };
   list_news_feeds: { args: undefined; result: NewsFeed[] };
+  /**
+   * Finds the feeds a site publishes, from its address. Reads the site's own
+   * `<link rel="alternate">` declarations; an empty list means it advertises none.
+   */
+  discover_feeds: { args: { input: string }; result: FeedCandidate[] };
   /** Fetches and parses a candidate feed without storing anything. */
   preview_news_feed: { args: { url: string }; result: FeedPreview };
   add_news_feed: {

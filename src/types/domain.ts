@@ -45,6 +45,7 @@ export type { EndpointReach } from './generated/EndpointReach';
 export type { EngineStatus } from './generated/EngineStatus';
 export type { ExportResult } from './generated/ExportResult';
 export type { CsvExportResult } from './generated/CsvExportResult';
+export type { FeedCandidate } from './generated/FeedCandidate';
 export type { FeedPreview } from './generated/FeedPreview';
 export type { ImportMode } from './generated/ImportMode';
 export type { ImportResult } from './generated/ImportResult';
