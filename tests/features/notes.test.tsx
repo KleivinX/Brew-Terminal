@@ -3,6 +3,8 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { NotesRoute } from '@/features/notes/NotesRoute';
+import { ToastHost } from '@/components/status/ToastHost';
+import { useToastStore } from '@/stores/toastStore';
 import { MAX_NOTE_BODY, MAX_NOTE_TITLE, noteSymbol, snippetOf } from '@/features/notes/noteText';
 import { __resetHarness } from '@/lib/ipc.browser';
 import { readFileSync } from 'node:fs';
@@ -12,6 +14,7 @@ import { findAccessibilityViolations, describeViolations } from '../setup/axe';
 
 beforeEach(() => {
   __resetHarness();
+  useToastStore.setState({ toasts: [] });
 });
 
 /**
@@ -24,10 +27,14 @@ beforeEach(() => {
  */
 function renderNotes(route = '/notes') {
   return renderWithProviders(
-    <Routes>
-      <Route path="/notes" element={<NotesRoute />} />
-      <Route path="/notes/:noteId" element={<NotesRoute />} />
-    </Routes>,
+    <>
+      <Routes>
+        <Route path="/notes" element={<NotesRoute />} />
+        <Route path="/notes/:noteId" element={<NotesRoute />} />
+      </Routes>
+      {/* The delete confirmation and its Undo live here, so the route alone cannot show them. */}
+      <ToastHost />
+    </>,
     { route },
   );
 }
@@ -113,7 +120,10 @@ describe('notes workspace', () => {
 
     // Regression guard: the confirmation was previously wiped by the effect that re-seeds the
     // editor when the save navigated to the new note's URL, so it never appeared at all.
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Saved'), SETTLE);
+    await waitFor(
+      () => expect(within(editor()).getByRole('status')).toHaveTextContent('Saved'),
+      SETTLE,
+    );
   });
 
   it('warns while there are unsaved changes', async () => {
@@ -124,7 +134,7 @@ describe('notes workspace', () => {
     await user.click(screen.getByRole('button', { name: 'Write your first note' }));
     await user.type(await screen.findByLabelText('Title'), 'Half written');
 
-    expect(screen.getByRole('status')).toHaveTextContent('Unsaved changes');
+    expect(within(editor()).getByRole('status')).toHaveTextContent('Unsaved changes');
   });
 
   it('will not save an empty note', async () => {
@@ -261,6 +271,88 @@ describe('notes workspace', () => {
     );
     await waitFor(
       () => expect(within(editor()).getByText('Nothing open')).toBeInTheDocument(),
+      SETTLE,
+    );
+  });
+
+  it('offers Undo after a delete, and putting the note back restores what was in it', async () => {
+    const user = userEvent.setup();
+    renderNotes();
+    await waitFor(() => screen.getByText('No notes yet'), SETTLE);
+
+    await write('Second thoughts', 'the part worth keeping');
+    await waitFor(
+      () => expect(within(list()).getByText('Second thoughts')).toBeInTheDocument(),
+      SETTLE,
+    );
+
+    await user.click(within(editor()).getByRole('button', { name: /Delete/ }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }),
+    );
+
+    await waitFor(
+      () => expect(within(list()).getByText('No notes yet')).toBeInTheDocument(),
+      SETTLE,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
+
+    await waitFor(
+      () => expect(within(list()).getByText('Second thoughts')).toBeInTheDocument(),
+      SETTLE,
+    );
+    // The body too. A restore that brought back a title and an empty note would pass a
+    // presence check and still have lost the thing the note was for.
+    await waitFor(
+      () => expect(screen.getByLabelText('Note')).toHaveValue('the part worth keeping'),
+      SETTLE,
+    );
+  });
+
+  it('reopens the restored note rather than leaving the editor empty', async () => {
+    // Undo that returns a row to a list but leaves the writer looking at "Nothing open" has
+    // technically recovered the note and not obviously recovered anything.
+    const user = userEvent.setup();
+    renderNotes();
+    await waitFor(() => screen.getByText('No notes yet'), SETTLE);
+
+    await write('Back please', 'body');
+    await waitFor(
+      () => expect(within(list()).getByText('Back please')).toBeInTheDocument(),
+      SETTLE,
+    );
+
+    await user.click(within(editor()).getByRole('button', { name: /Delete/ }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }),
+    );
+    await waitFor(
+      () => expect(within(editor()).getByText('Nothing open')).toBeInTheDocument(),
+      SETTLE,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
+
+    await waitFor(() => expect(screen.getByLabelText('Title')).toHaveValue('Back please'), SETTLE);
+  });
+
+  it('takes the undo offer away once it has been used', async () => {
+    const user = userEvent.setup();
+    renderNotes();
+    await waitFor(() => screen.getByText('No notes yet'), SETTLE);
+
+    await write('Once only', 'body');
+    await waitFor(() => expect(within(list()).getByText('Once only')).toBeInTheDocument(), SETTLE);
+
+    await user.click(within(editor()).getByRole('button', { name: /Delete/ }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Undo' }));
+
+    await waitFor(
+      () => expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument(),
       SETTLE,
     );
   });

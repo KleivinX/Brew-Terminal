@@ -32,6 +32,13 @@ pub async fn delete_note(state: State<'_, AppState>, note_id: String) -> AppResu
     services::notes::delete_note(&state, note_id).await
 }
 
+/// Undo for a deleted note. Takes the whole note because the row it would be read from is
+/// already gone — see `services::notes::restore_note`.
+#[tauri::command]
+pub async fn restore_note(state: State<'_, AppState>, note: Note) -> AppResult<Note> {
+    services::notes::restore_note(&state, note).await
+}
+
 #[tauri::command]
 pub async fn search_notes(
     state: State<'_, AppState>,

@@ -8,7 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ipc } from '@/lib/ipc';
 import { STALE_TIMES } from '@/lib/queryClient';
-import type { AssetType, ChartRange, NewsCategory, WatchlistItem } from '@/types/domain';
+import type { AssetType, ChartRange, NewsCategory, Note, WatchlistItem } from '@/types/domain';
 
 export const marketKeys = {
   list: (assetType: AssetType, region: string) => ['market-list', assetType, region] as const,
@@ -268,6 +268,27 @@ export function useUpsertNote(assetId: string | undefined) {
       title: string;
       bodyMd: string;
     }) => ipc('upsert_note', { noteId, assetId: assetId ?? null, title, bodyMd }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['notes'] });
+      if (assetId) {
+        void queryClient.invalidateQueries({ queryKey: noteKeys.forAsset(assetId) });
+      }
+    },
+  });
+}
+
+/**
+ * Undo for a deleted note.
+ *
+ * Takes the note object the delete handler kept hold of, because the row is gone by the time
+ * the Undo button exists. The backend restores the id, the timestamps and the asset link
+ * verbatim — routing this through `upsert_note` instead would bring the note back with a fresh
+ * created_at and, from the notes workspace, with no asset attached at all.
+ */
+export function useRestoreNote(assetId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (note: Note) => ipc('restore_note', { note }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes'] });
       if (assetId) {

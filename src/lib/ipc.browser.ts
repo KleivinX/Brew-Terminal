@@ -1437,6 +1437,17 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       saveState(state);
       return null;
 
+    case 'restore_note': {
+      // Mirrors the Rust path: idempotent, and the living copy wins over the restored one.
+      const incoming = args.note as Note;
+      const existing = state.notes.find((note) => note.id === incoming.id);
+      if (existing) return existing;
+
+      state = { ...state, notes: [...state.notes, incoming] };
+      saveState(state);
+      return incoming;
+    }
+
     case 'search_notes': {
       // The real command uses SQLite FTS5; substring matching is close enough to drive the UI.
       const needle = String(args.query).trim().toLowerCase();

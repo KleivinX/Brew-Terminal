@@ -9,7 +9,14 @@ import { Icon } from '@/components/ui/Icon';
 import { EmptyState } from '@/components/status/EmptyState';
 import { RelativeTime } from '@/components/status/RelativeTime';
 import { SkeletonRows } from '@/components/status/Skeleton';
-import { useAllNotes, useDeleteNote, useNoteSearch, useUpsertNote } from '@/lib/market';
+import {
+  useAllNotes,
+  useDeleteNote,
+  useNoteSearch,
+  useRestoreNote,
+  useUpsertNote,
+} from '@/lib/market';
+import { toast } from '@/stores/toastStore';
 import { MAX_NOTE_BODY, MAX_NOTE_TITLE, noteSymbol, snippetOf } from './noteText';
 import type { Note } from '@/types/domain';
 import styles from './NotesRoute.module.css';
@@ -36,6 +43,7 @@ export function NotesRoute() {
 
   const upsertNote = useUpsertNote(undefined);
   const deleteNote = useDeleteNote(undefined);
+  const restoreNote = useRestoreNote(undefined);
 
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Note | null>(null);
@@ -114,13 +122,37 @@ export function NotesRoute() {
 
   const confirmDelete = (): void => {
     if (!pendingDelete) return;
-    const removed = pendingDelete.id;
-    deleteNote.mutate(removed, {
+    /*
+     * The whole note, not just its id. Undo has to put back the timestamps and the asset link
+     * as well as the text, and once the row is gone this closure is the only place they still
+     * exist.
+     */
+    const removed = pendingDelete;
+
+    deleteNote.mutate(removed.id, {
       onSuccess: () => {
         setPendingDelete(null);
         // Cleared too, or the just-saved note would stay open after being deleted.
-        if (savedId === removed) setSavedId(null);
-        if (noteId === removed) void navigate('/notes');
+        if (savedId === removed.id) setSavedId(null);
+        if (noteId === removed.id) void navigate('/notes');
+
+        toast.info(`Deleted “${removed.title || 'Untitled note'}”`, {
+          action: {
+            label: 'Undo',
+            onAction: () =>
+              restoreNote.mutate(removed, {
+                onSuccess: (note) => void navigate(`/notes/${note.id}`),
+                onError: () =>
+                  toast.error('Could not put that note back', {
+                    detail: 'It could not be written to the local database.',
+                  }),
+              }),
+          },
+        });
+      },
+      onError: () => {
+        setPendingDelete(null);
+        toast.error(`Could not delete “${removed.title || 'Untitled note'}”`);
       },
     });
   };
@@ -249,7 +281,7 @@ export function NotesRoute() {
       <ConfirmDialog
         open={pendingDelete !== null}
         title="Delete this note?"
-        message={`“${pendingDelete?.title || 'Untitled note'}” will be removed from this computer. This cannot be undone.`}
+        message={`“${pendingDelete?.title || 'Untitled note'}” will be removed from this computer. Undo is offered for a few seconds afterwards.`}
         confirmLabel="Delete"
         destructive
         onConfirm={confirmDelete}

@@ -135,6 +135,11 @@ export interface IpcContract {
     result: Note;
   };
   delete_note: { args: { noteId: string }; result: null };
+  /**
+   * Undo for a delete. Takes the whole note rather than an id: by the time Undo is pressed the
+   * row is gone, so there is nothing left to read it back from.
+   */
+  restore_note: { args: { note: Note }; result: Note };
   search_notes: { args: { query: string; limit: number }; result: Note[] };
 
   // --- news ---

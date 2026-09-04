@@ -135,6 +135,68 @@ pub fn upsert(
     get(conn, &note_id)?.ok_or(AppError::NotFound)
 }
 
+/// Puts a deleted note back exactly as it was.
+///
+/// Deliberately not `upsert` with the old id. That path would bring the note back with a fresh
+/// `created_at` and with whatever `asset_id` the calling screen happened to know about — which
+/// for the notes workspace is `None`, so undoing a delete there would silently detach a note
+/// from the asset it was written against. An undo that loses part of what it restores is worse
+/// than no undo, because the user believes they recovered.
+///
+/// Idempotent: restoring a note that is already present returns it untouched rather than
+/// failing, so a double-click on Undo does not produce an error the user cannot act on.
+///
+/// `asset_id` is dropped when the asset it points at is gone. The column is
+/// `REFERENCES assets(id) ON DELETE CASCADE`, so keeping it would fail the whole restore on a
+/// foreign-key violation and the user would lose the text as well as the link. Coming back as
+/// a general note is the lesser loss, and it is visible — the note simply appears unattached.
+pub fn restore(conn: &mut Connection, note: &Note) -> AppResult<Note> {
+    validate(&note.title, &note.body_md)?;
+
+    let tx = conn.transaction()?;
+
+    if let Some(existing) = {
+        let sql = format!("{SELECT} WHERE id = ?1");
+        tx.query_row(&sql, [&note.id], row_to_note).optional()?
+    } {
+        tx.commit()?;
+        return Ok(existing);
+    }
+
+    let asset_id = match note.asset_id.as_deref() {
+        Some(id) => tx
+            .query_row("SELECT id FROM assets WHERE id = ?1", [id], |row| {
+                row.get::<_, String>(0)
+            })
+            .optional()?,
+        None => None,
+    };
+
+    tx.execute(
+        "INSERT INTO notes (id, asset_id, title, body_md, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            note.id,
+            asset_id,
+            note.title,
+            note.body_md,
+            note.created_at,
+            note.updated_at
+        ],
+    )?;
+
+    // External-content FTS5 again: the index is not maintained for us, and a note that exists
+    // but cannot be searched is the exact failure this app would not notice on its own.
+    let rowid = tx.last_insert_rowid();
+    tx.execute(
+        "INSERT INTO notes_fts (rowid, title, body_md) VALUES (?1, ?2, ?3)",
+        params![rowid, note.title, note.body_md],
+    )?;
+
+    tx.commit()?;
+    get(conn, &note.id)?.ok_or(AppError::NotFound)
+}
+
 pub fn delete(conn: &mut Connection, note_id: &str) -> AppResult<()> {
     let tx = conn.transaction()?;
 
@@ -460,5 +522,155 @@ mod tests {
         let p = setup();
         let mut conn = p.get().unwrap();
         assert!(delete(&mut conn, "note-nope").is_err());
+    }
+
+    fn seed_bitcoin(conn: &Connection) {
+        conn.execute(
+            "INSERT INTO assets (id, asset_type, symbol, name, currency, created_at, updated_at)
+             VALUES ('crypto:cg:bitcoin','crypto','BTC','Bitcoin','USD',1,1)",
+            [],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn a_restored_note_comes_back_with_its_own_id_and_timestamps() {
+        // The point of a separate restore path. `upsert` would stamp a new `created_at`, so
+        // undoing a delete would quietly rewrite when the note was written.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = upsert(&mut conn, None, None, "Thesis", "body", 1_000).unwrap();
+        delete(&mut conn, &note.id).unwrap();
+
+        let restored = restore(&mut conn, &note).unwrap();
+        assert_eq!(restored.id, note.id);
+        assert_eq!(restored.created_at, 1_000);
+        assert_eq!(restored.updated_at, note.updated_at);
+        assert_eq!(restored.body_md, "body");
+    }
+
+    #[test]
+    fn a_restored_note_keeps_the_asset_it_was_written_against() {
+        // The failure this closes: the notes workspace deletes with no asset in hand, so an
+        // undo routed through `upsert` would detach the note from its asset without saying so.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+        seed_bitcoin(&conn);
+
+        let note = upsert(
+            &mut conn,
+            None,
+            Some("crypto:cg:bitcoin".into()),
+            "Attached",
+            "a",
+            1_000,
+        )
+        .unwrap();
+        delete(&mut conn, &note.id).unwrap();
+
+        let restored = restore(&mut conn, &note).unwrap();
+        assert_eq!(restored.asset_id.as_deref(), Some("crypto:cg:bitcoin"));
+        assert_eq!(list_for_asset(&conn, "crypto:cg:bitcoin").unwrap().len(), 1);
+    }
+
+    #[test]
+    fn a_restored_note_is_searchable_again() {
+        // External-content FTS5 is not maintained by SQLite. A restore that skipped the index
+        // would produce a note that exists, renders, and cannot be found.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = upsert(&mut conn, None, None, "Liquidity", "spreads widened", 1_000).unwrap();
+        delete(&mut conn, &note.id).unwrap();
+        restore(&mut conn, &note).unwrap();
+
+        let hits = search(&conn, "spreads", 10).unwrap();
+        assert_eq!(hits.len(), 1, "the restored note must be back in the index");
+        assert_eq!(hits[0].id, note.id);
+    }
+
+    #[test]
+    fn restoring_twice_is_harmless() {
+        // Undo is a button someone will double-click. The second press must not error.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = upsert(&mut conn, None, None, "Thesis", "body", 1_000).unwrap();
+        delete(&mut conn, &note.id).unwrap();
+
+        restore(&mut conn, &note).unwrap();
+        let again = restore(&mut conn, &note).unwrap();
+
+        assert_eq!(again.id, note.id);
+        assert_eq!(list_all(&conn, 10).unwrap().len(), 1, "no duplicate row");
+    }
+
+    #[test]
+    fn restoring_does_not_overwrite_a_note_that_is_already_there() {
+        // Undo pressed long after the id was reused, or after the user rewrote the note. The
+        // living copy wins; a recovery must not become a destructive write.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let original = upsert(&mut conn, None, None, "Old", "old body", 1_000).unwrap();
+        let rewritten = upsert(
+            &mut conn,
+            Some(original.id.clone()),
+            None,
+            "New",
+            "new body",
+            2_000,
+        )
+        .unwrap();
+
+        let result = restore(&mut conn, &original).unwrap();
+        assert_eq!(result.body_md, "new body");
+        assert_eq!(result.title, rewritten.title);
+    }
+
+    #[test]
+    fn a_note_whose_asset_is_gone_comes_back_detached_rather_than_not_at_all() {
+        // asset_id is REFERENCES assets(id), so keeping it would fail the whole insert on a
+        // foreign-key violation and the user would lose the text too. Detached is the lesser
+        // loss and it is visible on screen.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+        seed_bitcoin(&conn);
+
+        let note = upsert(
+            &mut conn,
+            None,
+            Some("crypto:cg:bitcoin".into()),
+            "Attached",
+            "a",
+            1_000,
+        )
+        .unwrap();
+        delete(&mut conn, &note.id).unwrap();
+        conn.execute("DELETE FROM assets WHERE id = 'crypto:cg:bitcoin'", [])
+            .unwrap();
+
+        let restored = restore(&mut conn, &note).unwrap();
+        assert_eq!(restored.asset_id, None);
+        assert_eq!(restored.body_md, "a");
+    }
+
+    #[test]
+    fn a_restore_still_has_to_pass_validation() {
+        // The one write path that takes a whole record from the frontend. It is not a reason
+        // to skip the length checks every other path runs.
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let oversized = Note {
+            id: "note-x".into(),
+            asset_id: None,
+            title: "t".into(),
+            body_md: "x".repeat(MAX_NOTE_BODY + 1),
+            created_at: 1,
+            updated_at: 1,
+        };
+        assert!(restore(&mut conn, &oversized).is_err());
     }
 }

@@ -6,7 +6,8 @@ import { IconButton } from '@/components/ui/IconButton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/status/EmptyState';
 import { RelativeTime } from '@/components/status/RelativeTime';
-import { useDeleteNote, useNotes, useUpsertNote } from '@/lib/market';
+import { useDeleteNote, useNotes, useRestoreNote, useUpsertNote } from '@/lib/market';
+import { toast } from '@/stores/toastStore';
 import type { Note } from '@/types/domain';
 import styles from './NotesPanel.module.css';
 
@@ -19,6 +20,7 @@ export function NotesPanel({ assetId, symbol }: NotesPanelProps) {
   const { data: notes, isLoading } = useNotes(assetId);
   const upsertNote = useUpsertNote(assetId);
   const deleteNote = useDeleteNote(assetId);
+  const restoreNote = useRestoreNote(assetId);
 
   const [editing, setEditing] = useState<Note | 'new' | null>(null);
   const [title, setTitle] = useState('');
@@ -169,12 +171,29 @@ export function NotesPanel({ assetId, symbol }: NotesPanelProps) {
       <ConfirmDialog
         open={pendingDelete !== null}
         title="Delete this note?"
-        message={`"${pendingDelete?.title || 'Untitled note'}" will be removed from this computer. This cannot be undone.`}
+        message={`"${pendingDelete?.title || 'Untitled note'}" will be removed from this computer. Undo is offered for a few seconds afterwards.`}
         confirmLabel="Delete"
         destructive
         onConfirm={() => {
-          if (pendingDelete) deleteNote.mutate(pendingDelete.id);
+          const removed = pendingDelete;
           setPendingDelete(null);
+          if (!removed) return;
+
+          // The note itself travels into the closure: restoring it needs the asset link and
+          // the original timestamps, and the row is gone by the time Undo is pressed.
+          deleteNote.mutate(removed.id, {
+            onSuccess: () =>
+              toast.info(`Deleted "${removed.title || 'Untitled note'}"`, {
+                action: {
+                  label: 'Undo',
+                  onAction: () =>
+                    restoreNote.mutate(removed, {
+                      onError: () => toast.error('Could not put that note back'),
+                    }),
+                },
+              }),
+            onError: () => toast.error(`Could not delete "${removed.title || 'Untitled note'}"`),
+          });
         }}
         onCancel={() => setPendingDelete(null)}
       />

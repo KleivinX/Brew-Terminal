@@ -46,6 +46,20 @@ pub async fn delete_note(state: &AppState, note_id: String) -> AppResult<()> {
     .await
 }
 
+/// Puts a deleted note back, for the Undo on the delete toast.
+///
+/// The whole note travels from the frontend rather than an id, because by the time Undo is
+/// pressed the row is gone and there is nothing left to look up. That makes this the one write
+/// path that trusts a client-supplied `created_at`; `repo_notes::restore` still validates the
+/// text, and the worst a malformed call can do is create a note with an odd timestamp in a
+/// local database the user already owns.
+pub async fn restore_note(state: &AppState, note: Note) -> AppResult<Note> {
+    with_db(state.pool.clone(), move |conn| {
+        repo_notes::restore(conn, &note)
+    })
+    .await
+}
+
 pub async fn search_notes(state: &AppState, query: String, limit: usize) -> AppResult<Vec<Note>> {
     let limit = limit.clamp(1, 100);
     with_db(state.pool.clone(), move |conn| {
