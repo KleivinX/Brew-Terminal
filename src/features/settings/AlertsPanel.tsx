@@ -129,6 +129,14 @@ export function AlertsPanel() {
             onChange={(value) => setPreference.mutate({ key: 'alertsEnabled', value })}
           />
 
+          {enabled ? (
+            <p className={styles.hint}>
+              A fired alert appears in the app, and as a system notification so it reaches you when
+              the window is not in front. Your operating system will ask once whether to allow
+              those; declining leaves everything else working, and fired alerts still appear here.
+            </p>
+          ) : null}
+
           {enabled && armed.length === 0 ? (
             <p className={styles.hint}>
               Nothing is being checked yet — add an alert below and it starts then.

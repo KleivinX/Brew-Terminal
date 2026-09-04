@@ -18,6 +18,9 @@ tauri-build = { version = "2.6", features = [] }
 tauri = { version = "2.11", features = [] }
 tauri-plugin-dialog = "2.7"
 tauri-plugin-opener = "2.5"
+# OS notifications for alerts. The one feature that has to reach the user when the window is
+# not in front, which is by definition something a webview cannot do. See DEPENDENCIES.md.
+tauri-plugin-notification = "2"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

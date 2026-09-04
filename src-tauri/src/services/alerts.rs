@@ -144,6 +144,53 @@ pub async fn check_once(state: &AppState) -> AppResult<Vec<TriggeredAlert>> {
     Ok(fired)
 }
 
+/// The event the frontend listens for. Kebab-cased to match Tauri's own event names.
+pub const ALERTS_FIRED_EVENT: &str = "alerts:fired";
+
+/// Tells the user an alert fired, twice over.
+///
+/// A background alert is the one thing this app produces that the user is by definition not
+/// looking at, so both routes matter and they are not redundant:
+///
+/// * The **event** reaches the window if it is open, and the frontend turns it into a toast
+///   with the alert's own wording. That is the route that works when the app is in front.
+/// * The **OS notification** is the route that works when it is not, which is the entire point
+///   of a price alert. Until now a background alert only reached `tracing::info!`, so unless
+///   the user happened to open the alerts panel afterwards it was invisible.
+///
+/// Both are best-effort. A window that has closed, or a user who has denied notification
+/// permission, must not stop the poll or lose the alert — `triggered_at` is already recorded in
+/// the database by this point, so the alerts panel still shows it either way.
+fn announce<R: tauri::Runtime>(handle: &tauri::AppHandle<R>, fired: &[TriggeredAlert]) {
+    use tauri::Emitter;
+    use tauri_plugin_notification::NotificationExt;
+
+    if let Err(error) = handle.emit(ALERTS_FIRED_EVENT, fired) {
+        tracing::debug!(?error, "no window to receive the alert event");
+    }
+
+    // One notification, not one per alert. Several thresholds crossing in the same poll is
+    // normal in a fast market, and a stack of system notifications is how an app gets muted.
+    let body = match fired {
+        [single] => single.message.clone(),
+        many => {
+            let names: Vec<&str> = many.iter().map(|f| f.alert.symbol.as_str()).collect();
+            format!("{} alerts fired: {}", many.len(), names.join(", "))
+        }
+    };
+
+    if let Err(error) = handle
+        .notification()
+        .builder()
+        .title("Brew Terminal")
+        .body(&body)
+        .show()
+    {
+        // Denied permission is the common case and is the user's choice, not a fault.
+        tracing::debug!(?error, "the OS notification could not be shown");
+    }
+}
+
 /// Starts the background poll.
 ///
 /// Takes an `AppHandle` rather than the state itself: the state is owned by Tauri and is not
@@ -164,6 +211,7 @@ pub fn spawn_poller<R: tauri::Runtime>(handle: tauri::AppHandle<R>) {
                         count = fired.len(),
                         "alerts fired during a background check"
                     );
+                    announce(&handle, &fired);
                 }
                 Ok(_) => {}
                 Err(error) => {
