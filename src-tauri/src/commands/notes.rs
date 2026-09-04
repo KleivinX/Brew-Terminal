@@ -23,8 +23,10 @@ pub async fn upsert_note(
     asset_id: Option<String>,
     title: String,
     body_md: String,
+    // The day the note is about, when it names one. See `models::Note::pinned_at`.
+    pinned_at: Option<i64>,
 ) -> AppResult<Note> {
-    services::notes::upsert_note(&state, note_id, asset_id, title, body_md).await
+    services::notes::upsert_note(&state, note_id, asset_id, title, body_md, pinned_at).await
 }
 
 #[tauri::command]

@@ -38,10 +38,12 @@ fn row_to_note(row: &rusqlite::Row<'_>) -> rusqlite::Result<Note> {
         body_md: row.get(3)?,
         created_at: row.get(4)?,
         updated_at: row.get(5)?,
+        pinned_at: row.get(6)?,
     })
 }
 
-const SELECT: &str = "SELECT id, asset_id, title, body_md, created_at, updated_at FROM notes";
+const SELECT: &str =
+    "SELECT id, asset_id, title, body_md, created_at, updated_at, pinned_at FROM notes";
 
 pub fn list_for_asset(conn: &Connection, asset_id: &str) -> AppResult<Vec<Note>> {
     let sql = format!("{SELECT} WHERE asset_id = ?1 ORDER BY updated_at DESC");
@@ -89,6 +91,7 @@ pub fn upsert(
     asset_id: Option<String>,
     title: &str,
     body: &str,
+    pinned_at: Option<i64>,
     now: i64,
 ) -> AppResult<Note> {
     validate(title, body)?;
@@ -110,8 +113,9 @@ pub fn upsert(
             [rowid],
         )?;
         tx.execute(
-            "UPDATE notes SET title = ?2, body_md = ?3, updated_at = ?4 WHERE id = ?1",
-            params![note_id, title, body, now],
+            "UPDATE notes SET title = ?2, body_md = ?3, updated_at = ?4, pinned_at = ?5
+             WHERE id = ?1",
+            params![note_id, title, body, now, pinned_at],
         )?;
         tx.execute(
             "INSERT INTO notes_fts (rowid, title, body_md) VALUES (?1, ?2, ?3)",
@@ -119,9 +123,9 @@ pub fn upsert(
         )?;
     } else {
         tx.execute(
-            "INSERT INTO notes (id, asset_id, title, body_md, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
-            params![note_id, asset_id, title, body, now],
+            "INSERT INTO notes (id, asset_id, title, body_md, created_at, updated_at, pinned_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?5, ?6)",
+            params![note_id, asset_id, title, body, now, pinned_at],
         )?;
         let rowid = tx.last_insert_rowid();
         tx.execute(
@@ -173,15 +177,16 @@ pub fn restore(conn: &mut Connection, note: &Note) -> AppResult<Note> {
     };
 
     tx.execute(
-        "INSERT INTO notes (id, asset_id, title, body_md, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO notes (id, asset_id, title, body_md, created_at, updated_at, pinned_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![
             note.id,
             asset_id,
             note.title,
             note.body_md,
             note.created_at,
-            note.updated_at
+            note.updated_at,
+            note.pinned_at
         ],
     )?;
 
@@ -229,7 +234,10 @@ pub fn search(conn: &Connection, query: &str, limit: usize) -> AppResult<Vec<Not
     }
 
     let mut stmt = conn.prepare(
-        "SELECT n.id, n.asset_id, n.title, n.body_md, n.created_at, n.updated_at
+        // Column order has to match `row_to_note`, which reads by index — this is the one
+        // query that spells the columns out separately from `SELECT`, so a column added there
+        // has to be added here too.
+        "SELECT n.id, n.asset_id, n.title, n.body_md, n.created_at, n.updated_at, n.pinned_at
          FROM notes_fts f JOIN notes n ON n.rowid = f.rowid
          WHERE notes_fts MATCH ?1
          ORDER BY rank
@@ -262,6 +270,20 @@ fn fts_query(input: &str) -> String {
 mod tests {
     use super::*;
     use crate::db::{migrations, pool};
+
+    /// The existing tests predate pinning and none of them are about it, so this shadows the
+    /// real `upsert` with the unpinned form rather than threading a `None` through forty call
+    /// sites. The pin has its own tests below.
+    fn upsert(
+        conn: &mut Connection,
+        id: Option<String>,
+        asset_id: Option<String>,
+        title: &str,
+        body: &str,
+        now: i64,
+    ) -> AppResult<Note> {
+        super::upsert(conn, id, asset_id, title, body, None, now)
+    }
 
     fn setup() -> pool::DbPool {
         let p = pool::create_in_memory().unwrap();
@@ -657,6 +679,106 @@ mod tests {
     }
 
     #[test]
+    fn a_note_can_name_the_day_it_is_about() {
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        // Written now, about last March. The pin is not the creation time.
+        let note = super::upsert(
+            &mut conn,
+            None,
+            None,
+            "Why I bought",
+            "spreads had blown out",
+            Some(1_700_000_000),
+            1_800_000_000,
+        )
+        .unwrap();
+
+        assert_eq!(note.pinned_at, Some(1_700_000_000));
+        assert_eq!(note.created_at, 1_800_000_000);
+    }
+
+    #[test]
+    fn a_note_with_no_pin_reads_back_unpinned() {
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = upsert(&mut conn, None, None, "General", "thoughts", 1_000).unwrap();
+        assert_eq!(note.pinned_at, None);
+    }
+
+    #[test]
+    fn a_pin_can_be_added_moved_and_taken_off_again() {
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = upsert(&mut conn, None, None, "Thesis", "body", 1_000).unwrap();
+
+        let pinned = super::upsert(
+            &mut conn,
+            Some(note.id.clone()),
+            None,
+            "Thesis",
+            "body",
+            Some(1_700_000_000),
+            2_000,
+        )
+        .unwrap();
+        assert_eq!(pinned.pinned_at, Some(1_700_000_000));
+
+        let moved = super::upsert(
+            &mut conn,
+            Some(note.id.clone()),
+            None,
+            "Thesis",
+            "body",
+            Some(1_710_000_000),
+            3_000,
+        )
+        .unwrap();
+        assert_eq!(moved.pinned_at, Some(1_710_000_000));
+
+        let unpinned = super::upsert(
+            &mut conn,
+            Some(note.id.clone()),
+            None,
+            "Thesis",
+            "body",
+            None,
+            4_000,
+        )
+        .unwrap();
+        assert_eq!(
+            unpinned.pinned_at, None,
+            "clearing a pin has to be possible"
+        );
+    }
+
+    /// Undo has to bring the pin back with everything else, or restoring a note about a
+    /// specific day returns it to the wrong place on the chart.
+    #[test]
+    fn a_restored_note_keeps_its_pin() {
+        let p = setup();
+        let mut conn = p.get().unwrap();
+
+        let note = super::upsert(
+            &mut conn,
+            None,
+            None,
+            "Pinned",
+            "body",
+            Some(1_700_000_000),
+            1_000,
+        )
+        .unwrap();
+        delete(&mut conn, &note.id).unwrap();
+
+        let restored = restore(&mut conn, &note).unwrap();
+        assert_eq!(restored.pinned_at, Some(1_700_000_000));
+    }
+
+    #[test]
     fn a_restore_still_has_to_pass_validation() {
         // The one write path that takes a whole record from the frontend. It is not a reason
         // to skip the length checks every other path runs.
@@ -664,6 +786,7 @@ mod tests {
         let mut conn = p.get().unwrap();
 
         let oversized = Note {
+            pinned_at: None,
             id: "note-x".into(),
             asset_id: None,
             title: "t".into(),

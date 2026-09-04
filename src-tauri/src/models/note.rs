@@ -19,6 +19,13 @@ pub struct Note {
     /// Markdown source. Rendered as plain text for now — introducing a Markdown renderer
     /// means introducing an HTML-injection surface. See DEPENDENCIES.md.
     pub body_md: String,
+    /// The day this note is *about*, when it names one. `None` for a note about a holding
+    /// rather than a moment, which is most of them.
+    ///
+    /// Not `created_at`: a note written today can be about last March, and pinning it to when
+    /// it was typed would misplace the marker on exactly the note whose point is where it sits.
+    #[cfg_attr(test, ts(type = "number | null"))]
+    pub pinned_at: Option<i64>,
     #[cfg_attr(test, ts(type = "number"))]
     pub created_at: i64,
     #[cfg_attr(test, ts(type = "number"))]

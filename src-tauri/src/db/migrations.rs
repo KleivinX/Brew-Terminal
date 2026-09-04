@@ -22,6 +22,7 @@ const MIGRATIONS: &[(i64, &str)] = &[
         8,
         include_str!("../../migrations/0008_sentiment_history.sql"),
     ),
+    (9, include_str!("../../migrations/0009_note_pins.sql")),
 ];
 
 pub fn latest_version() -> i64 {

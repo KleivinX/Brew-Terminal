@@ -135,6 +135,8 @@ export interface IpcContract {
       assetId: string | null;
       title: string;
       bodyMd: string;
+      /** The day the note is about, when it names one. Null clears an existing pin. */
+      pinnedAt: number | null;
     };
     result: Note;
   };

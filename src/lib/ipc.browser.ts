@@ -1530,13 +1530,15 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       const now = Math.floor(Date.now() / 1000);
       const existing = state.notes.find((note) => note.id === args.noteId);
 
+      const pinnedAt = (args.pinnedAt as number | null | undefined) ?? null;
       const note: Note = existing
-        ? { ...existing, title: args.title, bodyMd: args.bodyMd, updatedAt: now }
+        ? { ...existing, title: args.title, bodyMd: args.bodyMd, pinnedAt, updatedAt: now }
         : {
             id: `note-${now}-${Math.random().toString(36).slice(2, 8)}`,
             assetId: args.assetId ?? null,
             title: args.title,
             bodyMd: args.bodyMd,
+            pinnedAt,
             createdAt: now,
             updatedAt: now,
           };

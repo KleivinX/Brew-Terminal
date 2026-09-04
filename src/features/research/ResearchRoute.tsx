@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { WorkspaceHeader } from '@/components/layout/WorkspaceHeader';
@@ -18,7 +18,7 @@ import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { formatCompact } from '@/lib/format';
 import { derivePanelStatus } from '@/lib/freshness';
 import { ipc } from '@/lib/ipc';
-import { useChart, useQuotes, useSupportedRanges } from '@/lib/market';
+import { useChart, useNotes, useQuotes, useSupportedRanges } from '@/lib/market';
 import { describeQuote } from '@/lib/aiContext';
 import { usePaletteStore } from '@/stores/paletteStore';
 import { RangeSelector } from './RangeSelector';
@@ -51,6 +51,25 @@ export function ResearchRoute() {
 
   const quoteQuery = useQuotes(decodedId ? [decodedId] : []);
   const quote = quoteQuery.data?.data?.[0];
+
+  /*
+   * Notes for this asset, reduced to the ones that name a day. The chart draws a marker for
+   * each; a note about the holding generally has no place on a date axis.
+   *
+   * Shares the query the notes panel below already runs, so this costs nothing extra.
+   */
+  const { data: assetNotes } = useNotes(decodedId);
+  const pins = useMemo(
+    () =>
+      (assetNotes ?? [])
+        .filter((note): note is typeof note & { pinnedAt: number } => note.pinnedAt !== null)
+        .map((note) => ({
+          id: note.id,
+          title: note.title || 'Untitled note',
+          pinnedAt: note.pinnedAt,
+        })),
+    [assetNotes],
+  );
 
   const supportedRanges = useSupportedRanges(asset?.assetType ?? null);
   const [preferredRange, setPreferredRange] = useState<ChartRange>('1M');
@@ -222,6 +241,7 @@ export function ResearchRoute() {
                   points={chartQuery.data?.data ?? []}
                   currency={quote?.currency ?? 'USD'}
                   label={`${asset.symbol} over ${range}`}
+                  pins={pins}
                 />
               </Suspense>
             )}

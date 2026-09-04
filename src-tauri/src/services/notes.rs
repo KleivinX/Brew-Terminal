@@ -31,10 +31,11 @@ pub async fn upsert_note(
     asset_id: Option<String>,
     title: String,
     body_md: String,
+    pinned_at: Option<i64>,
 ) -> AppResult<Note> {
     let now = now_epoch_secs();
     with_db(state.pool.clone(), move |conn| {
-        repo_notes::upsert(conn, note_id, asset_id, &title, &body_md, now)
+        repo_notes::upsert(conn, note_id, asset_id, &title, &body_md, pinned_at, now)
     })
     .await
 }

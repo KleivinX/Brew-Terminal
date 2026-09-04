@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/status/EmptyState';
 import { RelativeTime } from '@/components/status/RelativeTime';
 import { useDeleteNote, useNotes, useRestoreNote, useUpsertNote } from '@/lib/market';
+import { dayToEpoch, isoDay } from '@/lib/format';
 import { toast } from '@/stores/toastStore';
 import type { Note } from '@/types/domain';
 import styles from './NotesPanel.module.css';
@@ -26,23 +27,31 @@ export function NotesPanel({ assetId, symbol }: NotesPanelProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Note | null>(null);
+  /*
+   * The day this note is about, as a `yyyy-mm-dd` string because that is what a date input
+   * speaks. Empty means unpinned, which is the normal case.
+   */
+  const [pinned, setPinned] = useState('');
 
   const startNew = (): void => {
     setEditing('new');
     setTitle('');
     setBody('');
+    setPinned('');
   };
 
   const startEdit = (note: Note): void => {
     setEditing(note);
     setTitle(note.title);
     setBody(note.bodyMd);
+    setPinned(note.pinnedAt === null ? '' : isoDay(note.pinnedAt));
   };
 
   const cancel = (): void => {
     setEditing(null);
     setTitle('');
     setBody('');
+    setPinned('');
   };
 
   const save = (): void => {
@@ -52,6 +61,7 @@ export function NotesPanel({ assetId, symbol }: NotesPanelProps) {
         noteId: editing && editing !== 'new' ? editing.id : null,
         title: title.trim(),
         bodyMd: body,
+        pinnedAt: pinned === '' ? null : dayToEpoch(pinned),
       },
       { onSuccess: cancel },
     );
@@ -102,6 +112,21 @@ export function NotesPanel({ assetId, symbol }: NotesPanelProps) {
               maxLength={20000}
               placeholder="Questions to look into, things to verify, what you concluded and why."
             />
+
+            <label className={styles.label} htmlFor="note-pin">
+              About a specific day (optional)
+            </label>
+            <Input
+              id="note-pin"
+              type="date"
+              value={pinned}
+              onChange={(event) => setPinned(event.target.value)}
+              aria-describedby="note-pin-hint"
+            />
+            <p id="note-pin-hint" className={styles.hint}>
+              Marks the note on the chart above, so a year from now the reason is next to the move
+              it explains. Leave blank for a note about {symbol} generally.
+            </p>
 
             <div className={styles.editorActions}>
               <Button variant="ghost" onClick={cancel}>

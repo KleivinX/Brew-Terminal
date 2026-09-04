@@ -109,7 +109,18 @@ export function NotesRoute() {
 
   const save = (title: string, bodyMd: string): void => {
     upsertNote.mutate(
-      { noteId: creating ? null : (selected?.id ?? null), title: title.trim(), bodyMd },
+      {
+        noteId: creating ? null : (selected?.id ?? null),
+        title: title.trim(),
+        bodyMd,
+        /*
+         * Carried through rather than defaulted. This editor has no pin control — pinning is a
+         * Research Lab concern, where the chart is — so omitting it would silently clear the
+         * pin of any note edited here, and the marker would vanish from a chart the writer was
+         * not even looking at.
+         */
+        pinnedAt: creating ? null : (selected?.pinnedAt ?? null),
+      },
       {
         onSuccess: (note) => {
           setCreating(false);

@@ -263,11 +263,14 @@ export function useUpsertNote(assetId: string | undefined) {
       noteId,
       title,
       bodyMd,
+      pinnedAt = null,
     }: {
       noteId: string | null;
       title: string;
       bodyMd: string;
-    }) => ipc('upsert_note', { noteId, assetId: assetId ?? null, title, bodyMd }),
+      /** The day the note is about. Omitted means unpinned; null clears an existing pin. */
+      pinnedAt?: number | null;
+    }) => ipc('upsert_note', { noteId, assetId: assetId ?? null, title, bodyMd, pinnedAt }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notes'] });
       if (assetId) {

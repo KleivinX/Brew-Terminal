@@ -15,4 +15,12 @@ assetId: string | null, title: string,
  * Markdown source. Rendered as plain text for now — introducing a Markdown renderer
  * means introducing an HTML-injection surface. See DEPENDENCIES.md.
  */
-bodyMd: string, createdAt: number, updatedAt: number, };
+bodyMd: string, 
+/**
+ * The day this note is *about*, when it names one. `None` for a note about a holding
+ * rather than a moment, which is most of them.
+ *
+ * Not `created_at`: a note written today can be about last March, and pinning it to when
+ * it was typed would misplace the marker on exactly the note whose point is where it sits.
+ */
+pinnedAt: number | null, createdAt: number, updatedAt: number, };

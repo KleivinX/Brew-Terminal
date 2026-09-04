@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
   createChart,
+  createSeriesMarkers,
   AreaSeries,
   LineSeries,
   type IChartApi,
@@ -21,6 +22,14 @@ interface AssetChartProps {
   /** Used in the accessible description, e.g. "BTC · 1 month". */
   label: string;
   height?: number;
+  /**
+   * Notes pinned to a day, drawn as markers under the line.
+   *
+   * The reason this exists: "why did I buy here" is a question asked a year later while looking
+   * at the point on the chart, and the answer is useless anywhere else. Only notes with a
+   * `pinnedAt` appear — a note about the holding generally has no place on a date axis.
+   */
+  pins?: { id: string; title: string; pinnedAt: number }[] | undefined;
 }
 
 /**
@@ -84,7 +93,7 @@ function token(name: string, fallback: string): string {
  * bitmap. Both are always in the DOM; the table is visually collapsed by default and can be
  * opened by anyone. See ADR-006.
  */
-export function AssetChart({ points, currency, label, height = 260 }: AssetChartProps) {
+export function AssetChart({ points, currency, label, height = 260, pins }: AssetChartProps) {
   /*
    * The chart paints axis labels and grid lines into a canvas using token values read at
    * creation time, so it does not follow a theme switch on its own — the grid would stay
@@ -186,6 +195,37 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
       }
     }
 
+    /*
+     * Markers for pinned notes, clamped to the chart's own range. A marker outside it is not
+     * drawn by the library but does widen the time scale, which would stretch a one-month view
+     * back to whenever the oldest note was pinned.
+     */
+    if (pins && pins.length > 0) {
+      const first = points[0]?.time;
+      const last = points[points.length - 1]?.time;
+
+      if (first !== undefined && last !== undefined) {
+        const inRange = pins
+          .filter((pin) => pin.pinnedAt >= first && pin.pinnedAt <= last)
+          .sort((a, b) => a.pinnedAt - b.pinnedAt);
+
+        if (inRange.length > 0) {
+          createSeriesMarkers(
+            series,
+            inRange.map((pin) => ({
+              time: pin.pinnedAt as UTCTimestamp,
+              position: 'belowBar' as const,
+              shape: 'circle' as const,
+              color: token('--accent', '#f97316'),
+              // The title, not an icon alone: the marker has to say what it marks, and the
+              // chart is already carrying the date.
+              text: pin.title || 'Note',
+            })),
+          );
+        }
+      }
+    }
+
     chart.timeScale().fitContent();
 
     chartRef.current = chart;
@@ -205,7 +245,7 @@ export function AssetChart({ points, currency, label, height = 260 }: AssetChart
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [points, height, summary?.changePct, theme, drawn, values]);
+  }, [points, height, summary?.changePct, theme, drawn, values, pins]);
 
   if (!summary) {
     return (

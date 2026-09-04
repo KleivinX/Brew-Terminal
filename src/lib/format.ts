@@ -184,6 +184,39 @@ export function formatDate(epochSeconds: number, locale?: string): string {
   );
 }
 
+/**
+ * Epoch seconds to the `yyyy-mm-dd` a date input speaks, in UTC.
+ *
+ * UTC on both sides of this pair, deliberately. A note pinned to the 3rd must stay on the 3rd
+ * for a reader in Auckland and one in Los Angeles, and round-tripping through local time is how
+ * a marker quietly moves a day when someone changes timezone.
+ */
+export function isoDay(epochSeconds: number): string {
+  return new Date(epochSeconds * 1000).toISOString().slice(0, 10);
+}
+
+/**
+ * `yyyy-mm-dd` back to epoch seconds, stamped at midday UTC.
+ *
+ * Midday rather than midnight: a daily series is plotted at a point somewhere inside its day,
+ * and a marker at 00:00 sits on the boundary where rounding can put it against the previous
+ * session. The middle of the day is unambiguous whichever way a chart rounds.
+ *
+ * Returns null for anything that is not a real date — an empty input, or the partial value a
+ * date field holds mid-typing.
+ */
+export function dayToEpoch(isoDay: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDay)) return null;
+
+  const parsed = Date.parse(`${isoDay}T12:00:00Z`);
+  if (Number.isNaN(parsed)) return null;
+
+  // Date.parse accepts 2026-02-31 and rolls it into March. A date that does not survive the
+  // round trip was never a real one.
+  const seconds = Math.floor(parsed / 1000);
+  return isoDay === new Date(parsed).toISOString().slice(0, 10) ? seconds : null;
+}
+
 export function formatVolume(value: number | null, locale?: string): string {
   return formatCompact(value, locale);
 }
