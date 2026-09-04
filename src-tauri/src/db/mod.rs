@@ -13,6 +13,7 @@ pub mod repo_profile;
 pub mod repo_progress;
 pub mod repo_providers;
 pub mod repo_saved_views;
+pub mod repo_sentiment_history;
 pub mod repo_watchlists;
 
 pub use pool::{DbConnection, DbPool};
