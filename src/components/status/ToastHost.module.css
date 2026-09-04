@@ -1,0 +1,159 @@
+/*
+ * The stack sits above the status bar in the bottom-right corner: out of the way of the nav
+ * rail on the left and of the header, and close to where the eye already is after clicking a
+ * button in a panel.
+ */
+.host {
+  position: fixed;
+  right: var(--space-5);
+  bottom: calc(var(--status-bar-height) + var(--space-5));
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(380px, calc(100vw - var(--space-8)));
+
+  /*
+   * The container spans a corner of the viewport even when empty, so it must not intercept
+   * clicks meant for the panel underneath. Individual toasts turn pointer events back on.
+   */
+  pointer-events: none;
+}
+
+/*
+ * Both regions stay mounted whether or not they hold anything (see the component note), so
+ * one of them is usually an empty box. That costs nothing visually: an empty list has no
+ * height, the stack is anchored to the bottom edge, and the host's gap only ever separates
+ * things above the visible toasts.
+ */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-4);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  animation: toast-in var(--motion-base) var(--motion-ease);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Tone is carried by the left rule and the icon, never by the text colour: body copy stays at
+ * --text-primary so a message is legible at the same contrast whatever it is about. The icons
+ * differ in shape as well as hue, so the tone survives being read by someone who cannot
+ * separate the colours.
+ */
+.info {
+  border-left-color: var(--border-strong);
+}
+
+.info .icon {
+  color: var(--text-secondary);
+}
+
+.success {
+  border-left-color: var(--positive);
+}
+
+.success .icon {
+  color: var(--positive);
+}
+
+.warning {
+  border-left-color: var(--accent);
+}
+
+.warning .icon {
+  color: var(--accent);
+}
+
+.error {
+  border-left-color: var(--negative);
+}
+
+.error .icon {
+  color: var(--negative);
+}
+
+.icon {
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.message {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The action reads as a link rather than a button so it does not compete with the primary
+ * control in whatever panel raised the toast. It still has a real focus ring — this is often
+ * the only route back from a destructive action.
+ */
+.action {
+  padding: var(--space-1) var(--space-2);
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.action:hover {
+  background: var(--accent-muted);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.close {
+  flex-shrink: 0;
+}
