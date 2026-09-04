@@ -22,6 +22,16 @@
   color: var(--status-stale);
 }
 
+/*
+ * Louder than the mock-data notice on purpose. Mock mode is a development state the developer
+ * chose; being offline is something that happened to the reader, and it explains why every
+ * panel on the screen has stopped agreeing with reality.
+ */
+.offline {
+  color: var(--negative);
+  font-weight: var(--weight-medium);
+}
+
 .spacer {
   flex: 1;
 }

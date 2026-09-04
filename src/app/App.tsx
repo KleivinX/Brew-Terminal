@@ -7,6 +7,7 @@ import { AppRoutes } from './router';
 import { CommandPalette } from '@/components/palette/CommandPalette';
 import { ToastHost } from '@/components/status/ToastHost';
 import { OnboardingDialog } from '@/features/onboarding/OnboardingDialog';
+import { ConnectivityWatch } from '@/components/status/ConnectivityWatch';
 
 /**
  * Hash history: avoids custom-protocol path-resolution differences across WKWebView,
@@ -23,6 +24,7 @@ export function App() {
               <CommandPalette />
               <ToastHost />
               <OnboardingDialog />
+              <ConnectivityWatch />
             </KeyboardProvider>
           </ThemeProvider>
         </HashRouter>
