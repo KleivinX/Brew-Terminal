@@ -6,6 +6,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { AppRoutes } from './router';
 import { CommandPalette } from '@/components/palette/CommandPalette';
 import { ToastHost } from '@/components/status/ToastHost';
+import { OnboardingDialog } from '@/features/onboarding/OnboardingDialog';
 
 /**
  * Hash history: avoids custom-protocol path-resolution differences across WKWebView,
@@ -21,6 +22,7 @@ export function App() {
               <AppRoutes />
               <CommandPalette />
               <ToastHost />
+              <OnboardingDialog />
             </KeyboardProvider>
           </ThemeProvider>
         </HashRouter>

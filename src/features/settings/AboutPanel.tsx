@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
+import { useUiStore } from '@/stores/uiStore';
 import { DisclaimerNote } from '@/components/status/DisclaimerNote';
 import { ipc } from '@/lib/ipc';
 import { shortcutLabel } from '@/lib/keyboard';
@@ -117,6 +118,7 @@ const CREDITS: Credit[] = [
 ];
 
 export function AboutPanel() {
+  const replayOnboarding = useUiStore((state) => state.replayOnboarding);
   const { data: appInfo } = useQuery({
     queryKey: ['app-info'],
     queryFn: () => ipc('get_app_info'),
@@ -153,6 +155,19 @@ export function AboutPanel() {
             <dd>Protected separately — see TRADEMARK.md</dd>
           </dl>
           <DisclaimerNote variant="block" />
+        </div>
+      </Panel>
+
+      <Panel title="Introduction">
+        <div className={styles.prose}>
+          <p>
+            The four-step introduction that runs on first launch — what the app is, what works
+            without an account, and what does and does not leave this computer.
+          </p>
+
+          <Button variant="secondary" onClick={() => replayOnboarding()}>
+            Show the introduction again
+          </Button>
         </div>
       </Panel>
 

@@ -1,0 +1,118 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/*
+ * The Modal already carries the title as its accessible name, so this heading is the visible
+ * one and the focus target on each step change. Its focus ring is suppressed because focus
+ * lands here programmatically rather than by the user's own navigation — the step change is
+ * announced instead.
+ */
+.heading {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.heading:focus {
+  outline: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+
+  /*
+   * Tall enough for the longest step — the theme picker, at 257px — rather than for the
+   * average one. The steps differ in length, and a floor that only some of them clear lets the
+   * dialog resize under the pointer: pressing Next moves the button itself, so the next click
+   * lands on the backdrop and dismisses the introduction instead of advancing it. That is not
+   * hypothetical, it happened while this was being checked in the browser.
+   *
+   * The cost is some empty space under the shorter steps, which is the cheaper of the two.
+   */
+  min-height: 260px;
+}
+
+.content p {
+  margin: 0;
+}
+
+.emphasis {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+.themes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.theme {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.theme:hover {
+  background: var(--bg-hover);
+}
+
+.theme:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/*
+ * Selection is carried by aria-checked for assistive tech and by both a border and a tinted
+ * ground here. Never by the border alone: at these sizes a one-pixel colour change is not a
+ * reliable signal, which is the same reason the notes list announces its selection.
+ */
+.theme[aria-checked='true'] {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+}
+
+.themeName {
+  font-weight: var(--weight-semibold);
+}
+
+.themeHint {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.counter {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-3);
+}
