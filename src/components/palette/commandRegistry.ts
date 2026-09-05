@@ -70,6 +70,14 @@ export const commands: Command[] = [
     route: '/pulse',
   }),
   goTo({
+    id: 'nav.atlas',
+    title: 'Go to Atlas',
+    icon: 'pulse',
+    keywords: ['ticker', 'live', 'stream', 'real time', 'prices', 'watch'],
+    shortcut: 'g a',
+    route: '/atlas',
+  }),
+  goTo({
     id: 'nav.portfolio',
     title: 'Go to Portfolio',
     icon: 'portfolio',

@@ -747,3 +747,74 @@ the ADR-008 review, and answers a question the site already answers itself). Shi
 directory only (rejected: it goes stale, and it cannot answer "does _this_ site have a feed",
 which is the actual question). Probe conventional paths when autodiscovery finds nothing
 (rejected: see 2 — that is guessing at endpoints, which is the line).
+
+---
+
+## ADR-039 — Atlas rotates free tiers; it does not pretend they add up to a real-time feed
+
+**Status:** accepted.
+
+Atlas is a live ticker over the free provider tiers this project has reviewed. It refreshes on a
+fixed 90-second cadence, tracks each provider's allowance, and steps aside from any provider that
+returns 429 or fails repeatedly.
+
+This needs recording because "real-time market data, free" is a thing that does not exist, and
+the interesting decisions here are all about not implying it does.
+
+**What Atlas actually is.** A ticker whose figures are at most ninety seconds old, over providers
+whose free tiers are samples rather than supplies. Real-time market data is licensed; the reason
+no free API offers it continuously is commercial, not technical, and no amount of rotation
+changes that. Atlas says "at most 90 seconds old" on screen rather than "live", and the status
+line names the provider and its remaining allowance so a reader can see what is behind the
+number.
+
+**Why rotation and not just one provider.** A per-minute allowance shared with the rest of the
+app is easy to exhaust, and the failure is invisible: the panel silently shows older data with no
+account of why. The manager makes that explicit — it knows what each tier permits, spends
+deliberately below it, and reports what is left.
+
+**The design decisions that matter:**
+
+1. **The policy is pure and the clock is a parameter.** Every failure mode worth catching is
+   about time — a window that never rolls, a backoff that never expires, a daily cap that resets
+   in the wrong timezone — and none is reproducible against a real clock and a real API. Twenty-
+   eight tests exist because `now` is an argument.
+2. **Calls are counted, not ticks.** Finnhub's `/quote` takes one symbol per call, so a
+   twelve-symbol watchlist is twelve calls; CoinGecko's `/coins/markets` returns the lot for one.
+   A manager counting ticks would be wrong by the length of the watchlist on the equities side.
+3. **A call is booked when it is made, not when it succeeds.** The provider counted it either
+   way, and booking on success lets a run of failures walk straight through a daily cap.
+4. **Every ceiling is below what the provider publishes.** A client running at exactly the
+   documented limit is one clock skew from a 429, and the margin costs nothing at this cadence.
+   Atlas also takes only a slice of each allowance, because the rest of the app draws on the same
+   account.
+5. **A partial tick beats an empty one.** Where the budget covers part of the list, that part is
+   refreshed and the rest keeps its cached value with its real age. Degrading to older data is
+   honest; degrading to an error or to a number with no provenance is not.
+6. **"Fallback ready" is checked, not assumed.** The status line only claims a fallback when the
+   manager has confirmed a second provider could take the next request, and says "no second
+   source reviewed" otherwise rather than leaving the reader to infer a safety net.
+
+**Alpha Vantage is not in the rotation**, despite being the obvious second equity source. The
+arithmetic rules it out, not the terms: `GLOBAL_QUOTE` takes one symbol per call against a free
+tier of **25 requests a day**, so a twelve-symbol watchlist would spend half the daily budget on
+one tick. It is a chart-only provider in this codebase for that reason — its `quotes()` returns
+nothing deliberately — and listing it would produce a fallback that rotates to a provider which
+answers with an empty list. A fallback that silently returns no data is worse than none, because
+the status line would claim a working route. ADR-013 reached the same conclusion for the
+watchlist; nothing about a rotation manager changes the request cost.
+
+**Binance is not in the rotation either.** Its public market-data endpoints are documented and
+keyless and would be a genuine second crypto source. They have not been through the ADR-008 terms
+review, and they are geo-restricted in the US with Binance.US a separate API under separate
+terms. Adding a provider to `catalogue.rs` is one entry; adding one without reading its terms is
+the thing ADR-008 forbids. The table is the extension point, and it is deliberately empty until
+that review happens.
+
+**Alternatives:** stream over WebSocket (rejected for now: Finnhub's free tier supports it for up
+to 50 symbols and it would genuinely reduce request cost, but it needs a WebSocket dependency, a
+reconnection policy and a second data path for one screen — worth doing, and worth doing on its
+own rather than folded into this). Refresh faster than 90s (rejected: the allowances are
+per-minute, so a five-second cadence spends a tier's minute in one tick and returns rate limits).
+Make the cadence a preference (rejected for the same reason — it is part of what makes the
+feature work, not a taste).

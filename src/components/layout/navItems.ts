@@ -27,6 +27,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/pulse', label: 'Pulse', icon: 'pulse', hint: 'Market overview', key: 'p' },
+  { to: '/atlas', label: 'Atlas', icon: 'pulse', hint: 'Live ticker', key: 'a' },
   { to: '/portfolio', label: 'Portfolio', icon: 'portfolio', hint: 'What you hold', key: 'o' },
   { to: '/screener', label: 'Screener', icon: 'search', hint: 'Filter the market', key: 'e' },
   { to: '/research', label: 'Research Lab', icon: 'research', hint: 'Asset deep dive', key: 'r' },

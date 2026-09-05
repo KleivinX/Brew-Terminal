@@ -382,6 +382,29 @@ Missing observations are written as `.` and are skipped rather than read as zero
 
 ---
 
+## Atlas — the rotation manager
+
+Atlas is a live ticker that draws on the providers above rather than adding one of its own. It
+holds a per-provider allowance well below each published limit, counts **calls** rather than
+ticks (Finnhub is one symbol per call, CoinGecko batches), books a call when it is made rather
+than when it succeeds, and rests a provider that returns 429 for longer than it asked.
+
+| Market   | Provider  | Atlas allowance | Notes                                                |
+| -------- | --------- | --------------- | ---------------------------------------------------- |
+| Crypto   | CoinGecko | 20/min, 200/day | Batches — one call serves the whole ticker.          |
+| Equities | Finnhub   | 20/min          | One symbol per call; twelve symbols is twelve calls. |
+
+Both figures are a slice of the provider's limit, not the whole of it, because the Research Lab
+and the screener draw on the same account.
+
+**Not in the rotation, and why** — see ADR-039:
+
+- **Alpha Vantage.** One symbol per call against 25 requests a day. A twelve-symbol watchlist
+  would spend half the daily budget on a single tick. It stays a chart-only provider.
+- **Binance.** A genuine second crypto source, documented and keyless, but not yet through the
+  ADR-008 terms review — and geo-restricted in the US, with Binance.US a separate API under
+  separate terms.
+
 ## Deliberately not used
 
 - **The well-known equity Fear & Greed index's data endpoint.** It is reachable and it is what that site's own charts call, but it is not offered as a public API and its terms do not cover third-party use. This is why the equity index in this app is computed rather than reported — see above.

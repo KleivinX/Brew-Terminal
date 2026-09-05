@@ -9,6 +9,9 @@ import { PulseRoute } from '@/features/pulse/PulseRoute';
  * Pulse ships in the initial chunk because it is the landing route. Everything else is lazy —
  * this is the main lever for the 200 KB initial-bundle budget in ARCHITECTURE.md §5.
  */
+const AtlasRoute = lazy(() =>
+  import('@/features/atlas/AtlasRoute').then((m) => ({ default: m.AtlasRoute })),
+);
 const CompareRoute = lazy(() =>
   import('@/features/compare/CompareRoute').then((m) => ({ default: m.CompareRoute })),
 );
@@ -78,6 +81,17 @@ export function AppRoutes() {
           element={
             <ErrorBoundary area="Pulse">
               <PulseRoute />
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/atlas"
+          element={
+            <ErrorBoundary area="Atlas">
+              <Suspense fallback={<RouteFallback label="Loading Atlas" />}>
+                <AtlasRoute />
+              </Suspense>
             </ErrorBoundary>
           }
         />

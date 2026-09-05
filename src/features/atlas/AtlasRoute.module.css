@@ -1,0 +1,131 @@
+/*
+ * Split pane: the ticker takes the width it needs and the route panel sits beside it. Below
+ * 1100px they stack — the route line is long, and squeezing it next to a table makes both
+ * unreadable.
+ */
+.layout {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+@media (width <= 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.4fr) auto auto;
+    overflow-y: auto;
+  }
+}
+
+.tickerPanel,
+.routePanel {
+  min-height: 0;
+}
+
+/* The disclaimer spans both columns, as it does on every other route. */
+.layout > :last-child {
+  grid-column: 1 / -1;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.updated {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.ticker {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+/*
+ * A grid rather than flex, so the price column lines up down the list. A ticker whose numbers
+ * do not align is one you have to read rather than scan.
+ */
+.rowButton {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) auto auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.rowButton:hover {
+  background: var(--bg-hover);
+}
+
+.rowButton:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.symbol {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+}
+
+.name {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.price {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.routeBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+/* The status list still spans the panel; only the trailing button hugs the left. */
+.routeBody > div:first-child,
+.routeBody > p {
+  align-self: stretch;
+}
+
+.explain {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.quiet {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

@@ -6,6 +6,7 @@
 
 pub mod ai;
 pub mod alerts;
+pub mod atlas;
 pub mod cache;
 pub mod community;
 pub mod csv_export;

@@ -846,6 +846,43 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       );
     }
 
+    case 'atlas_snapshot': {
+      /*
+       * Mirrors the real command's shape: quotes for whatever was asked, plus one route per
+       * market represented. The harness has no rate limiter, so the route always reports a
+       * healthy Finnhub/CoinGecko with allowance to spare — the exhausted and blocked paths are
+       * asserted in Rust, where the policy actually lives.
+       */
+      const ids = new Set(args.assetIds as string[]);
+      const matched = allQuotes.filter((q) => ids.has(q.assetId));
+
+      const routes = [];
+      if (matched.some((q) => q.assetType === 'crypto')) {
+        routes.push({
+          market: 'crypto',
+          providerId: 'coingecko',
+          providerName: 'CoinGecko',
+          fallbackName: null,
+          windowRemaining: 19,
+          dayRemaining: 199,
+          blocked: [],
+        });
+      }
+      if (matched.some((q) => q.assetType !== 'crypto')) {
+        routes.push({
+          market: 'stock',
+          providerId: 'finnhub',
+          providerName: 'Finnhub',
+          fallbackName: null,
+          windowRemaining: 14,
+          dayRemaining: null,
+          blocked: [],
+        });
+      }
+
+      return { quotes: matched, routes };
+    }
+
     case 'get_asset':
       return allAssets.find((a) => a.id === args.assetId) ?? null;
 

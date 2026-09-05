@@ -146,7 +146,7 @@ export function DigestPanel({ quotes, watching, className }: DigestPanelProps) {
                     onClick={() => void navigate(`/research/${encodeURIComponent(quote.assetId)}`)}
                   >
                     <span className={styles.symbol}>{quote.symbol}</span>
-                    <ChangeValue value={quote.changePct24h} period="24 hour" />
+                    <ChangeValue value={quote.changePct24h} period="24 hour change" />
                   </button>
                 </li>
               ))}

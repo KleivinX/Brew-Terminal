@@ -16,6 +16,12 @@ pub struct AppState {
     /// The download in flight, if any. One at a time on purpose: two concurrent gigabyte
     /// downloads on a domestic connection make both of them slow and neither of them clear.
     pub downloads: Mutex<Option<(String, Arc<crate::localai::download::DownloadHandle>)>>,
+    /// Atlas's per-provider rate-limit accounting.
+    ///
+    /// Lives here rather than in a global because it is process state with a lifetime — two
+    /// tests that each bootstrap a state must not inherit each other's exhausted budgets, and a
+    /// static would give them exactly that.
+    pub atlas: Mutex<crate::services::atlas::AtlasUsage>,
 }
 
 impl AppState {
@@ -27,6 +33,7 @@ impl AppState {
             db_path,
             engine: Arc::new(crate::localai::engine::EngineProcess::default()),
             downloads: Mutex::new(None),
+            atlas: Mutex::new(Default::default()),
         })
     }
 

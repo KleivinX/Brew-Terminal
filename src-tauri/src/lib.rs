@@ -123,6 +123,8 @@ pub fn run() {
             commands::notes::search_notes,
             commands::notes::restore_note,
             // tables
+            // atlas
+            commands::atlas::atlas_snapshot,
             commands::csv_export::export_csv,
             // saved views
             commands::saved_views::list_saved_views,

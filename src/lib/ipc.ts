@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from './env';
 import type {
+  AtlasSnapshot,
   CsvExportResult,
   FeedCandidate,
   SavedView,
@@ -170,6 +171,13 @@ export interface IpcContract {
 
   // --- saved views ---
   /** A screener filter set or a compare selection, kept by name. */
+  // --- atlas ---
+  /**
+   * One tick of the Atlas ticker: whatever the current provider allowance covered, the rest
+   * from cache, and the route that served it.
+   */
+  atlas_snapshot: { args: { assetIds: string[] }; result: AtlasSnapshot };
+
   list_saved_views: { args: { kind: SavedViewKind }; result: SavedView[] };
   /** Saving over a name that already exists on the same screen replaces it. */
   save_view: {

@@ -1,0 +1,83 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/*
+ * State travels on the dot's colour *and* on the wording beside it. The dot alone would put the
+ * whole signal on hue, which is the failure this project's palette rules exist to prevent.
+ */
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+}
+
+.dot[data-state='ok'] {
+  background: var(--positive);
+}
+
+.dot[data-state='live'] {
+  background: var(--accent);
+}
+
+.dot[data-state='blocked'] {
+  background: var(--negative);
+}
+
+/*
+ * Normal flow, not a flex column. As a column every span became its own line and the sentence
+ * read as a stack of fragments — "connected via" / "CoinGecko" / "no second source" — instead
+ * of one line that wraps where it runs out of room.
+ */
+.text {
+  min-width: 0;
+}
+
+.label {
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+/* The allowance is a second line under the sentence, not part of it. */
+.budget,
+.blocked {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.blocked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.blockedItem {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
