@@ -19,7 +19,7 @@ use crate::state::AppState;
 pub mod catalogue;
 pub mod rotation;
 
-use rotation::{Allowance, Unavailable, Usage};
+use rotation::{Unavailable, Usage};
 
 /// Per-provider accounting, keyed by provider id.
 pub type AtlasUsage = HashMap<&'static str, Usage>;

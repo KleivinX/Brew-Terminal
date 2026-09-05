@@ -266,7 +266,7 @@ pub async fn discover(state: &AppState, input: String) -> AppResult<Vec<FeedCand
 
     // Most items first: of several feeds a site offers, the fullest is almost always the one
     // someone typing the bare domain meant.
-    found.sort_by(|a, b| b.item_count.cmp(&a.item_count));
+    found.sort_by_key(|candidate| std::cmp::Reverse(candidate.item_count));
     Ok(found)
 }
 
