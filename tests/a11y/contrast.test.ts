@@ -78,6 +78,18 @@ const BODY_TEXT_PAIRS: [string, string][] = [
   ['--text-secondary', '--bg-app'],
   ['--text-secondary', '--bg-surface'],
   ['--text-muted', '--bg-app'],
+  /*
+   * `--text-muted` is listed against `--bg-app` and deliberately not against `--bg-elevated`
+   * or `--bg-inset`: in the dark theme it reaches only 4.2:1 on elevated, which is under the
+   * floor. That is not a token bug — muted is for the app background — but it was a real one
+   * in Sentry, where a whole status bar sits on elevated and axe in a real browser caught
+   * eight failures this file could not see. So the pairs that are safe there are pinned
+   * instead, and anything on an elevated or inset surface uses secondary.
+   */
+  ['--text-secondary', '--bg-elevated'],
+  ['--text-secondary', '--bg-inset'],
+  ['--text-primary', '--bg-elevated'],
+  ['--text-primary', '--bg-inset'],
   ['--accent', '--bg-app'],
   ['--accent', '--bg-surface'],
   ['--positive', '--bg-surface'],
@@ -123,6 +135,25 @@ describe.each(THEMES)('theme: %s', (theme) => {
       parseHex(tokens['--negative'] as string),
     );
     expect(ratio).toBeGreaterThan(1.2);
+  });
+});
+
+/**
+ * The pair that caused the Sentry failures, recorded rather than merely avoided.
+ *
+ * If a future token change makes muted safe on elevated, this test fails and the comment above
+ * can go. Until then it documents why the safe-pair list is shaped the way it is.
+ */
+describe('the muted-on-elevated trap', () => {
+  it('is still a trap in the dark theme', () => {
+    const tokens = themeTokens('dark');
+    const ratio = contrastRatio(
+      parseHex(tokens['--text-muted'] as string),
+      parseHex(tokens['--bg-elevated'] as string),
+    );
+    expect(ratio, 'muted on elevated now passes; the guidance above can be relaxed').toBeLessThan(
+      4.5,
+    );
   });
 });
 

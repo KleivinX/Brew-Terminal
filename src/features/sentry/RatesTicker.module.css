@@ -1,0 +1,92 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.rates {
+  min-inline-size: 0;
+  flex: 1;
+}
+
+/* Wide on a narrow window: the bar scrolls itself rather than the page scrolling sideways. */
+.list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.rate {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/*
+ * `--text-secondary`, not `--text-muted`. The bar sits on `--bg-elevated`, which is the
+ * lightest surface in the dark theme — muted text reaches only 4.2:1 there, under the 4.5:1
+ * AA floor for text this size. Muted passes comfortably on `--bg-app`, which is why it is fine
+ * almost everywhere else and not here.
+ */
+.pair {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.statusText,
+.quiet {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.quiet {
+  color: var(--text-secondary);
+}
+
+.date {
+  color: var(--text-secondary);
+}
+
+.dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: var(--radius-full);
+  background: var(--status-live);
+  flex-shrink: 0;
+}
+
+.dot[data-state='degraded'] {
+  background: var(--status-stale);
+}
+
+@media (max-width: 900px) {
+  .bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+}

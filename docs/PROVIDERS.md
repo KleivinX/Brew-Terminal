@@ -405,12 +405,218 @@ and the screener draw on the same account.
   ADR-008 terms review — and geo-restricted in the US, with Binance.US a separate API under
   separate terms.
 
+## Sentry — geospatial and macro sources
+
+Five sources behind the Sentry map. Verified on **2026-09-05** against live calls, not against
+documentation alone: every response shape recorded below was read off an actual request made with
+this app's own User-Agent.
+
+Sentry's own decisions — which of these may ship enabled, and why the others were rejected — are
+in ADR-040. This section records the terms and the endpoints.
+
+### USGS — earthquakes
+
+|                 |                                                                               |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Status**      | Live, enabled by default (keyless)                                            |
+| **Adapter**     | `src-tauri/src/providers/live/usgs.rs`                                        |
+| **Endpoint**    | `GET /earthquakes/feed/v1.0/summary/4.5_day.geojson` on `earthquake.usgs.gov` |
+| **Credential**  | None                                                                          |
+| **Limits**      | None published. Feeds are regenerated every minute.                           |
+| **Attribution** | Courtesy, not obligation — see below                                          |
+
+USGS output is a work of the United States government and is in the public domain under
+17 U.S.C. §105, so no attribution is required. The app renders it anyway: the standing rule is
+that no figure appears without its source.
+
+The 4.5+ day feed is used rather than 2.5+ or "all". The all-day feed runs to several hundred
+events, nearly all too small to be felt, and a world map covered in them shows nothing.
+
+Response shape verified: `FeatureCollection`, `features[].properties` carrying `mag`, `place`,
+`time`, `tsunami`, `alert`, `url`, and `geometry.coordinates` as `[lon, lat, depth_km]`. **`time`
+is epoch milliseconds**, which is the one thing in this feed that will silently put every event in
+1970 if it is read as seconds. There is a test for exactly that.
+
+### NOAA / National Weather Service — severe weather
+
+|                |                                                                          |
+| -------------- | ------------------------------------------------------------------------ |
+| **Status**     | Live, enabled by default (keyless)                                       |
+| **Adapter**    | `src-tauri/src/providers/live/nws.rs`                                    |
+| **Endpoint**   | `GET /alerts/active` on `api.weather.gov`                                |
+| **Credential** | None. A User-Agent identifying the client is required.                   |
+| **Limits**     | "Reasonable rate limits", figures not published; retry after ~5 seconds. |
+| **Coverage**   | **United States only**                                                   |
+
+Public domain, same basis as USGS. The published requirement is a User-Agent that identifies the
+client and carries contact information — which `providers::http::USER_AGENT` already satisfies for
+FRED's WAF and satisfies here for the same reason.
+
+Query parameters, each load-bearing and measured on 2026-09-05:
+
+| Parameter                 | Why                                                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `severity=Extreme,Severe` | The two levels the service itself calls significant. Adding Moderate roughly triples the volume.                                    |
+| `status=actual`           | Without it, a scheduled NWS test broadcast renders as a live warning.                                                               |
+| `message_type=alert`      | Original issuances only. Took the response from 61 features / 387 KB to 35 / 212 KB and removed duplicate markers for every update. |
+
+**`limit` is not a valid parameter on `/alerts/active`** — it returns HTTP 400 with a
+`parameterErrors` body. Filter, do not paginate.
+
+About half of active alerts carry `geometry: null` because they are scoped to named forecast zones
+rather than polygons; resolving those is one further request per zone. They are counted and
+reported on the layer ("N more not mapped") rather than dropped silently. Alerts that do carry
+geometry are `Polygon` or `MultiPolygon`, and their rings repeat the first vertex as the last per
+RFC 7946 §3.1.6 — counted twice, that biases the representative point toward one corner every
+time.
+
+### World Bank Open Data — country indicators
+
+|                |                                                                          |
+| -------------- | ------------------------------------------------------------------------ |
+| **Status**     | Live, enabled by default (keyless)                                       |
+| **Adapter**    | `src-tauri/src/providers/live/worldbank.rs`                              |
+| **Endpoint**   | `GET /v2/country/{codes}/indicator/{codes}?source=2&format=json&mrnev=1` |
+| **Credential** | None                                                                     |
+| **Limits**     | None published                                                           |
+| **Licence**    | CC BY 4.0 — attribution required, and rendered                           |
+
+One request covers every indicator for every country. `source=2` selects the World Development
+Indicators database and is what makes the semicolon-separated multi-indicator form work at all —
+without it the API returns only the first indicator. Measured: 81 rows, 18 KB, for five indicators
+across seventeen countries.
+
+Indicators requested: `FP.CPI.TOTL.ZG` (inflation), `NY.GDP.MKTP.KD.ZG` (GDP growth),
+`GC.DOD.TOTL.GD.ZS` (central government debt), `BN.CAB.XOKA.GD.ZS` (current account),
+`SL.UEM.TOTL.ZS` (unemployment).
+
+**The trap, recorded because it is invisible in a response that looks fine.** `mrnev=1` means
+_most recent non-empty value_, and it reaches back as far as it must. Coverage measured across
+seventeen countries on 2026-09-05:
+
+| Indicator           | Countries with data | Oldest observation returned |
+| ------------------- | ------------------- | --------------------------- |
+| `FP.CPI.TOTL.ZG`    | 17 / 17             | 2024                        |
+| `NY.GDP.MKTP.KD.ZG` | 17 / 17             | 2024                        |
+| `BN.CAB.XOKA.GD.ZS` | 17 / 17             | 2024                        |
+| `SL.UEM.TOTL.ZS`    | 17 / 17             | 2025                        |
+| `GC.DOD.TOTL.GD.ZS` | 13 / 17             | **1990** (Germany, 20.9%)   |
+
+The adapter drops any observation more than five years old for that reason. See ADR-040.
+
+Error responses are a **one-element** array holding a `message` object, where a success is a
+two-element `[metadata, rows]` array. Indexing straight to `[1]` panics on precisely the responses
+that most need handling.
+
+### Frankfurter — reference exchange rates
+
+|                |                                                                   |
+| -------------- | ----------------------------------------------------------------- |
+| **Status**     | Live, enabled by default (keyless)                                |
+| **Adapter**    | `src-tauri/src/providers/live/frankfurter.rs`                     |
+| **Endpoint**   | `GET /v2/rates?base=USD&quotes=…&from=…` on `api.frankfurter.dev` |
+| **Credential** | None                                                              |
+| **Limits**     | "No quotas. Requests are rate-limited to prevent abuse."          |
+
+Aggregates official central bank reference rates — 84 central banks, 201 currencies back to 1948 —
+and is open source and self-hostable. That shape is the reason it was chosen over a market-data
+FX API: it publishes a dated official figure rather than quoting a tradeable price, which is
+exactly what this app should be rendering.
+
+**These are reference rates, not dealing rates,** and the ticker says so. Central banks publish
+once per working day, so over a weekend the newest figure is Friday's and the date on screen is
+Friday's.
+
+The time-series form is requested with a seven-day window rather than `/latest`, because it
+returns both the newest rate and the one before it in a single call — which is what makes the
+change column possible without a second request per pair. Seven days rather than one because a
+Monday request with a one-day window can return a single observation, and a long weekend can
+stretch that to three.
+
+Response shape verified: a flat array of `{date, base, quote, rate}`. Note the v1 and v2 shapes
+differ — v1 returns `{amount, base, date, rates: {…}}` — and on 2026-09-05 v1 was a day behind v2.
+
+### OpenSky Network — freight aircraft
+
+|                |                                                                           |
+| -------------- | ------------------------------------------------------------------------- |
+| **Status**     | **Off by default. Needs the user's own credentials.**                     |
+| **Adapter**    | `src-tauri/src/providers/live/opensky.rs`                                 |
+| **Endpoint**   | `GET /api/states/all` on `opensky-network.org`                            |
+| **Credential** | OAuth2 client credentials, entered as `client-id:client-secret`           |
+| **Limits**     | 400 credits/day anonymous, 4,000 authenticated. A global request costs 4. |
+
+**Terms position, which is why this one ships off.** The licence grants a limited,
+non-transferable licence for non-profit research, non-profit education, commercial internal
+testing and evaluation, or government purposes. Use of the REST API in any operational capacity —
+including integration into a live product, service, or automated system — requires a previous
+written agreement, explicitly including non-profit and governmental entities. Any use by a
+for-profit or commercial entity requires written permission.
+
+Brew Terminal is a distributed application that would poll on a timer. That is an automated system
+integrated into a live product. The layer is therefore off, credential-gated, and the restriction
+is stated on the toggle and in the settings help rather than buried here.
+
+Authentication changed on **18 March 2026**: basic auth is gone, and the only supported flow is
+OAuth2 client credentials against
+`https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token`.
+Tokens last 30 minutes and are cached in the adapter.
+
+Measured on 2026-09-05: a global `/states/all` returned **1,189,222 bytes for 9,024 aircraft** in
+1.03 s. That is inside the app's 2 MB body cap but not by much, and air traffic is diurnal — so
+this one call gets an explicit 4 MB cap via `http::get_json_capped`, and nothing else uses it.
+
+The state vector is a **17-element** array without `extended=1`, addressed by index. Index 5 is
+longitude and index 6 is latitude, the opposite order from everything else in this codebase.
+
+Freight aircraft are identified by the ICAO airline designator at the start of the callsign, from
+a hand-maintained list of dedicated cargo operators. That is a claim about the _operator_, not the
+cargo: belly freight on passenger airlines, a large share of world air cargo, is not in this layer
+at all, and a missing designator means missing aircraft rather than a wrong position.
+
+### Shipped reference geography
+
+Not a provider — constants in `src-tauri/src/services/sentry/geography.rs` — but the figures have
+publishers and dates, so they belong in this record.
+
+Oil transit volumes are the EIA's, from _World Oil Transit Chokepoints_, last updated
+**3 March 2026**, reporting the **first half of 2025**:
+
+| Chokepoint           | million b/d |
+| -------------------- | ----------- |
+| Strait of Malacca    | 23.2        |
+| Strait of Hormuz     | 20.9        |
+| Cape of Good Hope    | 9.1         |
+| Suez Canal and SUMED | 4.9         |
+| Danish Straits       | 4.9         |
+| Bab el-Mandeb        | 4.2         |
+| Turkish Straits      | 3.7         |
+| Panama Canal         | 2.3         |
+
+Quoted with that period attached rather than as standing figures, because they move sharply: Suez
+and Bab el-Mandeb are both roughly half their 2023 levels after traffic diverted around Africa,
+and the Cape of Good Hope is up by a third.
+
+Container ports carry a throughput figure **only where one has been verified** — Shanghai at 51.5m
+TEU and Singapore at 41.1m TEU for 2024, from Lloyd's List's One Hundred Container Ports. The rest
+render with their role and no number. `Chokepoint.throughput` and `Chokepoint.source` are both
+`Option` and a test asserts they agree about existing, so a figure can never appear without a
+publisher.
+
+Coastlines are Natural Earth 1:110m, public domain, decoded to an SVG path at integer precision on
+a 2000×1000 grid.
+
 ## Deliberately not used
 
 - **The well-known equity Fear & Greed index's data endpoint.** It is reachable and it is what that site's own charts call, but it is not offered as a public API and its terms do not cover third-party use. This is why the equity index in this app is computed rather than reported — see above.
 - **Any undocumented or reverse-engineered endpoint**, including the unofficial Yahoo Finance endpoints. They work, they are widely used, and they are not offered as a public API. ADR-008 treats that as a decision about the project's standing rather than a technical question.
 - **Scraping** of any provider's website.
 - **Alpha Vantage**, for now: its free tier's daily budget is small enough that a refreshing watchlist would exhaust it and leave the UI permanently rate-limited — see ADR-013.
+- **AISHub**, for vessel positions. Access is earned by contributing a raw NMEA feed from an AIS receiver you operate — at least ten vessels of coverage and 90% uptime over a rolling week. There is no paid tier and no anonymous tier, so it can be neither a default source nor a "just add a key" one. See ADR-040.
+- **MarineTraffic.** No free API tier exists, and the endpoints its own site calls are undocumented and not offered for third-party use — the case ADR-008 covers directly.
+- **CelesTrak**, which publishes satellite orbital elements and was considered for the maritime layer. Satellite positions captioned as commercial shipping would be miscategorised data dressed as supply-chain intelligence.
+- **The IMF Data API.** Covers the same indicators as the World Bank. Its legacy SDMX JSON service was retired on 5 November 2025 and the SDMX 3.0 replacement needs dataflow discovery and key construction before a figure comes back, for data the World Bank returns from one URL.
+- **The EIA API**, whose free key and clean REST are not in question — what it publishes is time series rather than geography, and the eight chokepoint volumes Sentry needed from it ship as constants with their period attached. See ADR-040.
 
 ## Re-review checklist
 
@@ -420,6 +626,8 @@ Before each release, and whenever an adapter changes:
 - [ ] Attribution wording and link unchanged
 - [ ] Response shapes unchanged (adapter tests run against recorded fixtures, so a silent upstream change will not fail CI — check by hand)
 - [ ] Desktop-client use and caching still permitted
+- [ ] **Sentry's shipped constants** still match their publishers: the EIA chokepoint volumes and their reporting period, and the two verified container-port TEU figures. These are numbers with dates on them living in source code, and nothing upstream will tell us when they move.
+- [ ] OpenSky's licence position unchanged — it is the one source whose terms decide whether a layer may ship enabled at all
 
 ## Community providers
 

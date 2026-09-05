@@ -1,0 +1,193 @@
+.wrap {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+}
+
+.svg,
+.svgDragging {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  touch-action: none;
+}
+
+.svg {
+  cursor: grab;
+}
+
+.svgDragging {
+  cursor: grabbing;
+}
+
+.ocean {
+  fill: var(--bg-inset);
+}
+
+/*
+ * Land is a filled silhouette rather than an outline. At world zoom an outline of 125 rings
+ * is visual noise; a flat mass reads instantly as "continent" and lets the markers own the
+ * contrast, which is what the screen is actually for.
+ */
+.land {
+  fill: var(--bg-surface);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.graticule,
+.equator {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.graticule {
+  opacity: 0.45;
+}
+
+.equator {
+  opacity: 0.8;
+  stroke-dasharray: 6 6;
+}
+
+/* --- Markers --- */
+
+.marker {
+  cursor: pointer;
+}
+
+/*
+ * Severity travels on colour *and* shape (set per layer in the component) *and* the label in
+ * the inspector. Three channels, because a map has no room for a fourth and colour alone is
+ * unreadable for a large share of readers. See UI_MAP.md §6.
+ */
+.symbolFill,
+.symbolOutline,
+.symbolRing {
+  vector-effect: non-scaling-stroke;
+}
+
+.symbolFill {
+  fill: var(--accent);
+  stroke: var(--bg-app);
+  stroke-width: 1;
+}
+
+.symbolOutline {
+  fill: var(--bg-app);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.symbolRing {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.marker[data-severity='severe'] .symbolFill {
+  fill: var(--negative);
+}
+
+.marker[data-severity='severe'] .symbolRing {
+  stroke: var(--negative);
+}
+
+.marker[data-severity='notable'] .symbolFill {
+  fill: var(--status-stale);
+}
+
+.marker[data-severity='notable'] .symbolRing {
+  stroke: var(--status-stale);
+}
+
+/*
+ * Reference geography recedes. It is on the map to be a landmark, not to compete with an
+ * earthquake for attention.
+ */
+.marker[data-layer='chokepoints'] .symbolOutline,
+.marker[data-layer='economy'] .symbolOutline {
+  stroke: var(--text-muted);
+}
+
+.marker[data-layer='flights'] .symbolFill {
+  fill: var(--text-secondary);
+}
+
+.marker:hover .symbolFill,
+.marker:hover .symbolOutline {
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
+.halo {
+  fill: none;
+  stroke: var(--border-focus);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.marker[data-selected='true'] .symbolOutline {
+  stroke: var(--border-focus);
+  stroke-width: 2;
+}
+
+/* --- Overlays --- */
+
+.controls {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.zoomButton {
+  inline-size: 28px;
+  block-size: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.zoomButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.zoomButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.zoomButton:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.scale {
+  position: absolute;
+  inset-block-end: var(--space-2);
+  inset-inline-start: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  pointer-events: none;
+}

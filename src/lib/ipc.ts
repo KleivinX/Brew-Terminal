@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from './env';
 import type {
   AtlasSnapshot,
+  SentrySnapshot,
   CsvExportResult,
   FeedCandidate,
   SavedView,
@@ -177,6 +178,15 @@ export interface IpcContract {
    * from cache, and the route that served it.
    */
   atlas_snapshot: { args: { assetIds: string[] }; result: AtlasSnapshot };
+
+  // --- sentry ---
+  /**
+   * One refresh of the Sentry board: every layer's status alongside its data, so the sidebar
+   * can say which sources answered, how old each is, and why any of them did not.
+   */
+  sentry_snapshot: { args: undefined; result: SentrySnapshot };
+  /** Attribution for every source that can appear on the board. */
+  sentry_attributions: { args: undefined; result: string[] };
 
   list_saved_views: { args: { kind: SavedViewKind }; result: SavedView[] };
   /** Saving over a name that already exists on the same screen replaces it. */

@@ -15,6 +15,10 @@ pub enum CacheKind {
     Community,
     Search,
     Sentiment,
+    /// Sentry's hazard layers — earthquakes, severe weather, aircraft.
+    Hazard,
+    /// Sentry's slow-moving layers — country indicators and reference exchange rates.
+    Reference,
 }
 
 impl CacheKind {
@@ -28,6 +32,8 @@ impl CacheKind {
             Self::Community => "community",
             Self::Search => "search",
             Self::Sentiment => "sentiment",
+            Self::Hazard => "hazard",
+            Self::Reference => "reference",
         }
     }
 
@@ -47,6 +53,23 @@ impl CacheKind {
             // Both Fear & Greed indices are daily figures. Refetching them every few minutes
             // would spend a provider's goodwill to redraw the same number.
             Self::Sentiment => 3 * 60 * 60,
+            /*
+             * These two TTLs govern how long a *fallback* survives, not how often anything is
+             * fetched: `cached_or_degraded` always asks the provider first and only reads the
+             * cache when that fails. So the question each answers is "how old may this be
+             * before showing it does more harm than showing nothing?"
+             *
+             * A quarter of an hour for hazards. An earthquake that happened is still true an
+             * hour later, but an aircraft position is worthless within minutes, and the same
+             * bucket covers both.
+             */
+            Self::Hazard => 15 * 60,
+            /*
+             * A day for reference data. World Bank indicators are annual and central bank
+             * rates are daily, so yesterday's copy is a genuinely useful thing to fall back to
+             * when the network is down — and the envelope says how old it is either way.
+             */
+            Self::Reference => 24 * 60 * 60,
         }
     }
 
@@ -123,6 +146,8 @@ mod tests {
             CacheKind::Community,
             CacheKind::Search,
             CacheKind::Sentiment,
+            CacheKind::Hazard,
+            CacheKind::Reference,
         ];
         let mut seen: Vec<&str> = kinds.iter().map(|k| k.as_str()).collect();
         seen.sort_unstable();

@@ -26,6 +26,7 @@ pub mod profile;
 pub mod saved_views;
 pub mod screener;
 pub mod sentiment;
+pub mod sentry;
 pub mod settings;
 pub mod updates;
 pub mod watchlist;

@@ -1,0 +1,85 @@
+/*
+ * A grid rather than a column: this panel sits under the map, where it is wide and short
+ * rather than narrow and tall. `auto-fit` collapses it back to one column in the stacked
+ * layout, so there is no second set of rules to keep in step.
+ */
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.row {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.row[data-on='true'] {
+  border-inline-start-color: var(--accent);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Toggle lays out its own label and switch across the full width, so it takes the space. */
+.head > *:first-child {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding-inline: var(--space-2);
+  padding-block: 2px;
+  border-radius: var(--radius-full);
+  background: var(--bg-inset);
+}
+
+.description,
+.coverage,
+.degraded,
+.needsKey,
+.meta {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.description {
+  color: var(--text-secondary);
+}
+
+/*
+ * Coverage limits read as quiet body text rather than as a warning. "United States only" is a
+ * fact about the source, not a fault — styling it like an error would train the reader to
+ * ignore the styling that does mean something is wrong.
+ */
+.coverage {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.degraded {
+  color: var(--status-error);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.needsKey {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.meta {
+  color: var(--text-secondary);
+}

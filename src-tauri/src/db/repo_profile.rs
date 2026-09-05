@@ -181,6 +181,17 @@ pub fn gather(conn: &Connection, schema_version: i64, now: i64) -> AppResult<Pro
 /// A valid authentication tag proves the file came from someone with the password. It proves
 /// nothing about whether the contents are sane, so the payload is validated with the same
 /// suspicion provider data gets. See THREAT_MODEL.md §6.3.
+/// Provider kinds an imported profile may carry.
+///
+/// This is the second copy of a list whose first copy is the `CHECK (kind IN (…))` on
+/// `provider_config`. They have to agree in both directions: a kind allowed here but rejected
+/// by the constraint makes an import fail mid-transaction, and a kind allowed by the constraint
+/// but missing here makes a profile this very app exported unimportable — which is exactly what
+/// happened when Sentry's sources were added and only the schema was widened.
+///
+/// `every_shipped_provider_kind_can_be_imported` holds the two together.
+const PROVIDER_KINDS: &[&str] = &["market", "news", "community", "ai", "sentry"];
+
 pub fn validate(payload: &ProfilePayload, current_schema_version: i64) -> AppResult<()> {
     if payload.schema_version > current_schema_version {
         return Err(AppError::Validation {
@@ -232,10 +243,7 @@ pub fn validate(payload: &ProfilePayload, current_schema_version: i64) -> AppRes
     }
 
     for provider in &payload.providers {
-        if !matches!(
-            provider.kind.as_str(),
-            "market" | "news" | "community" | "ai"
-        ) {
+        if !PROVIDER_KINDS.contains(&provider.kind.as_str()) {
             return Err(AppError::Validation {
                 field: "file".into(),
                 detail: "that profile contains a provider of an unknown kind".into(),
@@ -488,6 +496,43 @@ pub fn apply(conn: &Connection, payload: &ProfilePayload, mode: ImportMode) -> A
 
 #[cfg(test)]
 mod tests {
+    /// The two copies of the provider-kind list must agree, in both directions.
+    ///
+    /// This is a regression test with a name attached: when Sentry's sources were added, the
+    /// `CHECK` on `provider_config` was widened and this allowlist was not, and the failure
+    /// was a profile the app had just exported being refused on import. Neither list can be
+    /// changed alone now — one direction is proved by inserting every allowed kind against the
+    /// real schema, the other by asserting a kind the schema rejects is not on the list.
+    #[test]
+    fn every_shipped_provider_kind_can_be_imported_and_stored() {
+        let pool = crate::db::pool::create_in_memory().unwrap();
+        let mut conn = pool.get().unwrap();
+        crate::db::migrations::run(&mut conn, None).unwrap();
+
+        for kind in super::PROVIDER_KINDS {
+            conn.execute(
+                "INSERT INTO provider_config (provider_id, kind, enabled, updated_at)
+                 VALUES (?1, ?2, 0, 0)",
+                rusqlite::params![format!("probe-{kind}"), kind],
+            )
+            .unwrap_or_else(|error| {
+                panic!("the schema rejects the allowed kind {kind:?}: {error}")
+            });
+        }
+
+        // And the other way: a kind the schema would refuse must not be on the list.
+        assert!(
+            conn.execute(
+                "INSERT INTO provider_config (provider_id, kind, enabled, updated_at)
+                 VALUES ('probe-bogus', 'bogus', 0, 0)",
+                [],
+            )
+            .is_err(),
+            "the schema accepted a kind that is not in PROVIDER_KINDS"
+        );
+        assert!(!super::PROVIDER_KINDS.contains(&"bogus"));
+    }
+
     use super::*;
     use crate::db::migrations;
 

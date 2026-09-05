@@ -31,10 +31,14 @@ export type IconName =
   | 'trash'
   | 'globe'
   | 'filter'
-  | 'compare';
+  | 'compare'
+  | 'sentry';
 
 const PATHS: Record<IconName, string> = {
   pulse: 'M2 12h4l3-8 4 16 3-8h4',
+  // Sentry: a radar sweep. Deliberately not another circle-with-meridians — Atlas already has
+  // the globe, and at 16px two round outlines are the same icon.
+  sentry: 'M12 21a9 9 0 1 1 9-9M12 17a5 5 0 1 1 5-5M12 12l7-5',
   // Atlas: a globe. Named for a book of maps, and the one metaphor in the rail that is not
   // another chart — three of these were the same waveform before.
   globe:

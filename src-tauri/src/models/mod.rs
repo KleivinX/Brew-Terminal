@@ -14,6 +14,7 @@ pub mod quote;
 pub mod saved_view;
 pub mod screener;
 pub mod sentiment;
+pub mod sentry;
 pub mod watchlist;
 
 pub use ai::*;
@@ -32,4 +33,5 @@ pub use quote::*;
 pub use saved_view::*;
 pub use screener::*;
 pub use sentiment::*;
+pub use sentry::*;
 pub use watchlist::*;

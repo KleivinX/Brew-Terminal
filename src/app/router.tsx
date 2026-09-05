@@ -12,6 +12,9 @@ import { PulseRoute } from '@/features/pulse/PulseRoute';
 const AtlasRoute = lazy(() =>
   import('@/features/atlas/AtlasRoute').then((m) => ({ default: m.AtlasRoute })),
 );
+const SentryRoute = lazy(() =>
+  import('@/features/sentry/SentryRoute').then((m) => ({ default: m.SentryRoute })),
+);
 const CompareRoute = lazy(() =>
   import('@/features/compare/CompareRoute').then((m) => ({ default: m.CompareRoute })),
 );
@@ -91,6 +94,17 @@ export function AppRoutes() {
             <ErrorBoundary area="Atlas">
               <Suspense fallback={<RouteFallback label="Loading Atlas" />}>
                 <AtlasRoute />
+              </Suspense>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/sentry"
+          element={
+            <ErrorBoundary area="Sentry">
+              <Suspense fallback={<RouteFallback label="Loading Sentry" />}>
+                <SentryRoute />
               </Suspense>
             </ErrorBoundary>
           }

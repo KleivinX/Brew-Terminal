@@ -818,3 +818,135 @@ own rather than folded into this). Refresh faster than 90s (rejected: the allowa
 per-minute, so a five-second cadence spends a tier's minute in one tick and returns rate limits).
 Make the cadence a preference (rejected for the same reason — it is part of what makes the
 feature work, not a taste).
+
+## ADR-040 — Sentry ships only sources whose terms permit a shipped product to poll them
+
+**Status:** accepted.
+
+Sentry is a global trade and macro monitor: a world map carrying seismic activity, severe weather,
+country indicators, reference exchange rates, freight aircraft, and the straits, canals and ports
+that world trade moves through. Five layers ship enabled and keyless. One ships off.
+
+The interesting decisions here are almost all about which sources are _allowed_ to be in it, so
+those come first.
+
+### The split, and why it is the architecture rather than an accident
+
+**Default install, keyless and enabled:**
+
+| Layer                 | Source                                          | Standing                                    |
+| --------------------- | ----------------------------------------------- | ------------------------------------------- |
+| Earthquakes           | USGS                                            | US federal government output, public domain |
+| Severe weather        | NOAA / NWS                                      | US federal government output, public domain |
+| Economies             | World Bank Open Data                            | CC BY 4.0                                   |
+| Exchange rates        | Frankfurter, over central bank publications     | Open source, no quota                       |
+| Chokepoints and ports | Shipped constants, EIA and Lloyd's List figures | Published reference data                    |
+
+**Off until the user supplies their own credentials:** freight aircraft, from OpenSky.
+
+That is not a paywall. OpenSky's licence grants use for "non-profit research, non-profit
+education, commercial internal testing and evaluation, or government purposes" and states that
+use of the REST API **in any operational capacity — including integration into a live product,
+service, or automated system — requires a previous written agreement**, explicitly including
+non-profit and governmental users. A distributed desktop application polling on a timer is an
+automated system integrated into a live product. Shipping that layer on would put every user of
+Brew Terminal outside those terms without their knowledge.
+
+So the layer is built, tested, and switched off, with the restriction stated on the toggle and in
+the settings copy rather than buried. Someone with their own arrangement can turn it on; nobody
+turns it on by accident.
+
+### What was researched and rejected
+
+- **AISHub**, for container ships. Access is earned by _contributing_ a raw NMEA feed from an AIS
+  receiver you operate — coverage of at least ten vessels, 90% uptime over a rolling week. There
+  is no paid tier and no anonymous tier. It cannot be a default source, and it cannot be a
+  "just add a key" source either, because the thing you supply is a radio receiver.
+- **MarineTraffic.** No free API tier exists. The endpoints its own site calls are undocumented
+  and not offered for third-party use, which is exactly what ADR-008 forbids. Available as a
+  user-supplied key if someone holds a commercial one; not wired in.
+- **CelesTrak**, which was suggested as a vessel source. It publishes satellite orbital elements.
+  Putting satellite positions on a map captioned "commercial maritime tracking" would be
+  miscategorised data dressed as supply-chain intelligence, which is worse than an empty layer.
+- **The IMF.** It covers the same indicators as the World Bank. Its legacy SDMX JSON service was
+  retired on 5 November 2025 and the replacement is an SDMX 3.0 API needing dataflow discovery
+  and key construction before a single figure comes back. The World Bank returns all five
+  indicators for all seventeen countries from one URL. Revisit if the World Bank's coverage
+  degrades.
+- **The EIA API** for the energy layer. It has a free key and clean REST, and it is the right
+  source — but what it publishes is _time series_, not geography. The energy geography Sentry
+  actually needed from the EIA is the chokepoint transit volumes, and those are eight numbers
+  updated twice a year. They ship as constants with their period attached. A map layer of
+  refinery utilisation over time would be a chart, and Compare already draws charts.
+
+### Every figure carries its own vintage, and one of them proved why
+
+The World Bank's `mrnev=1` returns the most recent _non-empty_ observation, and it will reach back
+decades to find one. On 5 September 2026 the most recent central government debt figure it held
+for **Germany was 1990, at 20.9% of GDP** — roughly a third of the real current level. Rendered in
+a row beside 2025 inflation under one "as of" heading, that is a thirty-six-year-old number
+presented as current.
+
+So `CountryIndicator` carries its own `year`, `EconomyScore` has no single date at all, and any
+observation older than five years is dropped rather than shown. The scorecard shows one fewer row
+instead of one wrong one. `MAX_OBSERVATION_AGE_YEARS` in `providers/live/worldbank.rs` records
+this, and a test pins the Germany case with the real figure.
+
+### The proximity engine states a distance and stops
+
+`services/sentry/watch.rs` is the only thing in Sentry that combines two sources, so it is the
+only thing that could assert something neither of them said. Its output is a hazard, a place, and
+the great-circle distance between them — nothing about closure, disruption, delay or cost.
+
+"Magnitude 6.1, 140 km from the Port of Kaohsiung" is arithmetic over two published facts and a
+reader can check every part of it. "Expect container delays" is a forecast over a model of port
+resilience this app does not have and is not acquiring. ADR-022 and ADR-035 already settled that;
+this is the same rule applied to geography. The panel says so in its own copy, because the layout
+invites the inference even when the text does not.
+
+The radius is a single flat 500 km rather than one scaled by magnitude, for the same reason:
+scaling it would be this module deciding how far a given earthquake "matters".
+
+### No mapping library
+
+An `<svg>` with a `viewBox`, a shipped Natural Earth 1:110m coastline path, and an
+equirectangular projection that is two multiplications each way. Pan and zoom are four numbers on
+the viewBox, in the renderer the browser has already optimised.
+
+A mapping library would bring tile loading — a network dependency the app does not otherwise have,
+against a host whose terms would need their own review — plus several hundred kilobytes, to draw a
+few hundred points on a static basemap. The whole route, coastlines included, is 24 KB gzipped in
+a lazily loaded chunk, and the initial bundle is unchanged.
+
+The projection's cost is real and is stated on screen: areas near the poles are stretched. Every
+distance in the feature is computed on the sphere by `geography::distance_km`, never measured off
+the picture, so the distortion is a drawing artefact and never reaches a number.
+
+### A layer that cannot cover the map says so
+
+The NWS feed is the United States only. There is no equivalent free, keyless, documented, global
+severe-weather alert feed — the WMO register federates national services that each publish under
+their own terms, and stitching them together is a project rather than an adapter. About half of
+its active alerts are also scoped to named forecast zones with no coordinates and cannot be
+plotted at all.
+
+Both facts sit on the layer's toggle. An empty Europe otherwise means "quiet", "broken" or
+"American" and the map cannot say which — which is the same failure as a number without its
+provider, in a different medium.
+
+### There is no second key manager
+
+Sentry's "custom API key manager" is the provider settings screen that already existed. Its
+sources are registered as a fifth `ProviderKind`, so a source that wants a key gets a key field, a
+test button and an enable toggle from the machinery that already handles Finnhub. Building a
+second one would have meant a second place for a credential to be mishandled, and the first one
+already keeps keys in the OS keychain and out of IPC.
+
+The layer toggles disable the _source_, not just the drawing, so a layer nobody wants stops
+costing requests.
+
+**Alternatives:** ship OpenSky enabled and rely on users not reading terms (rejected, obviously).
+Ship no aircraft layer at all (rejected: the layer is legitimate for a user with their own
+arrangement, and building it is what makes the credential architecture real rather than
+hypothetical). Compute a composite country risk score (rejected under ADR-022 — it would be this
+app inventing a number and presenting it beside published ones with the same authority).

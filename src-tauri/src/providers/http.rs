@@ -137,6 +137,32 @@ pub async fn get_json<T: DeserializeOwned>(
     url: &str,
     auth: Option<AuthHeader<'_>>,
 ) -> AppResult<T> {
+    get_json_capped(client, provider_id, url, auth, MAX_BODY_BYTES).await
+}
+
+/// `get_json` with an explicit body cap.
+///
+/// Exists for one endpoint. OpenSky's `/states/all` returns every aircraft its receivers can
+/// currently see, as a flat array of numbers — measured at **1.13 MB for 9,024 aircraft** on
+/// 2026-09-05, which is inside `MAX_BODY_BYTES` but not by much. Air traffic is diurnal, and
+/// at the daily peak the same response runs to half again as many aircraft. Under the default
+/// cap that layer would work in the evening and fail at midday, which is the worst kind of
+/// bug: intermittent, environmental, and indistinguishable from the network being slow.
+///
+/// The cap is raised for that one call rather than for everything, and only that far. The
+/// response is a fixed-shape numeric array whose size is bounded by the number of aircraft in
+/// the air — not by anything the provider chooses — so the ceiling is a measured quantity
+/// rather than a guess. Every other guarantee is unchanged.
+///
+/// Anything else should use `get_json`. A provider that needs more than 2 MB for a normal
+/// response is usually a sign the wrong endpoint is being called.
+pub async fn get_json_capped<T: DeserializeOwned>(
+    client: &reqwest::Client,
+    provider_id: &str,
+    url: &str,
+    auth: Option<AuthHeader<'_>>,
+    max_bytes: usize,
+) -> AppResult<T> {
     // Logged redacted even though credentials travel in headers here: a provider may still
     // put something sensitive in a query string, and this is the only place URLs are logged.
     tracing::debug!(provider = provider_id, url = %redact_url(url), "provider request");
@@ -199,7 +225,7 @@ pub async fn get_json<T: DeserializeOwned>(
     // Reject an over-large body before reading it where the provider declares a length,
     // and again after reading where it does not.
     if let Some(len) = response.content_length() {
-        if len as usize > MAX_BODY_BYTES {
+        if len as usize > max_bytes {
             return Err(AppError::InvalidResponse {
                 provider_id: provider_id.to_string(),
                 detail: "response exceeds the size cap".into(),
@@ -218,7 +244,7 @@ pub async fn get_json<T: DeserializeOwned>(
         }
     })?;
 
-    if bytes.len() > MAX_BODY_BYTES {
+    if bytes.len() > max_bytes {
         return Err(AppError::InvalidResponse {
             provider_id: provider_id.to_string(),
             detail: "response exceeds the size cap".into(),

@@ -109,6 +109,32 @@ export type { MultiSeries } from './generated/MultiSeries';
 
 export type { AssetSeries } from './generated/AssetSeries';
 
+// --- Sentry ---
+
+export type { SentrySnapshot } from './generated/SentrySnapshot';
+
+export type { SentryLayer } from './generated/SentryLayer';
+
+export type { LayerStatus } from './generated/LayerStatus';
+
+export type { MapMarker } from './generated/MapMarker';
+
+export type { MarkerFact } from './generated/MarkerFact';
+
+export type { MarkerSeverity } from './generated/MarkerSeverity';
+
+export type { Chokepoint } from './generated/Chokepoint';
+
+export type { ChokepointKind } from './generated/ChokepointKind';
+
+export type { EconomyScore } from './generated/EconomyScore';
+
+export type { CountryIndicator } from './generated/CountryIndicator';
+
+export type { RateQuote } from './generated/RateQuote';
+
+export type { Proximity } from './generated/Proximity';
+
 // --- Frontend narrowings ---
 
 /**

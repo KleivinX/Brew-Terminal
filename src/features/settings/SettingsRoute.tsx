@@ -16,6 +16,7 @@ const SECTIONS = [
   { to: '/settings/appearance', label: 'Appearance' },
   { to: '/settings/markets', label: 'Markets' },
   { to: '/settings/providers', label: 'Data providers' },
+  { to: '/settings/sentry', label: 'Sentry sources' },
   { to: '/settings/news', label: 'News feeds' },
   { to: '/settings/alerts', label: 'Alerts' },
   { to: '/settings/ai', label: 'AI providers' },
@@ -54,6 +55,14 @@ export function SettingsRoute() {
             <Route path="appearance" element={<AppearancePanel />} />
             <Route path="markets" element={<MarketsPanel />} />
             <Route path="providers" element={<ProvidersPanel />} />
+            {/*
+              Same panel, filtered to Sentry's sources. Sentry's "custom API key manager" is
+              this screen and nothing else: a source that wants a key gets a key field here,
+              a test button, and an enable toggle, exactly like every other provider. Building
+              a second key manager would have meant a second place for a credential to be
+              mishandled.
+            */}
+            <Route path="sentry" element={<ProvidersPanel kind="sentry" />} />
             <Route path="news" element={<NewsFeedsPanel />} />
             <Route path="alerts" element={<AlertsPanel />} />
             <Route path="ai" element={<AiPanel />} />

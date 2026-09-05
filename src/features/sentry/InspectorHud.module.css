@@ -1,0 +1,214 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-block-size: 0;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+
+.detailHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.kind {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.severity {
+  padding-inline: var(--space-2);
+  padding-block: 1px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/*
+ * Outlined rather than filled. The tinted fill lifted the background to the point where the
+ * label sat at 4.48:1 against it — just under AA, and invisible to anything but a checker.
+ * On the panel's own surface the same colour clears it, and the outline still reads as a pill.
+ */
+.severity[data-severity='severe'] {
+  border: 1px solid var(--negative);
+  color: var(--negative);
+}
+
+.severity[data-severity='notable'] {
+  border: 1px solid var(--status-stale);
+  color: var(--status-stale);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.factLabel {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.factValue {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: var(--leading-normal);
+}
+
+.listSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filter {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+}
+
+.filter:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.listCount {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+  min-block-size: 0;
+}
+
+.listRow {
+  inline-size: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  text-align: start;
+  border: 1px solid transparent;
+  border-inline-start: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.listRow:hover {
+  background: var(--bg-hover);
+}
+
+.listRow:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.listRow[data-selected='true'] {
+  background: var(--bg-active);
+  border-color: var(--border-focus);
+}
+
+.listRow[data-severity='severe'] {
+  border-inline-start-color: var(--negative);
+}
+
+.listRow[data-severity='notable'] {
+  border-inline-start-color: var(--status-stale);
+}
+
+.listLabel {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Secondary rather than muted: a selected or hovered row raises the background, and muted text
+ * drops to 3.6:1 against it.
+ */
+.listKind {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+
+.source:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

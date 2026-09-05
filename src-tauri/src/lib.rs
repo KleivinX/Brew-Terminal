@@ -103,6 +103,9 @@ pub fn run() {
             // sentiment
             commands::sentiment::get_crypto_sentiment,
             commands::sentiment::get_stock_sentiment,
+            // sentry
+            commands::sentry::sentry_snapshot,
+            commands::sentry::sentry_attributions,
             // portfolio
             commands::portfolio::get_portfolio,
             commands::portfolio::list_transactions,

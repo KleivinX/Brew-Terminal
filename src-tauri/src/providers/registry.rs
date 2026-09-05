@@ -1,9 +1,17 @@
 use std::sync::Arc;
 
 use super::live::{
-    alphavantage::ALPHAVANTAGE_ID, coingecko::COINGECKO_ID, finnhub::FINNHUB_ID,
-    rss::RSS_PROVIDER_ID, AlphaVantageProvider, CoinGeckoProvider, FinnhubProvider,
-    RssNewsProvider,
+    alphavantage::ALPHAVANTAGE_ID,
+    coingecko::COINGECKO_ID,
+    finnhub::FINNHUB_ID,
+    frankfurter::{self, FRANKFURTER_ID},
+    nws::{self, NWS_ID},
+    opensky::{self, OPENSKY_ID},
+    rss::RSS_PROVIDER_ID,
+    usgs::{self, USGS_ID},
+    worldbank::{self, WORLDBANK_ID},
+    AlphaVantageProvider, CoinGeckoProvider, FinnhubProvider, FrankfurterProvider, NwsProvider,
+    OpenSkyProvider, RssNewsProvider, UsgsProvider, WorldBankProvider,
 };
 use super::mock::{
     community::MOCK_COMMUNITY_ID, market::MOCK_PROVIDER_ID, MockCommunityProvider,
@@ -36,8 +44,77 @@ pub fn default_provider_config() -> Vec<(&'static str, &'static str, bool)> {
         (crate::providers::ai::CLOUD_PROVIDER_ID, "ai", false),
         // Community is opt-in and off by default. PRODUCT_SCOPE_V0_1.md §Research.
         (MOCK_COMMUNITY_ID, "community", false),
+        /*
+         * Sentry's sources. The first four are on by default and that is not a shortcut: all
+         * four are keyless, and three of them are public-domain government output. There is
+         * nothing for the user to sign up for and nothing to disclose, so a Sentry that draws
+         * a blank map on first run would be withholding data for no reason.
+         */
+        (USGS_ID, "sentry", true),
+        (NWS_ID, "sentry", true),
+        (WORLDBANK_ID, "sentry", true),
+        (FRANKFURTER_ID, "sentry", true),
+        /*
+         * OpenSky is the exception, and its terms are why rather than its price. The licence
+         * covers non-profit research and education; using the REST API "in any operational
+         * capacity — including integration into a live product, service, or automated system"
+         * needs a prior written agreement. A shipped desktop app polling on a timer is exactly
+         * that, so this stays off until a user with their own arrangement turns it on. See
+         * `providers::live::opensky` and ADR-040.
+         */
+        (OPENSKY_ID, "sentry", false),
     ]
 }
+
+/// The Sentry sources, for Settings and for the layer sidebar.
+///
+/// A flat table rather than the `MarketDataProvider` trait: none of these price an asset, and
+/// implementing `quotes()` and `chart()` to return errors would be a worse lie than a table.
+pub struct SentryProviderInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub attribution: &'static str,
+    pub docs_url: &'static str,
+    pub requires_credential: bool,
+}
+
+pub const SENTRY_PROVIDERS: &[SentryProviderInfo] = &[
+    SentryProviderInfo {
+        id: USGS_ID,
+        name: usgs::USGS_NAME,
+        attribution: usgs::USGS_ATTRIBUTION,
+        docs_url: usgs::USGS_DOCS,
+        requires_credential: false,
+    },
+    SentryProviderInfo {
+        id: NWS_ID,
+        name: nws::NWS_NAME,
+        attribution: nws::NWS_ATTRIBUTION,
+        docs_url: nws::NWS_DOCS,
+        requires_credential: false,
+    },
+    SentryProviderInfo {
+        id: WORLDBANK_ID,
+        name: worldbank::WORLDBANK_NAME,
+        attribution: worldbank::WORLDBANK_ATTRIBUTION,
+        docs_url: worldbank::WORLDBANK_DOCS,
+        requires_credential: false,
+    },
+    SentryProviderInfo {
+        id: FRANKFURTER_ID,
+        name: frankfurter::FRANKFURTER_NAME,
+        attribution: frankfurter::FRANKFURTER_ATTRIBUTION,
+        docs_url: frankfurter::FRANKFURTER_DOCS,
+        requires_credential: false,
+    },
+    SentryProviderInfo {
+        id: OPENSKY_ID,
+        name: opensky::OPENSKY_NAME,
+        attribution: opensky::OPENSKY_ATTRIBUTION,
+        docs_url: opensky::OPENSKY_DOCS,
+        requires_credential: true,
+    },
+];
 
 /// Holds every provider and resolves which one answers a given request.
 ///
@@ -53,6 +130,13 @@ pub struct ProviderRegistry {
     mock_market: Arc<MockMarketProvider>,
     rss_news: Arc<RssNewsProvider>,
     mock_community: Arc<MockCommunityProvider>,
+    usgs: Arc<UsgsProvider>,
+    nws: Arc<NwsProvider>,
+    worldbank: Arc<WorldBankProvider>,
+    frankfurter: Arc<FrankfurterProvider>,
+    /// Holds a cached bearer token across calls, which is why it is an `Arc` rather than
+    /// constructed per request — see `OpenSkyProvider::bearer`.
+    opensky: Arc<OpenSkyProvider>,
 }
 
 impl ProviderRegistry {
@@ -60,6 +144,7 @@ impl ProviderRegistry {
         // One HTTP client, shared. reqwest pools connections internally, so sharing it means
         // a TLS handshake per host rather than per request.
         let client = http::build_client()?;
+        let client_for_sentry = client.clone();
 
         Ok(Self {
             client: client.clone(),
@@ -73,6 +158,11 @@ impl ProviderRegistry {
             // as well as the client.
             rss_news: Arc::new(RssNewsProvider::new(client, pool.clone())),
             mock_community: Arc::new(MockCommunityProvider::new()),
+            usgs: Arc::new(UsgsProvider::new(client_for_sentry.clone())),
+            nws: Arc::new(NwsProvider::new(client_for_sentry.clone())),
+            worldbank: Arc::new(WorldBankProvider::new(client_for_sentry.clone())),
+            frankfurter: Arc::new(FrankfurterProvider::new(client_for_sentry.clone())),
+            opensky: Arc::new(OpenSkyProvider::new(client_for_sentry)),
             pool,
         })
     }
@@ -224,6 +314,34 @@ impl ProviderRegistry {
         !providers.is_empty() && providers.iter().all(|p| p.id() == MOCK_PROVIDER_ID)
     }
 
+    /// Whether a Sentry source is switched on.
+    ///
+    /// Public because `services::sentry` decides which layers to fetch, and the enabled flag
+    /// is the only thing that decision turns on.
+    pub fn sentry_enabled(&self, provider_id: &str) -> bool {
+        self.enabled(provider_id)
+    }
+
+    pub fn usgs(&self) -> Arc<UsgsProvider> {
+        self.usgs.clone()
+    }
+
+    pub fn nws(&self) -> Arc<NwsProvider> {
+        self.nws.clone()
+    }
+
+    pub fn worldbank(&self) -> Arc<WorldBankProvider> {
+        self.worldbank.clone()
+    }
+
+    pub fn frankfurter(&self) -> Arc<FrankfurterProvider> {
+        self.frankfurter.clone()
+    }
+
+    pub fn opensky(&self) -> Arc<OpenSkyProvider> {
+        self.opensky.clone()
+    }
+
     pub async fn list_info(&self) -> Vec<ProviderInfo> {
         let mut out = Vec::new();
 
@@ -287,6 +405,48 @@ impl ProviderRegistry {
                 &caps,
                 enabled,
                 false,
+                health,
+            ));
+        }
+
+        /*
+         * Sentry's sources, listed the same way — present whether or not they are on, so
+         * Settings shows what exists rather than only what happens to be enabled. Health is
+         * derived rather than probed: four of these need no credential, and firing five
+         * requests every time the settings page opens would spend other people's bandwidth to
+         * tell the user something the configuration already says.
+         */
+        for provider in SENTRY_PROVIDERS {
+            let enabled = self.enabled(provider.id);
+            let has_credential = crate::security::secrets::exists(provider.id);
+
+            let health = if !enabled {
+                crate::models::ProviderHealth::Disabled
+            } else if provider.requires_credential && !has_credential {
+                crate::models::ProviderHealth::NotConfigured
+            } else {
+                crate::models::ProviderHealth::Ok
+            };
+
+            let caps = super::ProviderCapabilities {
+                asset_types: Vec::new(),
+                search: false,
+                quotes: false,
+                charts: Vec::new(),
+                profiles: false,
+                regions: Vec::new(),
+                requires_credential: provider.requires_credential,
+                attribution: provider.attribution.to_string(),
+                docs_url: Some(provider.docs_url.to_string()),
+            };
+
+            out.push(to_provider_info(
+                provider.id,
+                provider.name,
+                ProviderKind::Sentry,
+                &caps,
+                enabled,
+                has_credential,
                 health,
             ));
         }

@@ -33,6 +33,12 @@ import type {
   Quote,
   ScreenerFilter,
   SentimentIndex,
+  SentrySnapshot,
+  SentryLayer,
+  LayerStatus,
+  MapMarker,
+  EconomyScore,
+  RateQuote,
   TriggeredAlert,
   Watchlist,
   WatchlistItem,
@@ -58,15 +64,84 @@ const PROVIDER_NAME = 'Mock provider (fixtures)';
 
 let mockBehavior: MockBehavior = 'normal';
 
-/** Provider state for the harness. The real app keeps this in SQLite plus the OS keychain. */
-const providerState: Record<string, { enabled: boolean; hasCredential: boolean }> = {
-  coingecko: { enabled: true, hasCredential: false },
-  finnhub: { enabled: false, hasCredential: false },
-  mock: { enabled: true, hasCredential: false },
-  // Enabled here so the opt-in preference is the only gate in the harness. In the real app the
-  // provider is seeded disabled too; the preference is what the UI actually toggles.
-  'mock-community': { enabled: true, hasCredential: false },
-};
+/**
+ * Provider state for the harness. The real app keeps this in SQLite plus the OS keychain.
+ *
+ * A factory rather than a literal, because `__resetHarness` needs the same defaults and used
+ * to restore them by writing each provider out again by hand. That is a list that silently
+ * stops being complete: Sentry added five sources, the reset kept restoring the original four,
+ * and a test that switched a layer off leaked that into every test after it in the file. One
+ * source of defaults means a new provider cannot be forgotten.
+ */
+function defaultProviderState(): Record<string, { enabled: boolean; hasCredential: boolean }> {
+  return {
+    coingecko: { enabled: true, hasCredential: false },
+    finnhub: { enabled: false, hasCredential: false },
+    mock: { enabled: true, hasCredential: false },
+    // Enabled here so the opt-in preference is the only gate in the harness. In the real app
+    // the provider is seeded disabled too; the preference is what the UI actually toggles.
+    'mock-community': { enabled: true, hasCredential: false },
+    // Sentry's sources, seeded as the Rust registry seeds them: the keyless four on, OpenSky
+    // off. See `providers::registry::default_provider_config`.
+    usgs: { enabled: true, hasCredential: false },
+    nws: { enabled: true, hasCredential: false },
+    worldbank: { enabled: true, hasCredential: false },
+    frankfurter: { enabled: true, hasCredential: false },
+    opensky: { enabled: false, hasCredential: false },
+  };
+}
+
+let providerState = defaultProviderState();
+
+/** The Sentry rows of `harnessProviders`, in the order the registry lists them. */
+const SENTRY_PROVIDERS: {
+  id: string;
+  displayName: string;
+  attribution: string;
+  docsUrl: string;
+  requiresCredential: boolean;
+}[] = [
+  {
+    id: 'usgs',
+    displayName: 'USGS Earthquake Hazards',
+    attribution:
+      'Earthquake data from the U.S. Geological Survey. USGS output is in the public domain.',
+    docsUrl: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php',
+    requiresCredential: false,
+  },
+  {
+    id: 'nws',
+    displayName: 'NOAA / National Weather Service',
+    attribution:
+      'Severe weather alerts from the NOAA National Weather Service (United States only). NWS output is in the public domain.',
+    docsUrl: 'https://www.weather.gov/documentation/services-web-api',
+    requiresCredential: false,
+  },
+  {
+    id: 'worldbank',
+    displayName: 'World Bank Open Data',
+    attribution: 'Macroeconomic indicators from World Bank Open Data, licensed CC BY 4.0.',
+    docsUrl:
+      'https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation',
+    requiresCredential: false,
+  },
+  {
+    id: 'frankfurter',
+    displayName: 'Frankfurter (central bank reference rates)',
+    attribution:
+      'Exchange rates from Frankfurter, aggregating official central bank reference rates. Reference rates, not dealing rates.',
+    docsUrl: 'https://frankfurter.dev',
+    requiresCredential: false,
+  },
+  {
+    id: 'opensky',
+    displayName: 'OpenSky Network',
+    attribution:
+      'Flight data from the OpenSky Network. Non-commercial use; operational use requires a written agreement with OpenSky.',
+    docsUrl: 'https://openskynetwork.github.io/opensky-api/rest.html',
+    requiresCredential: true,
+  },
+];
 
 const GLOBAL_REGION = {
   id: 'global',
@@ -130,7 +205,246 @@ function harnessProviders(): ProviderInfo[] {
       supportedRanges: ['1D', '1W', '1M', '3M', '1Y', 'MAX'],
       supportedRegions: [GLOBAL_REGION, US_REGION],
     },
+
+    ...SENTRY_PROVIDERS.map((provider) => ({
+      id: provider.id,
+      displayName: provider.displayName,
+      kind: 'sentry' as const,
+      enabled: providerState[provider.id]?.enabled ?? false,
+      requiresCredential: provider.requiresCredential,
+      hasCredential: providerState[provider.id]?.hasCredential ?? false,
+      health: health(provider.id, provider.requiresCredential),
+      attribution: provider.attribution,
+      docsUrl: provider.docsUrl,
+      supportedAssetTypes: [],
+      supportedRanges: [],
+      supportedRegions: [],
+    })),
   ];
+}
+
+/**
+ * A Sentry board, from fixtures.
+ *
+ * Deliberately small: six sites, a handful of hazards, four economies. It exists so the layout,
+ * the toggles, the inspector and the proximity panel can be built and asserted in the fast
+ * loop — not to be a second copy of the shipped geography, which lives in
+ * `services/sentry/geography.rs` and is the only place that should be edited.
+ *
+ * It respects `providerState`, so switching a layer off in the harness visibly empties it, the
+ * same as it does against the real backend.
+ */
+function sentrySnapshot(): SentrySnapshot {
+  const now = Math.floor(Date.now() / 1000);
+
+  const meta = (providerId: string, providerName: string): EnvelopeMeta => ({
+    providerId,
+    providerName,
+    fetchedAt: new Date(now * 1000).toISOString(),
+    source: 'mock',
+    stale: false,
+    degraded: null,
+  });
+
+  const sites: MapMarker[] = [
+    ['strait-hormuz', 'Strait of Hormuz', 26.57, 56.25],
+    ['strait-malacca', 'Strait of Malacca', 2.5, 101.3],
+    ['suez-canal', 'Suez Canal and SUMED', 30.02, 32.35],
+    ['panama-canal', 'Panama Canal', 9.08, -79.68],
+    ['port-rotterdam', 'Port of Rotterdam', 51.95, 4.14],
+    ['port-singapore', 'Port of Singapore', 1.26, 103.82],
+  ].map(([id, name, lat, lon]) => ({
+    id: `chokepoints:${id as string}`,
+    layer: 'chokepoints' as const,
+    lat: lat as number,
+    lon: lon as number,
+    label: name as string,
+    summary: 'Development fixture, not the shipped geography.',
+    severity: 'info' as const,
+    scale: null,
+    observedAt: null,
+    facts: [{ label: 'Type', value: 'Fixture' }],
+    sourceUrl: null,
+  }));
+
+  const quakes: MapMarker[] = [
+    ['fx-1', 6.4, 'Aleutian Islands, Alaska', 52.4, -169.3, 'severe' as const],
+    ['fx-2', 5.1, 'Off the coast of Honshu, Japan', 37.4, 142.1, 'notable' as const],
+    ['fx-3', 4.8, 'Strait of Hormuz region', 26.9, 56.6, 'info' as const],
+  ].map(([id, mag, place, lat, lon, severity]) => ({
+    id: `seismic:${id as string}`,
+    layer: 'seismic' as const,
+    lat: lat as number,
+    lon: lon as number,
+    label: `M${(mag as number).toFixed(1)}`,
+    summary: place as string,
+    severity: severity as MapMarker['severity'],
+    scale: mag as number,
+    observedAt: now - 3600,
+    facts: [
+      { label: 'Magnitude', value: (mag as number).toFixed(1) },
+      { label: 'Region', value: place as string },
+    ],
+    sourceUrl: null,
+  }));
+
+  const economies: EconomyScore[] = [
+    ['US', 'United States', 39, -98, 2.9, 2.2],
+    ['DE', 'Germany', 51, 10, 2.2, 0.2],
+    ['CN', 'China', 35, 105, 0.1, 5.0],
+    ['SG', 'Singapore', 1.35, 103.8, 2.4, 4.4],
+  ].map(([code, name, lat, lon, inflation, growth]) => ({
+    countryCode: code as string,
+    countryName: name as string,
+    lat: lat as number,
+    lon: lon as number,
+    indicators: [
+      {
+        code: 'FP.CPI.TOTL.ZG',
+        label: 'Inflation',
+        value: inflation as number,
+        unit: '%',
+        year: 2025,
+      },
+      {
+        code: 'NY.GDP.MKTP.KD.ZG',
+        label: 'GDP growth',
+        value: growth as number,
+        unit: '%',
+        year: 2025,
+      },
+    ],
+  }));
+
+  const economyMarkers: MapMarker[] = economies.map((economy) => ({
+    id: `economy:${economy.countryCode}`,
+    layer: 'economy' as const,
+    lat: economy.lat,
+    lon: economy.lon,
+    label: economy.countryCode,
+    summary: economy.countryName,
+    severity: 'info' as const,
+    scale: null,
+    observedAt: null,
+    facts: economy.indicators.map((indicator) => ({
+      label: indicator.label,
+      value: `${indicator.value.toFixed(1)}${indicator.unit} (${indicator.year})`,
+    })),
+    sourceUrl: null,
+  }));
+
+  const on = (id: string): boolean => providerState[id]?.enabled ?? false;
+
+  const markers = [
+    ...sites,
+    ...(on('worldbank') ? economyMarkers : []),
+    ...(on('usgs') ? quakes : []),
+  ];
+
+  const rates: RateQuote[] = on('frankfurter')
+    ? [
+        { base: 'USD', quote: 'EUR', rate: 0.86006, date: '2026-09-05', changePct: -0.01 },
+        { base: 'USD', quote: 'JPY', rate: 156.61, date: '2026-09-05', changePct: -0.04 },
+        { base: 'USD', quote: 'GBP', rate: 0.7412, date: '2026-09-05', changePct: 0.12 },
+        { base: 'USD', quote: 'CNY', rate: 7.0912, date: '2026-09-05', changePct: null },
+      ]
+    : [];
+
+  const layer = (
+    layerId: SentryLayer,
+    label: string,
+    description: string,
+    providerId: string | null,
+    count: number,
+    providerName: string,
+    coverageNote: string | null,
+  ): LayerStatus => ({
+    layer: layerId,
+    label,
+    description,
+    providerId,
+    enabled: providerId === null || on(providerId),
+    needsCredential: providerId === 'opensky' && !(providerState.opensky?.hasCredential ?? false),
+    coverageNote,
+    count,
+    meta: providerId === null || !on(providerId) ? null : meta(providerId, providerName),
+  });
+
+  return {
+    layers: [
+      layer(
+        'chokepoints',
+        'Chokepoints and ports',
+        'Straits, canals and container ports.',
+        null,
+        sites.length,
+        '',
+        'Shipped reference geography, not a live feed.',
+      ),
+      layer(
+        'seismic',
+        'Earthquakes',
+        'Magnitude 4.5 and above worldwide, past 24 hours.',
+        'usgs',
+        on('usgs') ? quakes.length : 0,
+        'USGS Earthquake Hazards',
+        null,
+      ),
+      layer(
+        'weather',
+        'Severe weather',
+        'Active severe and extreme weather warnings.',
+        'nws',
+        0,
+        'NOAA / National Weather Service',
+        'United States only — no equivalent free global alert feed exists.',
+      ),
+      layer(
+        'economy',
+        'Economies',
+        'Inflation, growth, debt, current account and unemployment by country.',
+        'worldbank',
+        on('worldbank') ? economies.length : 0,
+        'World Bank Open Data',
+        'Annual national accounts. Each figure is shown with the year it belongs to.',
+      ),
+      layer(
+        'rates',
+        'Exchange rates',
+        'Central bank reference rates against the US dollar.',
+        'frankfurter',
+        rates.length,
+        'Frankfurter (central bank reference rates)',
+        'Reference rates published once a working day, not dealing rates.',
+      ),
+      layer(
+        'flights',
+        'Freight aircraft',
+        'Aircraft operated by dedicated cargo airlines, in the air now.',
+        'opensky',
+        0,
+        'OpenSky Network',
+        'Needs your own OpenSky credentials.',
+      ),
+    ],
+    markers,
+    economies: on('worldbank') ? economies : [],
+    rates,
+    proximities: on('usgs')
+      ? [
+          {
+            markerId: 'seismic:fx-3',
+            hazardLabel: 'M4.8',
+            hazardLayer: 'seismic',
+            chokepointId: 'strait-hormuz',
+            chokepointName: 'Strait of Hormuz',
+            distanceKm: 48,
+            severity: 'info',
+            observedAt: now - 3600,
+          },
+        ]
+      : [],
+  };
 }
 
 /**
@@ -882,6 +1196,12 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
 
       return { quotes: matched, routes };
     }
+
+    case 'sentry_attributions':
+      return SENTRY_PROVIDERS.map((provider) => provider.attribution);
+
+    case 'sentry_snapshot':
+      return sentrySnapshot();
 
     case 'get_asset':
       return allAssets.find((a) => a.id === args.assetId) ?? null;
@@ -1862,10 +2182,7 @@ export function __resetHarness(): void {
   state = defaultState();
   mockBehavior = 'normal';
   callCounts.clear();
-  providerState.coingecko = { enabled: true, hasCredential: false };
-  providerState.finnhub = { enabled: false, hasCredential: false };
-  providerState.mock = { enabled: true, hasCredential: false };
-  providerState['mock-community'] = { enabled: true, hasCredential: false };
+  providerState = defaultProviderState();
   ai = emptyAi();
   newsFeeds = defaultFeeds();
   feedSeq = 0;

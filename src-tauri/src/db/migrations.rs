@@ -23,6 +23,10 @@ const MIGRATIONS: &[(i64, &str)] = &[
         include_str!("../../migrations/0008_sentiment_history.sql"),
     ),
     (9, include_str!("../../migrations/0009_note_pins.sql")),
+    (
+        10,
+        include_str!("../../migrations/0010_sentry_providers.sql"),
+    ),
 ];
 
 pub fn latest_version() -> i64 {

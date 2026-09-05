@@ -1,0 +1,122 @@
+/*
+ * Four regions: layer and economy rail, map, inspector, ticker. The map is the only one that
+ * takes the remaining height, so the two rails scroll inside themselves rather than pushing
+ * the ticker off the bottom.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(240px, 320px);
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'left centre right'
+    'bottom bottom bottom'
+    'disclaimer disclaimer disclaimer';
+  gap: var(--space-3);
+  padding: var(--space-3);
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.left {
+  grid-area: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/*
+ * The map takes whatever is left after the note and the layer panel, with a floor so it never
+ * collapses to a strip on a short window.
+ */
+.centre {
+  grid-area: centre;
+  display: grid;
+  grid-template-rows: minmax(220px, 1fr) auto minmax(0, auto);
+  gap: var(--space-2);
+  min-block-size: 0;
+}
+
+.layerPanel {
+  max-block-size: 42vh;
+  min-block-size: 0;
+}
+
+.right {
+  grid-area: right;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom {
+  grid-area: bottom;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.disclaimer {
+  grid-area: disclaimer;
+}
+
+.panel {
+  min-block-size: 0;
+}
+
+.right .panel {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.mapLoading {
+  flex: 1;
+  min-block-size: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+}
+
+.mapNote {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: var(--leading-normal);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.updated,
+.refreshing {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/*
+ * Three columns need roughly 1100px before the map stops being the widest thing on screen.
+ * Below that the rails stack under it rather than squeezing it to a strip.
+ */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 60vh) auto auto auto auto;
+    grid-template-areas:
+      'centre'
+      'left'
+      'right'
+      'bottom'
+      'disclaimer';
+    block-size: auto;
+  }
+
+  .left,
+  .right {
+    overflow-y: visible;
+  }
+}

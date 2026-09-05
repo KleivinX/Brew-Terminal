@@ -32,6 +32,8 @@ const KEY_HELP: Record<string, string> = {
     'Optional. Without a key CoinGecko still works, at a lower and less predictable request limit. A free Demo key raises it to 100 requests a minute.',
   finnhub:
     'Required. Finnhub needs a key for every request, including prices. The free plan allows 60 requests a minute.',
+  opensky:
+    'Required, and entered as client-id:client-secret — OpenSky uses an OAuth2 client, not a plain API key. Create one from your OpenSky account page. Note their licence: it covers non-profit research and education, and using the API operationally, including from an application that polls it, needs a written agreement with OpenSky. Brew Terminal ships this source switched off for that reason.',
   alphavantage:
     'Required, and only used for stock charts — Finnhub serves prices but its candle data is paid. The free plan allows 25 requests a day, which is why this provider is never used for quotes or search. Cached history means that goes further than it sounds.',
 };

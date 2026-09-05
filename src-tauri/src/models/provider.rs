@@ -14,6 +14,11 @@ pub enum ProviderKind {
     News,
     Community,
     Ai,
+    /// Sentry's geospatial and macro sources. A separate kind rather than a sixth market
+    /// provider because none of them price an asset: they publish earthquakes, weather
+    /// warnings, national accounts and central bank reference rates. Settings groups them
+    /// under their own heading for the same reason.
+    Sentry,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
