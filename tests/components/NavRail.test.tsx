@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NavRail } from '@/components/layout/NavRail';
-import { useUiStore } from '@/stores/uiStore';
+import { __resetHarness, browserInvoke } from '@/lib/ipc.browser';
 import { renderWithProviders } from '../setup/renderWithProviders';
 import { findAccessibilityViolations, describeViolations } from '../setup/axe';
 
@@ -17,14 +17,14 @@ describe('NavRail', () => {
 
   it('keeps labels available to screen readers while collapsed', () => {
     // Collapsing is a visual affordance, not an accessibility trade.
-    useUiStore.setState({ navRailExpanded: false });
+    __resetHarness();
     renderWithProviders(<NavRail />);
 
     expect(screen.getByRole('link', { name: /Pulse/ })).toBeInTheDocument();
   });
 
   it('toggles expansion and reports its state', async () => {
-    useUiStore.setState({ navRailExpanded: false });
+    __resetHarness();
     const user = userEvent.setup();
     renderWithProviders(<NavRail />);
 
@@ -32,9 +32,15 @@ describe('NavRail', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(toggle);
-    expect(screen.getByRole('button', { name: /collapse navigation/i })).toHaveAttribute(
-      'aria-expanded',
-      'true',
+    // Optimistic, so this lands on the next render rather than after a round trip — but it is
+    // still a mutation, so the assertion waits rather than reading synchronously.
+    await waitFor(
+      () =>
+        expect(screen.getByRole('button', { name: /collapse navigation/i })).toHaveAttribute(
+          'aria-expanded',
+          'true',
+        ),
+      { timeout: 4000 },
     );
   });
 
@@ -47,5 +53,45 @@ describe('NavRail', () => {
     const { container } = renderWithProviders(<NavRail />);
     const violations = await findAccessibilityViolations(container);
     expect(violations, describeViolations(violations)).toHaveLength(0);
+  });
+});
+
+describe('the rail remembers how it was left', () => {
+  /**
+   * The bug this closes: `navRailExpanded` existed twice — once in the preferences the Settings
+   * toggle wrote to, once in `uiStore` that the rail rendered from — and nothing connected
+   * them. Setting the switch persisted `true` and changed nothing on screen, and the command
+   * palette's toggle worked until the next launch.
+   */
+  it('renders expanded when the stored preference says so', async () => {
+    __resetHarness();
+    await browserInvoke('set_preference', { key: 'navRailExpanded', value: 'true' });
+
+    renderWithProviders(<NavRail />, { resetHarness: false });
+
+    await waitFor(
+      () =>
+        expect(screen.getByRole('button', { name: /collapse navigation/i })).toHaveAttribute(
+          'aria-expanded',
+          'true',
+        ),
+      { timeout: 4000 },
+    );
+  });
+
+  it('writes the flip back, so it survives a restart', async () => {
+    __resetHarness();
+    const user = userEvent.setup();
+    renderWithProviders(<NavRail />, { resetHarness: false });
+
+    await user.click(await screen.findByRole('button', { name: /expand navigation/i }));
+
+    await waitFor(
+      async () => {
+        const prefs = (await browserInvoke('get_preferences')) as { navRailExpanded: boolean };
+        expect(prefs.navRailExpanded).toBe(true);
+      },
+      { timeout: 4000 },
+    );
   });
 });

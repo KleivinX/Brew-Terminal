@@ -56,3 +56,26 @@ export function useSetPreference() {
     },
   });
 }
+
+/**
+ * Whether the navigation rail shows labels, and a way to flip it.
+ *
+ * Backed by the stored preference rather than by session state. There used to be two things
+ * called `navRailExpanded` — one in the preferences the Settings toggle wrote to, and one in
+ * `uiStore` that the rail actually rendered from — and nothing connected them. The result was a
+ * Settings switch that persisted `true` and changed nothing, and a command-palette toggle that
+ * worked until the next launch.
+ *
+ * The optimistic update in `useSetPreference` is what makes one source enough: the flip lands on
+ * the same frame as the click, which is the only thing the split was buying.
+ */
+export function useNavRail(): { expanded: boolean; toggle: () => void } {
+  const { data: preferences } = usePreferences();
+  const setPreference = useSetPreference();
+  const expanded = preferences?.navRailExpanded ?? false;
+
+  return {
+    expanded,
+    toggle: () => setPreference.mutate({ key: 'navRailExpanded', value: !expanded }),
+  };
+}

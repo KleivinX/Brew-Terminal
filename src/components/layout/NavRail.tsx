@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
-import { useUiStore } from '@/stores/uiStore';
+import { useNavRail } from '@/lib/preferences';
 import { NAV_ITEMS } from './navItems';
 import styles from './NavRail.module.css';
 
@@ -10,8 +10,7 @@ import styles from './NavRail.module.css';
  * — collapsing is a visual affordance, not an accessibility trade.
  */
 export function NavRail() {
-  const expanded = useUiStore((s) => s.navRailExpanded);
-  const toggle = useUiStore((s) => s.toggleNavRail);
+  const { expanded, toggle } = useNavRail();
 
   return (
     <nav

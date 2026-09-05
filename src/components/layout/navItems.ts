@@ -27,11 +27,11 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/pulse', label: 'Pulse', icon: 'pulse', hint: 'Market overview', key: 'p' },
-  { to: '/atlas', label: 'Atlas', icon: 'pulse', hint: 'Live ticker', key: 'a' },
+  { to: '/atlas', label: 'Atlas', icon: 'globe', hint: 'Live ticker', key: 'a' },
   { to: '/portfolio', label: 'Portfolio', icon: 'portfolio', hint: 'What you hold', key: 'o' },
-  { to: '/screener', label: 'Screener', icon: 'search', hint: 'Filter the market', key: 'e' },
+  { to: '/screener', label: 'Screener', icon: 'filter', hint: 'Filter the market', key: 'e' },
   { to: '/research', label: 'Research Lab', icon: 'research', hint: 'Asset deep dive', key: 'r' },
-  { to: '/compare', label: 'Compare', icon: 'pulse', hint: 'Side by side and macro', key: 'c' },
+  { to: '/compare', label: 'Compare', icon: 'compare', hint: 'Side by side and macro', key: 'c' },
   { to: '/notes', label: 'Notes', icon: 'notes', hint: 'What you wrote down', key: 'n' },
   { to: '/learn', label: 'Learn', icon: 'learn', hint: 'Glossary and paths', key: 'l' },
   { to: '/desk', label: 'Model Desk', icon: 'desk', hint: 'Optional AI', key: 'd' },

@@ -72,7 +72,7 @@ export const commands: Command[] = [
   goTo({
     id: 'nav.atlas',
     title: 'Go to Atlas',
-    icon: 'pulse',
+    icon: 'globe',
     keywords: ['ticker', 'live', 'stream', 'real time', 'prices', 'watch'],
     shortcut: 'g a',
     route: '/atlas',
@@ -88,7 +88,7 @@ export const commands: Command[] = [
   goTo({
     id: 'nav.screener',
     title: 'Go to Screener',
-    icon: 'search',
+    icon: 'filter',
     keywords: ['filter', 'scan', 'find', 'criteria'],
     shortcut: 'g e',
     route: '/screener',
@@ -104,7 +104,7 @@ export const commands: Command[] = [
   goTo({
     id: 'nav.compare',
     title: 'Go to Compare',
-    icon: 'pulse',
+    icon: 'compare',
     keywords: ['correlation', 'macro', 'side by side', 'fear and greed', 'sentiment'],
     shortcut: 'g c',
     route: '/compare',

@@ -6,11 +6,6 @@ import type { MockBehavior } from '@/lib/ipc';
  * in TanStack Query. See ADR-011.
  */
 interface UiState {
-  /** Rail expansion mirrors a preference, but the store drives the frame-level render. */
-  navRailExpanded: boolean;
-  setNavRailExpanded: (expanded: boolean) => void;
-  toggleNavRail: () => void;
-
   /** Dev-only: which failure mode the mock provider is simulating. */
   mockBehavior: MockBehavior;
   setMockBehavior: (behavior: MockBehavior) => void;
@@ -37,10 +32,6 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  navRailExpanded: false,
-  setNavRailExpanded: (navRailExpanded) => set({ navRailExpanded }),
-  toggleNavRail: () => set((s) => ({ navRailExpanded: !s.navRailExpanded })),
-
   mockBehavior: 'normal',
   setMockBehavior: (mockBehavior) => set({ mockBehavior }),
 

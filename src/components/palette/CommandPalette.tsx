@@ -9,7 +9,7 @@ import { shortcutLabel } from '@/lib/keyboard';
 import { usePaletteStore } from '@/stores/paletteStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { usePreferences, useSetPreference } from '@/lib/preferences';
+import { useNavRail, usePreferences, useSetPreference } from '@/lib/preferences';
 import { toast } from '@/stores/toastStore';
 import { availableCommands, type Command, type CommandContext } from './commandRegistry';
 import type { AssetSearchResult } from '@/types/domain';
@@ -47,7 +47,7 @@ export function CommandPalette() {
 }
 
 function PaletteBody({ initialQuery, onClose }: { initialQuery: string; onClose: () => void }) {
-  const toggleNavRail = useUiStore((s) => s.toggleNavRail);
+  const { toggle: toggleNavRail } = useNavRail();
   const replayOnboarding = useUiStore((s) => s.replayOnboarding);
   const navigate = useNavigate();
   const queryClient = useQueryClient();

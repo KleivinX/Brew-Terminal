@@ -86,3 +86,19 @@ describe('navigation stays consistent', () => {
     }
   });
 });
+
+describe('rail icons', () => {
+  /**
+   * The rail is read by shape when it is collapsed — there are no labels, only icons — so two
+   * items sharing one is two items that look like the same destination.
+   *
+   * This started as three: Pulse, Atlas and Compare were all the same waveform, and Screener
+   * and the Research Lab were both magnifying glasses.
+   */
+  it('gives every destination its own icon', () => {
+    const icons = NAV_ITEMS.map((item) => item.icon);
+    const duplicates = icons.filter((icon, index) => icons.indexOf(icon) !== index);
+
+    expect(duplicates, `shared icons: ${[...new Set(duplicates)].join(', ')}`).toHaveLength(0);
+  });
+});

@@ -28,10 +28,23 @@ export type IconName =
   | 'command'
   | 'plus'
   | 'notes'
-  | 'trash';
+  | 'trash'
+  | 'globe'
+  | 'filter'
+  | 'compare';
 
 const PATHS: Record<IconName, string> = {
   pulse: 'M2 12h4l3-8 4 16 3-8h4',
+  // Atlas: a globe. Named for a book of maps, and the one metaphor in the rail that is not
+  // another chart — three of these were the same waveform before.
+  globe:
+    'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M3 12h18M12 3a13.5 13.5 0 0 1 0 18 13.5 13.5 0 0 1 0-18',
+  // Screener: a funnel. It filters a list it already has; a magnifying glass said "search",
+  // which is what the Research Lab does and what the palette does.
+  filter: 'M4 5h16l-6 7v6l-4 2v-8z',
+  // Compare: a balance. Two things weighed against each other, which is the screen's whole job
+  // and reads as nothing else in the set.
+  compare: 'M12 4v16M6 20h12M4 8h16M7 8l-3 6h6zM17 8l-3 6h6z',
   portfolio: 'M3 19V9l5-4 5 4 5-3v13M3 19h18M8 19v-5h4v5',
   research: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5 21 21',
   learn: 'M3 6.5 12 3l9 3.5-9 3.5-9-3.5zM6 10v5.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V10',
