@@ -15,7 +15,7 @@ No account, no server, no telemetry — and every number on screen tells you whe
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](#-download)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB.svg)](https://tauri.app)
 
-[**Download**](#-download) · [**How it works**](#the-one-idea) · [**Data sources**](#-where-the-data-comes-from) · [**Docs**](#-documentation)
+[**Download**](#-download) · [**How it works**](#the-one-idea) · [**Plain-language tour**](docs/WHAT_IS_BREW_TERMINAL.md) · [**Data sources**](#-where-the-data-comes-from)
 
 </div>
 
