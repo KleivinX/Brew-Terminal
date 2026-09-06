@@ -36,6 +36,13 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/notes', label: 'Notes', icon: 'notes', hint: 'What you wrote down', key: 'n' },
   { to: '/learn', label: 'Learn', icon: 'learn', hint: 'Glossary and paths', key: 'l' },
   { to: '/desk', label: 'Model Desk', icon: 'desk', hint: 'Optional AI', key: 'd' },
+  {
+    to: '/connectors',
+    label: 'Connectors',
+    icon: 'connectors',
+    hint: 'Where data comes from',
+    key: 'k',
+  },
   { to: '/settings', label: 'Settings', icon: 'settings', hint: 'Providers and privacy', key: 's' },
 ];
 

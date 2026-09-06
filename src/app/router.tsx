@@ -15,6 +15,9 @@ const AtlasRoute = lazy(() =>
 const SentryRoute = lazy(() =>
   import('@/features/sentry/SentryRoute').then((m) => ({ default: m.SentryRoute })),
 );
+const ConnectorsRoute = lazy(() =>
+  import('@/features/connectors/ConnectorsRoute').then((m) => ({ default: m.ConnectorsRoute })),
+);
 const CompareRoute = lazy(() =>
   import('@/features/compare/CompareRoute').then((m) => ({ default: m.CompareRoute })),
 );
@@ -105,6 +108,17 @@ export function AppRoutes() {
             <ErrorBoundary area="Sentry">
               <Suspense fallback={<RouteFallback label="Loading Sentry" />}>
                 <SentryRoute />
+              </Suspense>
+            </ErrorBoundary>
+          }
+        />
+
+        <Route
+          path="/connectors"
+          element={
+            <ErrorBoundary area="Connectors">
+              <Suspense fallback={<RouteFallback label="Loading Connectors" />}>
+                <ConnectorsRoute />
               </Suspense>
             </ErrorBoundary>
           }

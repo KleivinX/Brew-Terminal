@@ -15,6 +15,12 @@ pub struct ProviderConfigRow {
     pub has_credential: bool,
     pub base_url: Option<String>,
     pub last_error: Option<String>,
+    /// When this provider last answered a check without an error.
+    ///
+    /// Written by `set_last_error(_, None)`, which happens when a credential is saved or
+    /// "Test provider" is pressed — **not** on ordinary data requests. Anything rendering this
+    /// should call it "last checked", because "last used" would overstate it considerably.
+    pub last_ok_at: Option<i64>,
 }
 
 pub fn upsert_defaults(conn: &Connection, defaults: &[(&str, &str, bool)]) -> AppResult<()> {
@@ -34,7 +40,7 @@ pub fn upsert_defaults(conn: &Connection, defaults: &[(&str, &str, bool)]) -> Ap
 
 pub fn list(conn: &Connection) -> AppResult<Vec<ProviderConfigRow>> {
     let mut stmt = conn.prepare(
-        "SELECT provider_id, kind, enabled, has_credential, base_url, last_error
+        "SELECT provider_id, kind, enabled, has_credential, base_url, last_error, last_ok_at
          FROM provider_config ORDER BY provider_id",
     )?;
     let rows = stmt.query_map([], |row| {
@@ -45,6 +51,7 @@ pub fn list(conn: &Connection) -> AppResult<Vec<ProviderConfigRow>> {
             has_credential: row.get::<_, i64>(3)? != 0,
             base_url: row.get(4)?,
             last_error: row.get(5)?,
+            last_ok_at: row.get(6)?,
         })
     })?;
 
@@ -58,7 +65,7 @@ pub fn list(conn: &Connection) -> AppResult<Vec<ProviderConfigRow>> {
 pub fn get(conn: &Connection, provider_id: &str) -> AppResult<Option<ProviderConfigRow>> {
     let row = conn
         .query_row(
-            "SELECT provider_id, kind, enabled, has_credential, base_url, last_error
+            "SELECT provider_id, kind, enabled, has_credential, base_url, last_error, last_ok_at
              FROM provider_config WHERE provider_id = ?1",
             [provider_id],
             |row| {
@@ -69,6 +76,7 @@ pub fn get(conn: &Connection, provider_id: &str) -> AppResult<Option<ProviderCon
                     has_credential: row.get::<_, i64>(3)? != 0,
                     base_url: row.get(4)?,
                     last_error: row.get(5)?,
+                    last_ok_at: row.get(6)?,
                 })
             },
         )

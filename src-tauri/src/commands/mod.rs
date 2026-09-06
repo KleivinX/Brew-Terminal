@@ -9,6 +9,7 @@ pub mod alerts;
 pub mod atlas;
 pub mod cache;
 pub mod community;
+pub mod connectors;
 pub mod csv_export;
 pub mod feed_discovery;
 pub mod learn;

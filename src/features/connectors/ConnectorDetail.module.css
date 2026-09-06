@@ -1,0 +1,156 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/*
+ * Every badge paints its own background.
+ *
+ * A badge with a transparent background has undefined contrast: it depends on whatever happens
+ * to be behind it, which for the detail panel is a portal at the document root. axe measured
+ * the warn badge at 4.32:1 against a colour that is not even in this component's tree. Painting
+ * `--bg-surface` explicitly makes the pair deterministic, and `--negative on --bg-surface` is
+ * one of the pairs `tests/a11y/contrast.test.ts` pins in all three themes.
+ */
+.badge {
+  padding-inline: var(--space-2);
+  padding-block: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.badge[data-kind='category'] {
+  background: var(--bg-inset);
+}
+
+.badge[data-stage='wired'] {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+
+.badge[data-stage='candidate'] {
+  border-style: dashed;
+  border-color: var(--border-strong);
+}
+
+.badge[data-tone='ok'] {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+
+.badge[data-tone='caution'] {
+  border-color: var(--status-stale);
+  color: var(--status-stale);
+}
+
+.badge[data-tone='warn'] {
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
+.summary {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+}
+
+/*
+ * The stage explanation is styled as body text rather than as a warning. "Not reviewed" is a
+ * statement about this project's work queue, not a fault in the provider, and colouring it
+ * like an error would teach the reader to discount the styling that does mean something.
+ */
+.stageMeaning {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--border-strong);
+  background: var(--bg-inset);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.factLabel {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.factValue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.factHint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+.note[data-stage='declined'] {
+  border-color: var(--border-strong);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.docsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.docsLink:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

@@ -32,10 +32,14 @@ export type IconName =
   | 'globe'
   | 'filter'
   | 'compare'
-  | 'sentry';
+  | 'sentry'
+  | 'connectors';
 
 const PATHS: Record<IconName, string> = {
   pulse: 'M2 12h4l3-8 4 16 3-8h4',
+  // Connectors: a hub with spokes — a registry of sources rather than one more instrument.
+  connectors:
+    'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 3v6M12 15v6M4.2 7.5l5.2 3M14.6 13.5l5.2 3M4.2 16.5l5.2-3M14.6 10.5l5.2-3',
   // Sentry: a radar sweep. Deliberately not another circle-with-meridians — Atlas already has
   // the globe, and at 16px two round outlines are the same icon.
   sentry: 'M12 21a9 9 0 1 1 9-9M12 17a5 5 0 1 1 5-5M12 12l7-5',

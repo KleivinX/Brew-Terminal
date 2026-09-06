@@ -1,0 +1,182 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.panel {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.summary {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-block-end: var(--space-3);
+}
+
+.search {
+  flex: 1;
+  min-inline-size: 220px;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.select {
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.search:focus-visible,
+.select:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.nameButton {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text-primary);
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  inline-size: 100%;
+}
+
+.nameButton:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.nameButton:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* --- Badges --- */
+
+/*
+ * Every badge paints its own background.
+ *
+ * A badge with a transparent background has undefined contrast: it depends on whatever happens
+ * to be behind it, which for the detail panel is a portal at the document root. axe measured
+ * the warn badge at 4.32:1 against a colour that is not even in this component's tree. Painting
+ * `--bg-surface` explicitly makes the pair deterministic, and `--negative on --bg-surface` is
+ * one of the pairs `tests/a11y/contrast.test.ts` pins in all three themes.
+ */
+.badge {
+  display: inline-block;
+  max-inline-size: 100%;
+  padding-inline: var(--space-2);
+  padding-block: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge[data-kind='category'] {
+  background: var(--bg-inset);
+}
+
+/*
+ * The review stage is the most load-bearing badge on the screen, so it is outlined rather than
+ * tinted: a filled pill at this size cannot clear the contrast floor for its own text, and this
+ * is the one label that must not be hard to read.
+ */
+.badge[data-stage='wired'] {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+
+.badge[data-stage='declined'] {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+.badge[data-stage='candidate'] {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+  border-style: dashed;
+}
+
+.badge[data-tone='ok'] {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+
+.badge[data-tone='caution'] {
+  border-color: var(--status-stale);
+  color: var(--status-stale);
+}
+
+.badge[data-tone='warn'] {
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
+.plain {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.status {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.status[data-on='true'] {
+  color: var(--positive);
+}
+
+.empty {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}

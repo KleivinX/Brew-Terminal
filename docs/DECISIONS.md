@@ -950,3 +950,67 @@ Ship no aircraft layer at all (rejected: the layer is legitimate for a user with
 arrangement, and building it is what makes the credential architecture real rather than
 hypothetical). Compute a composite country risk score (rejected under ADR-022 — it would be this
 app inventing a number and presenting it beside published ones with the same authority).
+
+## ADR-041 — The connector catalogue records what we know, not what we could plausibly claim
+
+**Status:** accepted.
+
+`/connectors` lists every data source this project has wired, deliberately declined, or written
+down as a candidate — about a hundred rows. Each carries a review stage, and the stage gates
+every other field on the row.
+
+### The decision
+
+A catalogue of a hundred sources with a rate limit, an auth type and a risk level beside each
+name would be a hundred assertions about other people's terms of service. Eleven of those have
+been researched. The rest came from a list of names.
+
+So a **candidate row is visibly empty**: name, category, one sentence on what the source serves,
+and nothing else. No limits, no licence, no risk badge, no auth type. `Not reviewed` is the
+value, and the detail panel says in words that the gap is this project's work queue rather than a
+judgement on the provider.
+
+`catalogue::tests::a_candidate_carries_no_claim_about_anyones_terms` makes that structural: a
+candidate that acquires a rate limit or a risk level fails the build.
+
+### Why this rather than tiers
+
+The brief that prompted this asked for tier 0 / tier 1 / tier 2 — ship-enabled, opt-in,
+key-required. Tiers describe how much a **user** is trusted with a source. That is a real axis,
+but it is not the one that was missing.
+
+The axis that was missing is how much **this project** knows. A source can be free, keyless and
+excellent and still be something nobody here has read the terms of. Under a tier scheme it would
+be a "tier 1, opt-in" row indistinguishable from one that had been through the full review, and
+the distinction that matters would be invisible. Enablement is still recorded — it is the Status
+column, read live from the provider registry — but it is a consequence, not the organising idea.
+
+### Three things the design had to say out loud
+
+**A wired adapter with no toggle.** FRED and Alternative.me have no `provider_config` row, because
+the services that use them construct them directly. Neither needs a credential and neither serves
+market data. Listing them as absent would be wrong; giving them a switch that does nothing would
+be worse. They read as "Always on", with the reason attached.
+
+**"Last checked", not "last used".** `provider_config.last_ok_at` is written when a credential is
+saved or "Test provider" is pressed — not on ordinary requests. Labelling that column "last used"
+would overstate it by a wide margin on a screen whose whole subject is not overstating things.
+
+**A page listing exchange and broker APIs by name** invites the assumption that the app might one
+day place an order. It will not, so the disclaimer says it once, on the page, and notes that
+exchange and broker entries refer to their market-data endpoints only. Alpaca and Tradier carry
+that note on their own rows too.
+
+### What it links to
+
+Every wired connector names the `providerId` that appears in the `Envelope.meta` of every figure
+it served, and a test asserts that every provider in the runtime registry resolves to a catalogue
+row. That closes the loop the app is built around: a number on any screen carries a provider id,
+and that id resolves to a page stating the source's terms, limits and attribution.
+
+**Alternatives:** fill the table in from general knowledge and mark it "approximate" (rejected —
+an approximate rate limit is indistinguishable from a researched one at a glance, which is the
+entire problem). Ship only the eleven reviewed connectors and no candidate list (rejected — the
+list is useful precisely as a work queue, and hiding it would not make the other ninety sources
+stop existing). Let the catalogue write provider settings directly (rejected — Settings already
+holds the one credential path, and a second one is a second place for a key to be mishandled).

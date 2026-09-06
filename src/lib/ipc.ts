@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { isTauri } from './env';
 import type {
   AtlasSnapshot,
+  ConnectorCatalogue,
   SentrySnapshot,
   CsvExportResult,
   FeedCandidate,
@@ -178,6 +179,14 @@ export interface IpcContract {
    * from cache, and the route that served it.
    */
   atlas_snapshot: { args: { assetIds: string[] }; result: AtlasSnapshot };
+
+  // --- connectors ---
+  /**
+   * Every data source this project has wired, declined, or written down as a candidate, with
+   * live enable/credential state merged in. Read-only: switching one on is
+   * `set_provider_enabled`, so there stays exactly one write path for a credential.
+   */
+  list_connectors: { args: undefined; result: ConnectorCatalogue };
 
   // --- sentry ---
   /**

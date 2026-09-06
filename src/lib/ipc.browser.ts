@@ -33,6 +33,9 @@ import type {
   Quote,
   ScreenerFilter,
   SentimentIndex,
+  ConnectorCatalogue,
+  ConnectorCategory,
+  ConnectorInfo,
   SentrySnapshot,
   SentryLayer,
   LayerStatus,
@@ -444,6 +447,184 @@ function sentrySnapshot(): SentrySnapshot {
           },
         ]
       : [],
+  };
+}
+
+/**
+ * A connector catalogue, from fixtures.
+ *
+ * Structurally complete rather than exhaustive: every review stage, several categories, a
+ * connector with a key and one without, one that cannot be switched off. Enough to build and
+ * assert the table, the filters and the detail panel against.
+ *
+ * Deliberately not a copy of the shipped catalogue, which lives in
+ * `services/connectors/catalogue.rs` and is the only place entries should be edited. A second
+ * hundred-row list here would drift within a release.
+ */
+function connectorCatalogue(): ConnectorCatalogue {
+  const wired = (
+    id: string,
+    displayName: string,
+    category: ConnectorCategory,
+    categoryLabel: string,
+    summary: string,
+    extra: Partial<ConnectorInfo> = {},
+  ): ConnectorInfo => ({
+    id,
+    displayName,
+    category,
+    categoryLabel,
+    stage: 'wired',
+    summary,
+    auth: 'keyless',
+    termsRisk: 'core-ok',
+    termsLabel: 'Free, documented, fine to ship',
+    freeTier: 'No published limit.',
+    attribution: `Data from ${displayName}`,
+    docsUrl: 'https://example.invalid/docs',
+    note: null,
+    providerId: id,
+    enabled: providerState[id]?.enabled ?? true,
+    userControllable: providerState[id] !== undefined,
+    requiresCredential: false,
+    hasCredential: providerState[id]?.hasCredential ?? false,
+    lastCheckedAt: null,
+    ...extra,
+  });
+
+  const bare = (
+    id: string,
+    displayName: string,
+    category: ConnectorCategory,
+    categoryLabel: string,
+    summary: string,
+    stage: ConnectorInfo['stage'],
+    note: string | null,
+  ): ConnectorInfo => ({
+    id,
+    displayName,
+    category,
+    categoryLabel,
+    stage,
+    summary,
+    auth: null,
+    termsRisk: null,
+    termsLabel: null,
+    freeTier: null,
+    attribution: null,
+    docsUrl: null,
+    note,
+    providerId: null,
+    enabled: false,
+    userControllable: false,
+    requiresCredential: false,
+    hasCredential: false,
+    lastCheckedAt: null,
+  });
+
+  const connectors: ConnectorInfo[] = [
+    wired(
+      'coingecko',
+      'CoinGecko',
+      'crypto-market',
+      'Crypto market data',
+      'Crypto prices, market caps and charts.',
+      {
+        auth: 'mixed',
+        lastCheckedAt: Math.floor(Date.now() / 1000) - 7200,
+      },
+    ),
+    wired(
+      'finnhub',
+      'Finnhub',
+      'equities-market',
+      'Equities and multi-asset',
+      'Equity quotes, profiles and news.',
+      {
+        auth: 'api-key',
+        requiresCredential: true,
+      },
+    ),
+    wired('worldbank', 'World Bank Open Data', 'macro', 'Macro', 'Country indicators.'),
+    wired('frankfurter', 'Frankfurter', 'fx', 'Foreign exchange', 'Central bank reference rates.'),
+    wired('opensky', 'OpenSky Network', 'geospatial', 'Geospatial', 'Live aircraft positions.', {
+      auth: 'oauth',
+      termsRisk: 'requires-written-agreement',
+      termsLabel: 'Needs a written agreement',
+      requiresCredential: true,
+      note: 'Ships switched off. Operational use needs a prior written agreement with OpenSky.',
+    }),
+    // Wired but with no provider_config row, so it has no toggle — the FRED case.
+    wired('fred', 'FRED (St. Louis Fed)', 'macro', 'Macro', 'US macro series.', {
+      enabled: true,
+      userControllable: false,
+      note: 'Not switchable in Settings: the macro service constructs it directly.',
+    }),
+
+    bare(
+      'binance',
+      'Binance',
+      'exchange',
+      'Exchange',
+      'Spot and futures market data.',
+      'declined',
+      'Documented and keyless, but it has not been through the terms review and is geo-restricted in the United States.',
+    ),
+    bare(
+      'coincap',
+      'CoinCap',
+      'crypto-market',
+      'Crypto market data',
+      'Crypto prices and market caps.',
+      'candidate',
+      null,
+    ),
+    bare(
+      'defillama',
+      'DefiLlama',
+      'defi',
+      'DeFi',
+      'Protocol TVL, yields and stablecoin supply.',
+      'candidate',
+      null,
+    ),
+    bare(
+      'sec-edgar',
+      'SEC EDGAR',
+      'filings',
+      'Filings and disclosure',
+      'Company filings and XBRL company facts.',
+      'candidate',
+      'The strongest candidate in the list: US government output, documented and keyless.',
+    ),
+    bare(
+      'marketstack',
+      'Marketstack',
+      'equities-market',
+      'Equities and multi-asset',
+      'End-of-day and intraday equity prices.',
+      'candidate',
+      null,
+    ),
+    bare(
+      'gdelt',
+      'GDELT',
+      'geospatial',
+      'Geospatial',
+      'Global news volume and tone by country and theme.',
+      'candidate',
+      'Tone is a computed measure, so a review would have to settle how it is labelled before any of it is drawn.',
+    ),
+  ];
+
+  return {
+    connectors,
+    summary: {
+      wired: connectors.filter((c) => c.stage === 'wired').length,
+      enabled: connectors.filter((c) => c.stage === 'wired' && c.enabled).length,
+      declined: connectors.filter((c) => c.stage === 'declined').length,
+      candidates: connectors.filter((c) => c.stage === 'candidate').length,
+    },
   };
 }
 
@@ -1196,6 +1377,9 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
 
       return { quotes: matched, routes };
     }
+
+    case 'list_connectors':
+      return connectorCatalogue();
 
     case 'sentry_attributions':
       return SENTRY_PROVIDERS.map((provider) => provider.attribution);

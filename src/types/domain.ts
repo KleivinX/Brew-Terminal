@@ -135,6 +135,22 @@ export type { RateQuote } from './generated/RateQuote';
 
 export type { Proximity } from './generated/Proximity';
 
+// --- Connectors ---
+
+export type { ConnectorCatalogue } from './generated/ConnectorCatalogue';
+
+export type { ConnectorInfo } from './generated/ConnectorInfo';
+
+export type { ConnectorSummary } from './generated/ConnectorSummary';
+
+export type { ConnectorCategory } from './generated/ConnectorCategory';
+
+export type { ConnectorStage } from './generated/ConnectorStage';
+
+export type { ConnectorAuth } from './generated/ConnectorAuth';
+
+export type { TermsRisk } from './generated/TermsRisk';
+
 // --- Frontend narrowings ---
 
 /**
