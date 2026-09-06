@@ -10,9 +10,10 @@
  * dependency: Node 22+ has a global WebSocket, and CDP is a JSON protocol over one socket, so
  * pulling in a browser automation library for eight screenshots would be the larger cost.
  *
- * Alongside each image it writes `anchors.json`: the on-screen position of the controls worth
- * pointing at, measured in the same pass. `promo-video.mjs` aims its camera and cursor from
- * that file, so the two can never drift apart.
+ * Alongside each image it writes `anchors.json`: the position, size, role and accessible name
+ * of the controls worth pointing at, measured in the same pass. `promo-video.mjs` aims its
+ * camera and cursor from that file and labels each click with the name recorded here, so the
+ * film cannot claim a control the app does not have.
  *
  * Usage:
  *   npm run dev                 # in another terminal
@@ -23,6 +24,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { format } from 'prettier';
 
 const ORIGIN = process.env.BREW_ORIGIN ?? 'http://localhost:1420';
 const OUT_DIR = join('docs', 'screenshots');
@@ -241,12 +243,22 @@ async function main() {
 
   // `returnByValue` matters: without it CDP hands back an object *reference*, and every
   // measurement comes home as undefined while the page itself looks perfectly fine.
-  const evaluate = (expression) =>
-    cdp.send(
+  // `returnByValue` matters: without it CDP hands back an object *reference*, and every
+  // measurement comes home as undefined while the page itself looks perfectly fine. And an
+  // exception inside the page is reported in the *result*, not thrown — so a silent throw
+  // reads as "this route simply has no controls" unless it is checked for here.
+  const evaluate = async (expression) => {
+    const res = await cdp.send(
       'Runtime.evaluate',
       { expression, awaitPromise: true, returnByValue: true },
       sessionId,
     );
+    if (res.exceptionDetails) {
+      const detail = res.exceptionDetails;
+      throw new Error(`page threw: ${detail.exception?.description ?? detail.text}`);
+    }
+    return res;
+  };
 
   // Let the harness write its default state, then mark onboarding done and open the rail —
   // otherwise every screenshot is of the welcome dialog behind a collapsed sidebar.
@@ -402,6 +414,31 @@ async function main() {
           if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return null;
           return [x, y, Math.round(b.width), Math.round(b.height)];
         };
+        // The role and the visible name travel with the coordinates. A film that points at a
+        // control ought to be able to say which control, and reading it off the live DOM is the
+        // only way that caption can never be wrong.
+        //
+        // What a control is *called* is rarely its whole textContent. A table row concatenates
+        // every cell into one unreadable string; a select's name lives in the label beside it.
+        // So this walks the same places a screen reader would, in the same order, and falls
+        // back to the first run of text rather than to all of it.
+        const naming = (el) => {
+          const role = el.getAttribute('role') || el.tagName.toLowerCase();
+          const tidy = (v) => (v || '').replace(/\\s+/g, ' ').trim();
+          let name = tidy(el.getAttribute('aria-label'));
+          const by = el.getAttribute('aria-labelledby');
+          if (!name && by) name = tidy(document.getElementById(by)?.textContent);
+          if (!name && el.id) {
+            name = tidy(document.querySelector('label[for="' + CSS.escape(el.id) + '"]')?.textContent);
+          }
+          if (!name) name = tidy(el.closest('label')?.textContent);
+          if (!name) name = tidy(el.querySelector('h1,h2,h3,h4,h5,h6,strong,b')?.textContent);
+          if (!name) {
+            const first = [...el.childNodes].find((n) => tidy(n.textContent));
+            name = tidy(first?.textContent);
+          }
+          return { role, name: name.slice(0, 38) };
+        };
         const out = {};
         for (const [key, selector, text] of wanted) {
           const nodes = [...document.querySelectorAll(selector)];
@@ -409,7 +446,7 @@ async function main() {
             ? nodes.find((n) => (n.textContent || '').includes(text))
             : nodes[0];
           const box = hit ? centre(hit) : null;
-          if (box) out[key] = box;
+          if (box) out[key] = { box, ...naming(hit) };
         }
         return out;
       })()
@@ -420,19 +457,11 @@ async function main() {
     process.stdout.write(`${file}  (${found} anchor${found === 1 ? '' : 's'})\n`);
   }
 
-  // Written the way Prettier would write it — each box on one line — because the repository
-  // checks formatting before anything else, and a generated file that fails that check turns
-  // every re-capture into a second manual step.
+  // Formatted by the same Prettier the repository checks with, rather than by a hand-rolled
+  // printer hoping to match it. A generated file that fails the format gate turns every
+  // re-capture into a second manual step, and that step is the one people forget.
   const anchorFile = join(OUT_DIR, 'anchors.json');
-  const body = Object.entries(anchors)
-    .map(([shotName, found]) => {
-      const rows = Object.entries(found)
-        .map(([anchor, b]) => `    "${anchor}": [${b.join(', ')}]`)
-        .join(',\n');
-      return `  "${shotName}": {\n${rows}\n  }`;
-    })
-    .join(',\n');
-  writeFileSync(anchorFile, `{\n${body}\n}\n`);
+  writeFileSync(anchorFile, await format(JSON.stringify(anchors), { parser: 'json' }));
   process.stdout.write(`${anchorFile}\n`);
 
   cdp.close();

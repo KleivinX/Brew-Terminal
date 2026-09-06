@@ -1,75 +1,243 @@
 {
   "01-pulse": {
-    "providerBadge": [380, 311, 278, 19],
-    "firstRow": [622, 471, 794, 40],
-    "cryptoTab": [274, 343, 66, 28],
-    "newsItem": [1208, 433, 310, 39],
-    "digest": [820, 158, 1192, 188]
+    "providerBadge": {
+      "box": [380, 311, 278, 19],
+      "role": "span",
+      "name": "Mock provider (fixtures)"
+    },
+    "firstRow": {
+      "box": [622, 471, 794, 40],
+      "role": "row",
+      "name": "BTCBitcoin"
+    },
+    "cryptoTab": { "box": [274, 343, 66, 28], "role": "tab", "name": "Crypto" },
+    "newsItem": {
+      "box": [1208, 433, 310, 39],
+      "role": "a",
+      "name": "Central bank holds rates steady, signa"
+    },
+    "digest": {
+      "box": [820, 158, 1192, 188],
+      "role": "section",
+      "name": "Since you last looked"
+    }
   },
   "02-sentry": {
-    "severeMarker": [534, 126, 17, 17],
-    "watchRow": [358, 174, 298, 63],
-    "layerToggle": [767, 494, 36, 20],
-    "map": [810, 211, 586, 309],
-    "layers": [810, 613, 588, 378]
+    "severeMarker": { "box": [534, 126, 17, 17], "role": "g", "name": "" },
+    "watchRow": {
+      "box": [358, 174, 298, 63],
+      "role": "button",
+      "name": "M4.848 km from Strait of Hormuz1h ago"
+    },
+    "layerToggle": {
+      "box": [767, 494, 36, 20],
+      "role": "switch",
+      "name": "Chokepoints and ports"
+    },
+    "map": {
+      "box": [810, 211, 586, 309],
+      "role": "img",
+      "name": "World map showing 13 markers. Every ma"
+    },
+    "layers": {
+      "box": [810, 613, 588, 378],
+      "role": "section",
+      "name": "Layers"
+    }
   },
   "03-atlas": {
-    "tickerRow": [616, 147, 782, 36],
-    "pause": [1077, 24, 53, 26],
-    "route": [1220, 440, 392, 752]
+    "tickerRow": {
+      "box": [616, 147, 782, 36],
+      "role": "button",
+      "name": "BTC"
+    },
+    "pause": { "box": [1077, 24, 53, 26], "role": "button", "name": "Pause" },
+    "route": {
+      "box": [1220, 440, 392, 752],
+      "role": "section",
+      "name": "Route"
+    }
   },
   "04-connectors": {
-    "connectorName": [413, 208, 375, 20],
-    "notReviewed": [827, 488, 79, 23],
-    "stageFilter": [1322, 134, 105, 27],
-    "grid": [820, 480, 1222, 648]
+    "connectorName": {
+      "box": [413, 208, 375, 20],
+      "role": "button",
+      "name": "CoinGecko — details"
+    },
+    "notReviewed": {
+      "box": [827, 488, 79, 23],
+      "role": "span",
+      "name": "Not reviewed"
+    },
+    "stageFilter": {
+      "box": [1322, 134, 105, 27],
+      "role": "select",
+      "name": "Filter by review stage"
+    },
+    "grid": {
+      "box": [820, 480, 1222, 648],
+      "role": "grid",
+      "name": "Data connectors"
+    }
   },
   "05-research": {
-    "rangeButton": [1183, 306, 34, 26],
-    "indicator": [341, 638, 59, 23],
-    "showNumbers": [336, 719, 190, 26],
-    "ask": [1151, 24, 100, 26],
-    "overview": [820, 161, 1192, 193]
+    "rangeButton": {
+      "box": [1183, 306, 34, 26],
+      "role": "button",
+      "name": "1M"
+    },
+    "indicator": {
+      "box": [341, 638, 59, 23],
+      "role": "button",
+      "name": "EMA 20"
+    },
+    "showNumbers": {
+      "box": [336, 719, 190, 26],
+      "role": "button",
+      "name": "Show the underlying numbers"
+    },
+    "ask": {
+      "box": [1151, 24, 100, 26],
+      "role": "button",
+      "name": "Ask about this"
+    },
+    "overview": {
+      "box": [820, 161, 1192, 193],
+      "role": "section",
+      "name": "Overview"
+    }
   },
   "06-screener": {
-    "minCap": [366, 421, 266, 32],
-    "sort": [366, 550, 266, 27],
-    "query": [366, 289, 266, 32],
-    "saveView": [449, 174, 100, 26],
-    "exportCsv": [1365, 97, 84, 26]
+    "minCap": {
+      "box": [366, 421, 266, 32],
+      "role": "input",
+      "name": "Min market cap"
+    },
+    "sort": { "box": [366, 550, 266, 27], "role": "select", "name": "Sort by" },
+    "query": {
+      "box": [366, 289, 266, 32],
+      "role": "input",
+      "name": "Name or symbol"
+    },
+    "saveView": {
+      "box": [449, 174, 100, 26],
+      "role": "button",
+      "name": "Save this view"
+    },
+    "exportCsv": {
+      "box": [1365, 97, 84, 26],
+      "role": "button",
+      "name": "Export CSV"
+    }
   },
   "07-compare": {
-    "addField": [407, 234, 349, 32],
-    "addAsset": [619, 234, 59, 32],
-    "rangeTab": [1126, 24, 38, 28],
-    "removeAsset": [306, 194, 14, 15],
-    "showNumbers": [286, 770, 106, 18]
+    "addField": {
+      "box": [407, 234, 349, 32],
+      "role": "input",
+      "name": "Asset id to add"
+    },
+    "addAsset": { "box": [619, 234, 59, 32], "role": "button", "name": "Add" },
+    "rangeTab": { "box": [1126, 24, 38, 28], "role": "tab", "name": "1Y" },
+    "removeAsset": {
+      "box": [306, 194, 14, 15],
+      "role": "button",
+      "name": "Remove crypto:cg:bitcoin"
+    },
+    "showNumbers": {
+      "box": [286, 770, 106, 18],
+      "role": "button",
+      "name": "Show the numbers"
+    }
   },
   "08-learn": {
-    "firstLesson": [820, 160, 1190, 65],
-    "riskLesson": [820, 354, 1190, 65],
-    "glossary": [306, 589, 129, 20]
+    "firstLesson": {
+      "box": [820, 160, 1190, 65],
+      "role": "a",
+      "name": "Stocks BasicsWhat a share actually is,"
+    },
+    "riskLesson": {
+      "box": [820, 354, 1190, 65],
+      "role": "a",
+      "name": "Risk and ScamsCommon failure patterns,"
+    },
+    "glossary": {
+      "box": [306, 589, 129, 20],
+      "role": "a",
+      "name": "Open the glossary"
+    }
   },
   "09-desk": {
-    "setUp": [820, 308, 103, 26],
-    "panel": [820, 436, 1240, 872]
+    "setUp": {
+      "box": [820, 308, 103, 26],
+      "role": "button",
+      "name": "Set up a model"
+    },
+    "panel": {
+      "box": [820, 436, 1240, 872],
+      "role": "main",
+      "name": "Model Desk"
+    }
   },
   "10-notes": {
-    "noteCard": [384, 173, 318, 101],
-    "noteBody": [988, 457, 822, 575],
-    "search": [342, 93, 210, 32],
-    "newNote": [1165, 24, 73, 26]
+    "noteCard": {
+      "box": [384, 173, 318, 101],
+      "role": "button",
+      "name": "Questions to ask before I believe a he"
+    },
+    "noteBody": {
+      "box": [988, 457, 822, 575],
+      "role": "textarea",
+      "name": "Note"
+    },
+    "search": {
+      "box": [342, 93, 210, 32],
+      "role": "input",
+      "name": "Search your notes"
+    },
+    "newNote": {
+      "box": [1165, 24, 73, 26],
+      "role": "button",
+      "name": "New note"
+    }
   },
   "11-portfolio": {
-    "recordTrade": [1150, 24, 102, 26],
-    "exportCsv": [1049, 24, 84, 26],
-    "position": [613, 287, 793, 35],
-    "panel": [820, 436, 1240, 872]
+    "recordTrade": {
+      "box": [1150, 24, 102, 26],
+      "role": "button",
+      "name": "Record a trade"
+    },
+    "exportCsv": {
+      "box": [1049, 24, 84, 26],
+      "role": "button",
+      "name": "Export CSV"
+    },
+    "position": { "box": [613, 287, 793, 35], "role": "tr", "name": "BTC" },
+    "panel": {
+      "box": [820, 436, 1240, 872],
+      "role": "main",
+      "name": "Portfolio"
+    }
   },
   "12-settings": {
-    "saveKey": [838, 270, 90, 32],
-    "keyField": [625, 270, 320, 32],
-    "testConnection": [520, 351, 110, 26],
-    "toggle": [1381, 181, 36, 20]
+    "saveKey": {
+      "box": [838, 270, 90, 32],
+      "role": "button",
+      "name": "Save key"
+    },
+    "keyField": {
+      "box": [625, 270, 320, 32],
+      "role": "input",
+      "name": "API key"
+    },
+    "testConnection": {
+      "box": [520, 351, 110, 26],
+      "role": "button",
+      "name": "Test connection"
+    },
+    "toggle": {
+      "box": [1381, 181, 36, 20],
+      "role": "switch",
+      "name": "Use this provider"
+    }
   }
 }
