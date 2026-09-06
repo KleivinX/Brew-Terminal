@@ -96,10 +96,8 @@ rather than quietly used.
 | **Compare.** Up to six assets and macro series on one axis, normalised or absolute, with a correlation matrix that says plainly what correlation is not. | **Learn.** A glossary and five paths, written for someone who has never read a balance sheet. Ships with the app; reading it makes no request. |
 | ![Model Desk — optional AI, off by default](docs/screenshots/09-desk.png) | ![Notes — a local research journal](docs/screenshots/10-notes.png) |
 | **Model Desk.** Optional AI. Local or your own endpoint, off until you configure it. You see exactly what would be sent before it is sent, and the answer is shown unedited with advice-shaped language flagged. | **Notes.** A local research journal with full-text search, pinned to dates on the chart. Notes never leave the machine on their own; attaching one to a prompt is a separate, explicit action. |
-
-Also here: **Portfolio**, where positions are derived by replaying the transactions that produced
-them rather than stored, so cost basis and position can only ever agree — and **Settings**, which
-holds every provider, key and privacy control in one place.
+| ![Portfolio — positions replayed from the trades that made them](docs/screenshots/11-portfolio.png) | ![Settings — providers, keys and privacy in one place](docs/screenshots/12-settings.png) |
+| **Portfolio.** Positions are derived by replaying the transactions that produced them rather than stored, so cost basis and position can only ever agree. FIFO, worked out on this machine, from entries you typed. | **Settings.** Every provider, key and privacy control in one place. Keys go to the OS keychain — never into the database, the logs, IPC, or an export. |
 
 > Screenshots are from a development build, which is why panels carry a `fixtures` badge and the
 > status bar says so. That labelling is the app working correctly: mock data is never allowed to

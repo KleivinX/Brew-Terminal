@@ -13,20 +13,20 @@
  * on a machine with Playwright installed is the minimal build Playwright uses for screen
  * recording, and that one has exactly two video encoders: png and libvpx. There is no H.264 in
  * it, and H.264 in an MP4 is what every social platform wants. So that path needs a real ffmpeg
- * on PATH; without one it renders 720 frames and then fails at the last step.
+ * on PATH; without one it renders the frames and then fails at the last step.
  *
  * The animation is a **pure function of time**. The page exposes `seek(t)` and every property
  * is computed from `t` alone; nothing depends on requestAnimationFrame or the wall clock. That
  * is what makes the capture deterministic: a slow frame cannot drop anything, because the
  * renderer is asked for an exact moment rather than whatever it has drawn by now.
  *
- *   node scripts/screenshots.mjs      # the app shots this composes
- *   node scripts/promo-video.mjs
+ *   node scripts/screenshots.mjs      # the app shots and the anchor file this composes
+ *   node scripts/promo-video.mjs --html ~/Desktop/brew-terminal-promo-9x16.html
  *
  * Options:
  *   --out <path>   where to write the mp4  (default: a temp directory, printed at the end)
  *   --fps <n>      frames per second       (default: 30)
- *   --preview <d>  write one still per scene into <d> and stop, for checking the design
+ *   --preview <d>  write one still per beat into <d> and stop, for checking the design
  *                  without waiting on a full render
  *   --html <path>  write the animation as one self-contained HTML file and stop. Opens in any
  *                  browser, plays on its own, scrubs, and needs no network — fonts and
@@ -45,7 +45,6 @@ const flag = (name, fallback) => {
 };
 
 const FPS = Number(flag('fps', 30));
-const DURATION = 33;
 const W = 1080;
 const H = 1920;
 const PORT = 9335;
@@ -56,7 +55,7 @@ const shellPath = join(
   'chrome-headless-shell-mac-x64/chrome-headless-shell',
 );
 // A real ffmpeg if there is one; Playwright's minimal build otherwise, which will refuse the
-// H.264 options above. See the note at the top.
+// H.264 options below. See the note at the top.
 const ffmpegPath =
   process.env.FFMPEG ?? join(homedir(), 'Library/Caches/ms-playwright/ffmpeg-1011/ffmpeg-mac');
 
@@ -74,44 +73,266 @@ const mono = dataUri(
 const mark = dataUri('src/assets/brand/mark-on-dark.png', 'image/png');
 const shot = (n) => dataUri(join('docs', 'screenshots', `${n}.png`), 'image/png');
 
-/* ------------------------------------------------------------------------ the page */
+/* --------------------------------------------------------------------------- geometry */
 
-/**
- * Where the camera looks, in the app's own coordinates.
- *
- * Read off the screenshots themselves, with a 100px labelled grid rendered over each one, and
- * that detour was the shortcut. Measuring the *running* app instead looks equivalent and is
- * not: the app I queried had its navigation rail collapsed while the screenshots have it
- * expanded, which shifts every panel right by about 140px. The first zoom landed on the rail
- * rather than on the provider badge it was supposed to be showing.
- *
- * The image is the thing the film composites, so the image is the thing to measure.
- */
+/** The app's own coordinate space — the viewport the screenshots were taken at. */
 const SHOT_W = 1440;
-const FOCUS = {
-  pulse: { all: [720, 450], badge: [367, 311], rows: [620, 470], start: [1000, 640] },
-  sentry: {
-    all: [720, 450],
-    marker: [534, 125],
-    watch: [330, 175],
-    both: [400, 160],
-    start: [1120, 700],
-  },
-  connectors: {
-    all: [720, 450],
-    table: [700, 545],
-    opensky: [987, 367],
-    notReviewed: [827, 487],
-    dashes: [905, 560],
-    start: [1080, 190],
-  },
-};
-
+const SHOT_H = 900;
 /** The demo window, in stage coordinates. */
 const PORT_W = 960;
 const PORT_H = 600;
-/** The zoom at which the whole 1440-wide app exactly fills the window. */
+/** The zoom at which the whole app exactly fills the window. */
 const Z_FIT = PORT_W / SHOT_W;
+const DEMO_TOP = 740;
+const BAR_H = 44;
+
+/**
+ * Where things are, measured rather than guessed.
+ *
+ * Every coordinate in this film comes out of `docs/screenshots/anchors.json`, which is written
+ * by the same browser run that takes the screenshots. That is not tidiness — it is the fix for
+ * a specific bug. Positions were once read off a *separately running* copy of the app, whose
+ * navigation rail happened to be collapsed; every panel sat about 140px to the left of where
+ * the pictures had it, and the first zoom landed on the rail instead of on the badge it was
+ * meant to be showing. Same run, same numbers, or the two drift apart again.
+ */
+const anchorPath = join('docs', 'screenshots', 'anchors.json');
+let anchors;
+try {
+  anchors = JSON.parse(readFileSync(anchorPath, 'utf8'));
+} catch {
+  process.stderr.write(`no ${anchorPath} — run \`node scripts/screenshots.mjs\` first\n`);
+  process.exit(1);
+}
+
+const box = (shotName, anchor) => {
+  const found = anchors[shotName]?.[anchor];
+  if (!found) {
+    process.stderr.write(
+      `${shotName} has no anchor "${anchor}" — it is in ANCHORS in screenshots.mjs?\n`,
+    );
+    process.exit(1);
+  }
+  return found;
+};
+
+/**
+ * Keep the frame inside the picture.
+ *
+ * A camera centred near an edge at high zoom shows the page background past the edge of the
+ * screenshot, which reads as a rendering fault rather than as a choice.
+ */
+const inside = ([x, y], z) => {
+  const hw = PORT_W / 2 / z;
+  const hh = PORT_H / 2 / z;
+  return [Math.min(Math.max(x, hw), SHOT_W - hw), Math.min(Math.max(y, hh), SHOT_H - hh)];
+};
+
+/**
+ * Where to point the camera so a given box is *readable*, not merely centred.
+ *
+ * Half these targets are full-width rows — a lesson card, a position, a ticker line. Centring
+ * one at any useful zoom pushes both its ends out of frame and leaves the middle, which for a
+ * table row is a column of numbers with no labels attached. Whatever names the row lives at its
+ * left edge, so a box wider than the frame is aimed at its start instead of its middle.
+ */
+const aim = (b, z) => {
+  const halfW = PORT_W / 2 / z;
+  const halfH = PORT_H / 2 / z;
+  const wide = b.length >= 4 && b[2] * z > PORT_W;
+  const tall = b.length >= 4 && b[3] * z > PORT_H;
+  return inside(
+    [wide ? b[0] - b[2] / 2 - 40 + halfW : b[0], tall ? b[1] - b[3] / 2 - 30 + halfH : b[1]],
+    z,
+  );
+};
+
+/* ------------------------------------------------------------------------- the script */
+
+/**
+ * Twelve beats, one per part of the app.
+ *
+ * `target` is what the cursor clicks, and it is always a control that is genuinely clickable in
+ * the real app — a tab, a switch, a sort menu, a row that opens something. Pointing at a static
+ * badge and pretending it was pressed is the kind of small lie that a viewer feels without
+ * being able to name, and the badge is the thing the film is asking them to trust.
+ *
+ * `look` is where the camera settles afterwards: the consequence, not the control.
+ */
+const BEATS = [
+  {
+    shot: '01-pulse',
+    label: 'Pulse',
+    hero: true,
+    target: 'cryptoTab',
+    look: 'providerBadge',
+    enter: [1030, 700],
+    caption: ['Every panel names its source', 'Which provider it came from, and how old it is.'],
+  },
+  {
+    shot: '05-research',
+    label: 'Research Lab',
+    target: 'showNumbers',
+    look: [520, 650],
+    enter: [1180, 420],
+    caption: ['No chart without its numbers', 'One line opens every point it was drawn from.'],
+  },
+  {
+    shot: '07-compare',
+    label: 'Compare',
+    target: 'addAsset',
+    look: 'showNumbers',
+    enter: [1180, 430],
+    caption: ['Line them up on one axis', 'Rebased to a shared start, so the shapes compare.'],
+  },
+  {
+    shot: '06-screener',
+    label: 'Screener',
+    target: 'sort',
+    look: [470, 430],
+    enter: [1180, 260],
+    caption: ['Filter the whole market', 'Price, cap, change — then sort it, then take it away.'],
+  },
+  {
+    shot: '11-portfolio',
+    label: 'Portfolio',
+    target: 'recordTrade',
+    look: 'position',
+    enter: [520, 620],
+    caption: [
+      'What you hold, and what it did',
+      'FIFO cost basis, worked out here, from your entries.',
+    ],
+  },
+  {
+    shot: '02-sentry',
+    label: 'Sentry',
+    hero: true,
+    target: 'watchRow',
+    look: [446, 150],
+    enter: [1090, 640],
+    caption: [
+      'A hazard, a place, the distance',
+      'Within 500 km of a shipping chokepoint — and which one.',
+    ],
+  },
+  {
+    shot: '03-atlas',
+    label: 'Atlas',
+    target: 'pause',
+    look: 'tickerRow',
+    enter: [600, 500],
+    caption: ['A ticker you can stop', 'A number you cannot finish reading is not information.'],
+  },
+  {
+    shot: '08-learn',
+    label: 'Learn',
+    target: 'firstLesson',
+    look: 'glossary',
+    enter: [1200, 640],
+    caption: [
+      'Start from the beginning',
+      'Five paths and a glossary, for someone new to all of it.',
+    ],
+  },
+  {
+    shot: '10-notes',
+    label: 'Notes',
+    target: 'noteCard',
+    look: 'noteBody',
+    enter: [1150, 700],
+    caption: [
+      'Write down why you did it',
+      'Kept on this computer. Never sent anywhere on its own.',
+    ],
+  },
+  {
+    shot: '09-desk',
+    label: 'Model Desk',
+    target: 'setUp',
+    look: 'setUp',
+    enter: [400, 640],
+    caption: [
+      'The AI is optional, and off',
+      'Nothing reaches a model until you go and set one up.',
+    ],
+  },
+  {
+    shot: '04-connectors',
+    label: 'Connectors',
+    hero: true,
+    target: 'stageFilter',
+    look: 'notReviewed',
+    enter: [520, 700],
+    caption: ['Ninety sources nobody has vetted', 'So the row stays empty, and says which ones.'],
+  },
+  {
+    shot: '12-settings',
+    label: 'Settings',
+    target: 'saveKey',
+    look: 'keyField',
+    enter: [700, 640],
+    caption: [
+      'Your keys, your keychain',
+      'Held by the OS. Never in the database, logs or exports.',
+    ],
+  },
+];
+
+const TOUR_FROM = 8.0;
+const HERO = 2.9;
+const PLAIN = 1.93;
+const CROSS = 0.3;
+
+/** Beat timings, and the keyframes derived from them. */
+let cursorAt = TOUR_FROM;
+const DEMOS = BEATS.map((beat) => {
+  const from = cursorAt;
+  const dur = beat.hero ? HERO : PLAIN;
+  const to = from + dur;
+  cursorAt = to;
+
+  const hit = box(beat.shot, beat.target);
+  const lookBox = Array.isArray(beat.look) ? beat.look : box(beat.shot, beat.look);
+  const midZoom = beat.hero ? 1.3 : 1.22;
+  const endZoom = beat.hero ? 2.05 : 1.6;
+  const wide = [SHOT_W / 2, SHOT_H / 2];
+  const midPt = aim(hit, midZoom);
+  const endPt = aim(lookBox, endZoom);
+
+  return {
+    shot: beat.shot.replace(/[^a-z]/g, ''),
+    label: beat.label,
+    from,
+    to,
+    click: from + 0.53 * dur,
+    hit,
+    caption: beat.caption,
+    cam: [
+      [from, wide[0], wide[1], Z_FIT],
+      [from + 0.24 * dur, wide[0], wide[1], Z_FIT * 1.05],
+      [from + 0.62 * dur, midPt[0], midPt[1], midZoom],
+      [to, endPt[0], endPt[1], endZoom],
+    ],
+    // `back` overshoots and settles, the way a hand arrives at a button rather than gliding to
+    // a mathematical stop.
+    cursor: [
+      [from + 0.02 * dur, beat.enter[0], beat.enter[1], 'inOut'],
+      [from + 0.5 * dur, hit[0], hit[1], 'back'],
+      [from + 0.68 * dur, hit[0], hit[1], 'inOut'],
+      [to, endPt[0] - 44, endPt[1] + 36, 'inOut'],
+    ],
+  };
+});
+
+const TOUR_TO = cursorAt;
+const PROMISES_FROM = TOUR_TO + 0.2;
+const END_FROM = PROMISES_FROM + 2.2;
+const DURATION = Number((END_FROM + 2.3).toFixed(2));
+
+const IMAGES = BEATS.map((b) => [b.shot.replace(/[^a-z]/g, ''), b.shot]);
+
+/* ------------------------------------------------------------------------------ page */
 
 const html = `<meta charset="utf-8"><title>promo</title>
 <style>
@@ -124,9 +345,11 @@ const html = `<meta charset="utf-8"><title>promo</title>
   body { font-family:'Inter',system-ui,sans-serif; color:#f7f7f2; -webkit-font-smoothing:antialiased; }
 
   .stage { position:absolute; inset:0; }
-  .glow { position:absolute; inset:0;
+  .glow { position:absolute; inset:0; will-change:opacity,transform;
           background:radial-gradient(70% 45% at 50% 40%, #f9731633 0%, transparent 62%); }
-  .grid { position:absolute; inset:0; opacity:.5;
+  .glow2 { position:absolute; inset:0; will-change:opacity;
+           background:radial-gradient(55% 34% at 50% 62%, #38bdf826 0%, transparent 66%); }
+  .grid { position:absolute; inset:0; opacity:.5; will-change:transform;
           background-image:linear-gradient(#f7f7f207 1px,transparent 1px),
                            linear-gradient(90deg,#f7f7f207 1px,transparent 1px);
           background-size:90px 90px;
@@ -140,24 +363,29 @@ const html = `<meta charset="utf-8"><title>promo</title>
   h2 { font-weight:600; letter-spacing:-.03em; line-height:1.1; font-size:64px; }
   .sub { color:#aab3bf; font-size:36px; line-height:1.45; letter-spacing:-.01em; }
   .eyebrow { color:#f97316; font-family:'JB',monospace; font-weight:500; font-size:24px;
-             letter-spacing:.2em; text-transform:uppercase; }
+             letter-spacing:.2em; text-transform:uppercase; will-change:opacity,transform; }
   .mono { font-family:'JB',monospace; }
-  .mark { width:150px; }
+  .mark { width:150px; will-change:opacity,transform; }
   .word { display:inline-block; will-change:opacity,transform; }
+  .rule { width:0; height:5px; border-radius:3px; background:#f97316; margin-top:46px;
+          will-change:width,opacity; }
 
-  .price { font-family:'JB',monospace; font-weight:600; font-size:118px; letter-spacing:-.03em; }
-  .badge { display:inline-flex; align-items:center; gap:16px; margin-top:44px;
+  .price { font-family:'JB',monospace; font-weight:600; font-size:118px; letter-spacing:-.03em;
+           will-change:opacity,transform; }
+  .badge { display:inline-flex; align-items:center; gap:16px;
            padding:20px 34px; border:2px solid #f9731655; border-radius:999px;
-           background:#f9731612; font-size:30px; }
+           background:#f9731612; font-size:30px; will-change:opacity,transform; }
   .dot { width:14px; height:14px; border-radius:50%; background:#3fb950; }
-  .qmark { color:#79838f; font-size:34px; margin-top:40px; }
+  .qmark { color:#79838f; font-size:34px; will-change:opacity,transform; }
+  .swap { position:relative; height:120px; width:100%; margin-top:44px; }
+  .swap > * { position:absolute; left:0; right:0; display:flex; justify-content:center; top:0; }
 
   /* --- the demo window --- */
-  .demo { position:absolute; left:${(W - PORT_W) / 2}px; top:700px; width:${PORT_W}px;
+  .demo { position:absolute; left:${(W - PORT_W) / 2}px; top:${DEMO_TOP}px; width:${PORT_W}px;
           border-radius:22px; overflow:hidden; background:#15191f; border:1px solid #ffffff14;
           box-shadow:0 40px 90px -20px #000c, 0 110px 200px -60px #000;
           will-change:opacity,transform; }
-  .demo .bar { height:44px; display:flex; align-items:center; gap:10px; padding:0 18px;
+  .demo .bar { height:${BAR_H}px; display:flex; align-items:center; gap:10px; padding:0 18px;
                background:#ffffff08; border-bottom:1px solid #ffffff0f; }
   .demo .bar i { width:14px; height:14px; border-radius:50%; display:block; }
   .port { position:relative; width:${PORT_W}px; height:${PORT_H}px; overflow:hidden; }
@@ -166,31 +394,58 @@ const html = `<meta charset="utf-8"><title>promo</title>
    * image space lands at (portCentre + (point - focus) * zoom), with no second offset to track.
    */
   .port img { position:absolute; left:0; top:0; width:${SHOT_W}px; transform-origin:0 0;
-              will-change:transform; }
+              will-change:transform,opacity; }
 
-  /* The cursor lives above the window, positioned from the same camera transform, so it stays
-     glued to whatever it is pointing at while the camera moves underneath it. */
-  .cursor { position:absolute; width:46px; height:46px; margin:-4px 0 0 -3px; pointer-events:none;
-            filter:drop-shadow(0 6px 14px #000b); will-change:transform,opacity; z-index:5; }
-  .ripple { position:absolute; width:34px; height:34px; margin:-17px 0 0 -17px;
-            border:3px solid #f97316; border-radius:50%; pointer-events:none;
-            will-change:transform,opacity; z-index:4; }
+  /*
+   * The cursor, the ripple and the hit box live *inside* the window rather than beside it, so
+   * the window's float and tilt carry them along for free — and so the port's own overflow
+   * clips them, which is what a real pointer over a real window does.
+   */
+  .cursor { position:absolute; width:44px; height:44px; margin:-3px 0 0 -2px; pointer-events:none;
+            filter:drop-shadow(0 6px 14px #000b); will-change:transform,opacity; z-index:6; }
+  .ripple { position:absolute; border:3px solid #f97316; border-radius:50%; pointer-events:none;
+            width:34px; height:34px; margin:-17px 0 0 -17px;
+            will-change:transform,opacity; z-index:5; }
+  .hitbox { position:absolute; border:2.5px solid #f97316; border-radius:8px; pointer-events:none;
+            background:#f9731618; box-shadow:0 0 0 6px #f9731614;
+            will-change:transform,opacity,width,height; z-index:4; }
+  .sheen { position:absolute; inset:0; pointer-events:none; z-index:7; will-change:opacity,transform;
+           background:linear-gradient(105deg, transparent 34%, #ffffff1f 50%, transparent 66%); }
 
-  .caption { position:absolute; left:0; right:0; padding:0 110px; text-align:center;
-             will-change:opacity,transform; }
-  .caption .k { font-size:46px; font-weight:600; letter-spacing:-.025em; line-height:1.2; }
-  .caption .v { margin-top:18px; font-size:29px; color:#aab3bf; line-height:1.45; }
+  .chip { position:absolute; left:0; right:0; top:388px; text-align:center;
+          will-change:opacity,transform; }
+  .chip span { display:inline-block; padding:12px 26px; border-radius:999px;
+               border:1px solid #f9731644; background:#f9731614; color:#f97316;
+               font-family:'JB',monospace; font-size:24px; letter-spacing:.16em;
+               text-transform:uppercase; }
+
+  .caption { position:absolute; left:0; right:0; top:460px; padding:0 100px; text-align:center;
+             will-change:transform; }
+  .caption .k { font-size:52px; font-weight:650; letter-spacing:-.028em; line-height:1.14;
+                will-change:opacity,transform; }
+  .caption .v { margin-top:20px; font-size:29px; color:#aab3bf; line-height:1.45;
+                will-change:opacity,transform; }
+
+  .ticks { position:absolute; left:0; right:0; top:1440px; display:flex; justify-content:center;
+           gap:10px; will-change:opacity; }
+  .where { position:absolute; left:0; right:0; top:1502px; text-align:center;
+           font-family:'JB',monospace; font-size:26px; color:#79838f; letter-spacing:.02em;
+           will-change:opacity; }
+  .ticks i { display:block; height:6px; width:22px; border-radius:3px; background:#ffffff1f;
+             will-change:width,background; }
 
   .promise { font-size:44px; font-weight:600; letter-spacing:-.02em; margin:22px 0;
              will-change:opacity,transform; }
   .promise span { color:#f97316; }
-  .url { font-family:'JB',monospace; font-size:30px; color:#aab3bf; margin-top:36px; }
+  .url { font-family:'JB',monospace; font-size:30px; color:#aab3bf; margin-top:36px;
+         will-change:opacity; }
   .fine { position:absolute; bottom:150px; left:0; right:0; text-align:center;
-          font-size:22px; color:#79838f; line-height:1.5; padding:0 130px; }
+          font-size:22px; color:#79838f; line-height:1.5; padding:0 130px; will-change:opacity; }
 </style>
 
 <div class="stage">
   <div class="glow" id="glow"></div>
+  <div class="glow2" id="glow2"></div>
   <div class="grid" id="grid"></div>
 
   <div class="scene" id="s1">
@@ -202,41 +457,44 @@ const html = `<meta charset="utf-8"><title>promo</title>
   <div class="scene" id="s2">
     <h1><span class="word">Markets,</span> <span class="word">minus</span>
         <span class="word">the</span> <span class="word">gatekeeping.</span></h1>
+    <div class="rule" id="s2rule"></div>
   </div>
 
   <div class="scene" id="s3">
-    <div class="eyebrow" id="s3eye">Every finance app</div>
+    <div style="position:relative;height:34px;width:100%">
+      <div class="eyebrow" id="eyeA" style="position:absolute;left:0;right:0">Every finance app</div>
+      <div class="eyebrow" id="eyeB" style="position:absolute;left:0;right:0">Brew&nbsp;Terminal</div>
+    </div>
     <div style="height:56px"></div>
-    <div class="price" id="s3price">$67,412.08</div>
-    <div class="qmark" id="s3q">From where? How old? Says who?</div>
+    <div class="price" id="price">$61,240.55</div>
+    <div class="swap">
+      <div class="qmark" id="qmark">From where? How old? Says who?</div>
+      <div id="badgeWrap"><div class="badge" id="badge"><span class="dot"></span>
+        <span class="mono">CoinGecko&nbsp;·&nbsp;12s ago</span></div></div>
+    </div>
   </div>
 
-  <div class="scene" id="s4">
-    <div class="eyebrow" id="s4eye">This one</div>
-    <div style="height:56px"></div>
-    <div class="price" id="s4price">$67,412.08</div>
-    <div class="badge" id="s4badge"><span class="dot"></span>
-      <span class="mono">CoinGecko · 12s ago</span></div>
-  </div>
-
-  <!-- the three demos share one window; only the image and the camera change -->
+  <!-- twelve beats share one window; only the image and the camera change -->
   <div class="demo" id="demo">
     <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i>
       <i style="background:#28c840"></i></div>
     <div class="port">
-      <img id="shotPulse" src="${shot('01-pulse')}" alt="">
-      <img id="shotSentry" src="${shot('02-sentry')}" alt="">
-      <img id="shotConnectors" src="${shot('04-connectors')}" alt="">
+${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="">`).join('\n')}
+      <div class="hitbox" id="hitbox"></div>
+      <div class="ripple" id="ripple"></div>
+      <div class="ripple" id="ripple2"></div>
+      <svg class="cursor" id="cursor" viewBox="0 0 24 24" fill="none">
+        <path d="M5 2.5 L5 19.5 L9.6 15.2 L12.3 21.4 L15.2 20.1 L12.6 14.1 L18.8 13.9 Z"
+              fill="#ffffff" stroke="#08090b" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+      <div class="sheen" id="sheen"></div>
     </div>
   </div>
-  <svg class="cursor" id="cursor" viewBox="0 0 24 24" fill="none">
-    <path d="M5 2.5 L5 19.5 L9.6 15.2 L12.3 21.4 L15.2 20.1 L12.6 14.1 L18.8 13.9 Z"
-          fill="#ffffff" stroke="#08090b" stroke-width="1.4" stroke-linejoin="round"/>
-  </svg>
-  <div class="ripple" id="ripple"></div>
 
-  <div class="caption" id="capTop" style="top:420px"></div>
-  
+  <div class="caption" id="cap"><div class="k" id="capK"></div><div class="v" id="capV"></div></div>
+  <div class="chip" id="chip"><span id="chipText"></span></div>
+  <div class="ticks" id="ticks">${BEATS.map(() => '<i></i>').join('')}</div>
+  <div class="where" id="where">github.com/KleivinX/Brew-Terminal</div>
 
   <div class="scene" id="s8">
     <div class="promise" id="p1">Runs on <span>your</span> machine</div>
@@ -256,225 +514,309 @@ const html = `<meta charset="utf-8"><title>promo</title>
 </div>
 
 <script>
-  const $ = (id) => document.getElementById(id);
-  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-  const lerp = (a, b, p) => a + (b - a) * p;
+  var $ = function (id) { return document.getElementById(id); };
+  var clamp = function (v, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b;
+                                   return Math.min(b, Math.max(a, v)); };
+  var lerp = function (a, b, p) { return a + (b - a) * p; };
 
-  /* Entrances decelerate. Camera moves ease at both ends, the way a real one is driven. */
-  const out = (p) => 1 - Math.pow(1 - clamp(p), 3);
-  const inOut = (p) => (clamp(p) < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
-  const seg = (t, start, dur) => clamp((t - start) / dur);
-  const band = (t, start, end, fade) => Math.min(seg(t, start, fade), 1 - seg(t, end - fade, fade));
+  /*
+   * Entrances decelerate; camera moves ease at both ends, the way a real one is driven; 'back'
+   * overshoots a little and settles, which is what makes the cursor read as a hand rather than
+   * as a tween.
+   */
+  var out = function (p) { return 1 - Math.pow(1 - clamp(p), 3); };
+  var outQuint = function (p) { return 1 - Math.pow(1 - clamp(p), 5); };
+  var inOut = function (p) { p = clamp(p);
+    return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; };
+  var back = function (p) { p = clamp(p);
+    var c = 1.42; var q = p - 1; return 1 + (c + 1) * q * q * q + c * q * q; };
+  var EASE = { out: out, inOut: inOut, back: back, outQuint: outQuint };
+
+  var seg = function (t, start, dur) { return clamp((t - start) / dur); };
+  var band = function (t, start, end, fade) {
+    return Math.min(seg(t, start, fade), 1 - seg(t, end - fade, fade));
+  };
 
   /**
    * Value of a keyframe track at time t.
    *
-   * Declaring motion as [time, value] pairs rather than as arithmetic per property is what
-   * keeps the camera legible: a move is two numbers and a duration, and the easing between
-   * them is the same everywhere, so nothing drifts out of step with anything else.
+   * Declaring motion as [time, value] pairs rather than as arithmetic per property is what keeps
+   * the camera legible: a move is two numbers and a duration, and the easing between them is
+   * named on the frame it arrives at, so nothing drifts out of step with anything else.
    */
-  function track(t, keys, ease = inOut) {
+  function track(t, keys, dflt) {
     if (t <= keys[0][0]) return keys[0][1];
-    for (let i = 1; i < keys.length; i += 1) {
+    for (var i = 1; i < keys.length; i += 1) {
       if (t <= keys[i][0]) {
-        const [t0, v0] = keys[i - 1];
-        const [t1, v1] = keys[i];
-        return lerp(v0, v1, ease((t - t0) / (t1 - t0)));
+        var a = keys[i - 1], b = keys[i];
+        var ease = EASE[b[2] || dflt || 'inOut'] || inOut;
+        return lerp(a[1], b[1], ease((t - a[0]) / (b[0] - a[0])));
       }
     }
     return keys[keys.length - 1][1];
   }
+  /*
+   * Pull one channel out of a multi-value track.
+   *
+   * The last slot is an easing *name* on the cursor track and a zoom *number* on the camera
+   * track, so the type is what decides whether it is an easing at all. Passing a zoom through
+   * as an easing name looks up undefined and throws inside seek() — and a throw there is
+   * invisible: the frame still renders, with everything after the throw left at whatever it
+   * held before, which reads as a layout bug rather than as an error.
+   */
+  var pick = function (keys, n) {
+    return keys.map(function (k) {
+      var last = k[k.length - 1];
+      return [k[0], k[n], typeof last === 'string' ? last : undefined];
+    });
+  };
 
-  const PORT_W = ${PORT_W}, PORT_H = ${PORT_H}, Z_FIT = ${Z_FIT};
-  const DEMO_LEFT = ${(W - PORT_W) / 2}, DEMO_TOP = 700, BAR_H = 44;
+  var PORT_W = ${PORT_W}, PORT_H = ${PORT_H}, Z_FIT = ${Z_FIT};
+  var DURATION = ${DURATION}, CROSS = ${CROSS};
+  var TOUR_FROM = ${TOUR_FROM}, TOUR_TO = ${TOUR_TO};
+  var PROMISES_FROM = ${PROMISES_FROM}, END_FROM = ${END_FROM};
+  var DEMOS = ${JSON.stringify(DEMOS)};
 
-  /** Places image point (fx, fy) at the centre of the window, at zoom z. */
-  function camera(img, fx, fy, z) {
-    const x = PORT_W / 2 - fx * z;
-    const y = PORT_H / 2 - fy * z;
-    img.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) scale(' + z.toFixed(4) + ')';
-    return { x, y, z };
+  /**
+   * Points the camera: image point (cam.x, cam.y) lands at the centre of the window, at cam.z.
+   *
+   * transform-origin is the image's top-left corner, which is what keeps this to one line and
+   * inPort below to one line — every other origin needs a second offset tracked alongside.
+   */
+  function camera(img, cam) {
+    var x = PORT_W / 2 - cam.x * cam.z;
+    var y = PORT_H / 2 - cam.y * cam.z;
+    img.style.transform =
+      'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) scale(' + cam.z.toFixed(4) + ')';
   }
 
-  /** Where image point (px, py) ends up on the stage, given the camera that is set. */
-  function toStage(cam, px, py) {
+  /** Where image point (px, py) sits inside the window, under that same camera. */
+  function inPort(cam, px, py) {
     return {
-      x: DEMO_LEFT + cam.x + px * cam.z,
-      y: DEMO_TOP + BAR_H + cam.y + py * cam.z,
+      x: PORT_W / 2 + (px - cam.x) * cam.z,
+      y: PORT_H / 2 + (py - cam.y) * cam.z,
     };
   }
 
-  const F = ${JSON.stringify(FOCUS)};
+  function camAt(d, t) {
+    return {
+      x: track(t, pick(d.cam, 1)),
+      y: track(t, pick(d.cam, 2)),
+      z: track(t, pick(d.cam, 3)),
+    };
+  }
 
-  const DEMOS = [
-    {
-      shot: 'shotPulse',
-      from: 12.4, to: 18.0,
-      cam: [
-        [12.4, F.pulse.all.concat([Z_FIT])],
-        [14.4, F.pulse.all.concat([Z_FIT])],
-        [16.3, F.pulse.badge.concat([2.15])],
-        [18.0, F.pulse.badge.concat([2.3])],
-      ],
-      cursor: [
-        [13.0, F.pulse.start],
-        [14.9, F.pulse.rows],
-        [15.9, [380, 311]],
-      ],
-      click: 15.95,
-      capTop: ['Open any panel', 'It names the provider and the age. Always.'],
-    },
-    {
-      shot: 'shotSentry',
-      from: 18.0, to: 23.4,
-      cam: [
-        [18.0, F.sentry.all.concat([Z_FIT])],
-        [19.6, F.sentry.all.concat([Z_FIT])],
-        [21.5, F.sentry.both.concat([1.8])],
-        [23.4, F.sentry.both.concat([1.95])],
-      ],
-      cursor: [
-        [18.6, F.sentry.start],
-        [20.4, F.sentry.marker],
-        [21.4, F.sentry.marker],
-      ],
-      click: 20.5,
-      capTop: ['Watch the world move', 'A hazard, a place, and the distance between them.'],
-    },
-    {
-      shot: 'shotConnectors',
-      from: 23.4, to: 28.4,
-      cam: [
-        [23.4, F.connectors.all.concat([Z_FIT])],
-        [24.6, F.connectors.all.concat([Z_FIT])],
-        [26.2, F.connectors.table.concat([1.0])],
-        [28.4, F.connectors.dashes.concat([1.6])],
-      ],
-      cursor: [
-        [24.0, F.connectors.start],
-        [25.6, F.connectors.opensky],
-        [26.8, F.connectors.notReviewed],
-      ],
-      click: 26.85,
-      capTop: ['Ninety sources nobody has vetted', 'So it leaves the row empty, and says why.'],
-    },
-  ];
-
-  const SCENES = [
-    ['s1', 0.0, 3.0],
-    ['s2', 3.0, 6.2],
-    ['s3', 6.2, 9.2],
-    ['s4', 9.2, 12.4],
-    ['s8', 28.4, 31.0],
-    ['s9', 31.0, 33.0],
-  ];
+  var lastCaption = -1;
 
   function seek(t) {
-    $('glow').style.opacity = 0.5 + 0.5 * Math.sin((t / ${DURATION}) * Math.PI);
-    $('grid').style.transform = 'translateY(' + (-t * 8).toFixed(2) + 'px)';
-
-    for (const [id, start, end] of SCENES) {
-      const el = $(id);
-      const a = band(t, start, end, 0.45);
-      el.style.opacity = a;
-      el.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
+    /* --- the room the whole thing sits in. Never still. --- */
+    var pulse = 0.5 + 0.5 * Math.sin((t / DURATION) * Math.PI);
+    var beatFlash = 0;
+    for (var b = 0; b < DEMOS.length; b += 1) {
+      beatFlash = Math.max(beatFlash, Math.exp(-Math.pow((t - DEMOS[b].from) / 0.22, 2)));
     }
+    $('glow').style.opacity = 0.46 + 0.44 * pulse + 0.3 * beatFlash;
+    $('glow').style.transform =
+      'scale(' + (1 + 0.05 * Math.sin(t * 0.55) + 0.03 * beatFlash).toFixed(4) + ')';
+    $('glow2').style.opacity = (0.35 + 0.3 * Math.sin(t * 0.4 + 1.6)).toFixed(3);
+    $('grid').style.transform =
+      'translate(' + (Math.sin(t * 0.22) * 14).toFixed(2) + 'px,' + (-t * 9).toFixed(2) + 'px)';
 
-    const m = out(seg(t, 0.15, 1.1));
-    $('s1mark').style.transform = 'scale(' + (0.82 + 0.18 * m) + ')';
+    /* --- opening --- */
+    var a1 = band(t, 0, 1.95, 0.3);
+    $('s1').style.opacity = a1;
+    $('s1').style.visibility = a1 <= 0.001 ? 'hidden' : 'visible';
+    $('s1').style.transform = 'scale(' + (1 + 0.05 * seg(t, 0, 2.2)).toFixed(4) + ')';
+    var m = out(seg(t, 0.1, 0.85));
+    $('s1mark').style.transform =
+      'scale(' + (0.7 + 0.3 * m) + ') rotate(' + ((1 - m) * -9).toFixed(2) + 'deg)';
     $('s1mark').style.opacity = m;
-    const n = out(seg(t, 0.7, 0.9));
+    var n = out(seg(t, 0.55, 0.7));
     $('s1name').style.opacity = n;
-    $('s1name').style.transform = 'translateY(' + (26 - 26 * n) + 'px)';
+    $('s1name').style.transform = 'translateY(' + (30 - 30 * n) + 'px)';
 
-    document.querySelectorAll('#s2 .word').forEach((w, i) => {
-      const p = out(seg(t, 3.2 + i * 0.15, 0.8));
-      w.style.opacity = p;
-      w.style.transform = 'translateY(' + (54 - 54 * p) + 'px)';
-    });
+    var a2 = band(t, 1.9, 4.05, 0.3);
+    $('s2').style.opacity = a2;
+    $('s2').style.visibility = a2 <= 0.001 ? 'hidden' : 'visible';
+    var words = document.querySelectorAll('#s2 .word');
+    for (var i = 0; i < words.length; i += 1) {
+      var p = out(seg(t, 2.05 + i * 0.09, 0.6));
+      words[i].style.opacity = p;
+      words[i].style.transform =
+        'translateY(' + (58 - 58 * p) + 'px) rotate(' + ((1 - p) * -2.4).toFixed(2) + 'deg)';
+    }
+    var r = outQuint(seg(t, 2.5, 0.9));
+    $('s2rule').style.width = (r * 340).toFixed(1) + 'px';
+    $('s2rule').style.opacity = r;
 
-    $('s3eye').style.opacity = out(seg(t, 6.35, 0.6));
-    const pr = out(seg(t, 6.6, 0.8));
-    $('s3price').style.opacity = pr;
-    $('s3price').style.transform = 'scale(' + (0.94 + 0.06 * pr) + ')';
-    const q = out(seg(t, 7.5, 0.9));
-    $('s3q').style.opacity = q;
-    $('s3q').style.transform = 'translateY(' + (22 - 22 * q) + 'px)';
+    /*
+     * The problem and the answer are one scene, not two.
+     *
+     * A cut between "here is a number with no provenance" and "here is the same number with it"
+     * throws away the only thing that makes the point: that it is the *same number*. So the
+     * price stays put and the things around it are swapped underneath it.
+     */
+    var a3 = band(t, 3.95, TOUR_FROM + 0.15, 0.3);
+    $('s3').style.opacity = a3;
+    $('s3').style.visibility = a3 <= 0.001 ? 'hidden' : 'visible';
+    var flip = 5.85;
+    $('eyeA').style.opacity = out(seg(t, 4.1, 0.45)) * (1 - seg(t, flip - 0.25, 0.25));
+    $('eyeB').style.opacity = out(seg(t, flip + 0.05, 0.4));
+    var pr = out(seg(t, 4.25, 0.6));
+    var bump = Math.exp(-Math.pow((t - flip) / 0.2, 2));
+    $('price').style.opacity = pr;
+    $('price').style.transform = 'scale(' + (0.94 + 0.06 * pr + 0.045 * bump).toFixed(4) + ')';
+    var q = out(seg(t, 4.7, 0.6)) * (1 - seg(t, flip - 0.3, 0.3));
+    $('qmark').style.opacity = q;
+    $('qmark').style.transform = 'translateY(' + (24 - 24 * clamp(q)) + 'px)';
+    var bd = out(seg(t, flip + 0.12, 0.55));
+    $('badgeWrap').style.opacity = bd;
+    $('badgeWrap').style.transform =
+      'translateY(' + (34 - 34 * bd) + 'px) scale(' + (0.9 + 0.1 * back(seg(t, flip + 0.12, 0.55))).toFixed(4) + ')';
 
-    $('s4eye').style.opacity = out(seg(t, 9.35, 0.6));
-    $('s4price').style.opacity = out(seg(t, 9.5, 0.6));
-    const b = out(seg(t, 10.1, 0.85));
-    $('s4badge').style.opacity = b;
-    $('s4badge').style.transform =
-      'translateY(' + (34 - 34 * b) + 'px) scale(' + (0.94 + 0.06 * b) + ')';
+    /* --- the tour --- */
+    var demo = $('demo');
+    var live = band(t, TOUR_FROM - 0.35, TOUR_TO + 0.4, 0.36);
+    demo.style.opacity = live;
+    demo.style.visibility = live <= 0.001 ? 'hidden' : 'visible';
+    // The window is never quite still: a slow float and a degree of tilt, so the frame reads as
+    // a thing sitting in space rather than as a pasted rectangle.
+    var bob = Math.sin(t * 0.85) * 7;
+    var tilt = Math.sin(t * 0.42) * 0.55;
+    demo.style.transform =
+      'perspective(2600px) translateY(' + bob.toFixed(2) + 'px) ' +
+      'rotateY(' + tilt.toFixed(3) + 'deg) rotateX(' + (-tilt * 0.45).toFixed(3) + 'deg) ' +
+      'scale(' + (0.965 + 0.035 * clamp(live * 1.5)).toFixed(4) + ')';
 
-    // --- the demos ---
-    const demo = $('demo');
-    const cursor = $('cursor');
-    const ripple = $('ripple');
-    const active = DEMOS.find((d) => t >= d.from - 0.5 && t <= d.to + 0.5);
+    var idx = -1;
+    for (var j = 0; j < DEMOS.length; j += 1) {
+      if (t >= DEMOS[j].from && t < DEMOS[j].to) { idx = j; break; }
+    }
+    if (idx === -1) idx = t >= TOUR_TO ? DEMOS.length - 1 : 0;
+    var d = DEMOS[idx];
+    var into = t - d.from;
 
-    ['shotPulse', 'shotSentry', 'shotConnectors'].forEach((id) => {
-      $(id).style.opacity = active && active.shot === id ? 1 : 0;
-    });
-
-    if (!active) {
-      demo.style.opacity = 0;
-      demo.style.visibility = 'hidden';
-      cursor.style.opacity = 0;
-      ripple.style.opacity = 0;
-    } else {
-      const a = band(t, active.from, active.to, 0.45);
-      demo.style.opacity = a;
-      demo.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
-      // A hair of scale on the way in stops the cut feeling like a slide swap.
-      demo.style.transform = 'scale(' + (0.975 + 0.025 * clamp(a * 1.6)) + ')';
-
-      const cx = track(t, active.cam.map(([tt, v]) => [tt, v[0]]));
-      const cy = track(t, active.cam.map(([tt, v]) => [tt, v[1]]));
-      const cz = track(t, active.cam.map(([tt, v]) => [tt, v[2]]));
-      const cam = camera($(active.shot), cx, cy, cz);
-
-      const px = track(t, active.cursor.map(([tt, v]) => [tt, v[0]]));
-      const py = track(t, active.cursor.map(([tt, v]) => [tt, v[1]]));
-      const at = toStage(cam, px, py);
-
-      const shown = clamp(seg(t, active.cursor[0][0] - 0.25, 0.4)) * a;
-      // The cursor presses in at the moment of the click, then releases.
-      const press = 1 - 0.18 * Math.exp(-Math.pow((t - active.click) / 0.13, 2));
-      cursor.style.opacity = shown;
-      cursor.style.transform =
-        'translate(' + at.x.toFixed(1) + 'px,' + at.y.toFixed(1) + 'px) scale(' + press.toFixed(3) + ')';
-
-      const rp = seg(t, active.click, 0.75);
-      ripple.style.opacity = rp > 0 && rp < 1 ? (1 - rp) * 0.85 * a : 0;
-      ripple.style.transform =
-        'translate(' + at.x.toFixed(1) + 'px,' + at.y.toFixed(1) + 'px) scale(' + (0.4 + rp * 2.6).toFixed(3) + ')';
+    // Every image keeps its own camera, so a dissolve is two live shots crossing rather than a
+    // swap: the outgoing frame drifts on where it was left.
+    for (var k = 0; k < DEMOS.length; k += 1) {
+      var dk = DEMOS[k];
+      var img = $('im_' + dk.shot);
+      var op = 0;
+      if (k === idx) op = 1;
+      else if (k === idx - 1) op = 1 - clamp(into / CROSS);
+      img.style.opacity = op;
+      if (op > 0) camera(img, camAt(dk, t));
     }
 
-    // --- captions, tied to whichever demo is running ---
-    const capTop = $('capTop');
-    if (active) {
-      const ap = out(seg(t, active.from + 0.35, 0.7)) * (1 - seg(t, active.to - 0.4, 0.4));
-      capTop.style.opacity = ap;
-      capTop.style.transform = 'translateY(' + (20 - 20 * clamp(ap)) + 'px)';
-      capTop.innerHTML =
-        '<div class="k">' + active.capTop[0] + '</div><div class="v">' + active.capTop[1] + '</div>';
-    } else {
-      capTop.style.opacity = 0;
+    var cam = camAt(d, t);
+    var cx = track(t, pick(d.cursor, 1));
+    var cy = track(t, pick(d.cursor, 2));
+    var at = inPort(cam, cx, cy);
+
+    /*
+     * At a boundary the cursor would otherwise jump from wherever the last beat left it to
+     * wherever the next one starts. Blending in port space across the dissolve turns that jump
+     * into a sweep — and a sweep is what sells the idea that this is one continuous session.
+     */
+    if (idx > 0 && into < CROSS) {
+      var prev = DEMOS[idx - 1];
+      var pcam = camAt(prev, prev.to);
+      var pAt = inPort(
+        pcam,
+        track(prev.to, pick(prev.cursor, 1)),
+        track(prev.to, pick(prev.cursor, 2)),
+      );
+      var mix = out(into / CROSS);
+      at = { x: lerp(pAt.x, at.x, mix), y: lerp(pAt.y, at.y, mix) };
     }
 
-    ['p1', 'p2', 'p3', 'p4'].forEach((id, i) => {
-      const p = out(seg(t, 28.6 + i * 0.4, 0.7));
-      $(id).style.opacity = p;
-      $(id).style.transform = 'translateY(' + (30 - 30 * p) + 'px)';
-    });
+    var press = 1 - 0.2 * Math.exp(-Math.pow((t - d.click) / 0.12, 2));
+    $('cursor').style.opacity = live;
+    $('cursor').style.transform =
+      'translate(' + at.x.toFixed(1) + 'px,' + at.y.toFixed(1) + 'px) scale(' + press.toFixed(3) + ')';
 
-    const m9 = out(seg(t, 31.15, 0.9));
+    // Two rings, staggered, so the click lands with a bit of weight.
+    var rings = [['ripple', 0], ['ripple2', 0.11]];
+    for (var g = 0; g < rings.length; g += 1) {
+      var rp = seg(t, d.click + rings[g][1], 0.62);
+      var el = $(rings[g][0]);
+      el.style.opacity = rp > 0 && rp < 1 ? (1 - rp) * 0.9 * live : 0;
+      el.style.transform =
+        'translate(' + at.x.toFixed(1) + 'px,' + at.y.toFixed(1) + 'px) ' +
+        'scale(' + (0.35 + outQuint(rp) * 2.7).toFixed(3) + ')';
+    }
+
+    /*
+     * The control that was actually pressed, outlined at its measured size. It is the film's
+     * receipt: the highlight is drawn from the same box the anchor file recorded, so it can
+     * only ever sit on something the app really has.
+     */
+    var hb = $('hitbox');
+    var hv = Math.exp(-Math.pow((t - d.click - 0.06) / 0.34, 2)) * live;
+    var tl = inPort(cam, d.hit[0] - d.hit[2] / 2 - 5, d.hit[1] - d.hit[3] / 2 - 5);
+    hb.style.opacity = hv;
+    hb.style.width = ((d.hit[2] + 10) * cam.z).toFixed(1) + 'px';
+    hb.style.height = ((d.hit[3] + 10) * cam.z).toFixed(1) + 'px';
+    hb.style.transform =
+      'translate(' + tl.x.toFixed(1) + 'px,' + tl.y.toFixed(1) + 'px) ' +
+      'scale(' + (1 + 0.06 * (1 - hv)).toFixed(3) + ')';
+
+    // One pass of light across the glass as each beat opens.
+    var sh = clamp(into / 0.55);
+    $('sheen').style.opacity = (into < 0.55 ? (1 - sh) * 0.75 : 0) * live;
+    $('sheen').style.transform = 'translateX(' + lerp(-PORT_W, PORT_W, sh).toFixed(1) + 'px)';
+
+    /* --- captions and the route chip --- */
+    if (idx !== lastCaption) {
+      $('capK').textContent = d.caption[0];
+      $('capV').textContent = d.caption[1];
+      $('chipText').textContent = d.label;
+      lastCaption = idx;
+    }
+    $('cap').style.transform =
+      'translateY(' + (Math.sin(t * 0.7) * 4 - 5 * clamp(into / (d.to - d.from))).toFixed(2) + 'px)';
+    var capIn = out(seg(t, d.from + 0.08, 0.42));
+    var capOut = 1 - seg(t, d.to - 0.26, 0.26);
+    var ca = capIn * capOut * live;
+    $('capK').style.opacity = ca;
+    $('capK').style.transform = 'translateY(' + (26 - 26 * clamp(capIn)).toFixed(1) + 'px)';
+    var capV = out(seg(t, d.from + 0.2, 0.45)) * capOut * live;
+    $('capV').style.opacity = capV;
+    $('capV').style.transform = 'translateY(' + (22 - 22 * clamp(capV)).toFixed(1) + 'px)';
+    var chip = back(seg(t, d.from + 0.02, 0.4));
+    $('chip').style.opacity = clamp(seg(t, d.from + 0.02, 0.3)) * capOut * live;
+    $('chip').style.transform = 'scale(' + (0.86 + 0.14 * chip).toFixed(3) + ')';
+
+    $('ticks').style.opacity = live;
+    $('where').style.opacity = live * 0.9;
+    var ti = $('ticks').children;
+    for (var q2 = 0; q2 < ti.length; q2 += 1) {
+      var on = q2 === idx ? 1 : 0;
+      var done = q2 < idx ? 1 : 0;
+      ti[q2].style.width = (22 + 30 * on).toFixed(1) + 'px';
+      ti[q2].style.background = on ? '#f97316' : done ? '#f9731666' : '#ffffff1f';
+    }
+
+    /* --- closing --- */
+    var a8 = band(t, PROMISES_FROM - 0.1, END_FROM + 0.1, 0.3);
+    $('s8').style.opacity = a8;
+    $('s8').style.visibility = a8 <= 0.001 ? 'hidden' : 'visible';
+    var ps = ['p1', 'p2', 'p3', 'p4'];
+    for (var u = 0; u < ps.length; u += 1) {
+      var pp = out(seg(t, PROMISES_FROM + u * 0.28, 0.5));
+      $(ps[u]).style.opacity = pp;
+      $(ps[u]).style.transform =
+        'translateY(' + (34 - 34 * pp) + 'px) scale(' + (0.97 + 0.03 * pp).toFixed(3) + ')';
+    }
+
+    var a9 = band(t, END_FROM, DURATION + 0.2, 0.3);
+    $('s9').style.opacity = a9;
+    $('s9').style.visibility = a9 <= 0.001 ? 'hidden' : 'visible';
+    var m9 = out(seg(t, END_FROM + 0.1, 0.7));
     $('s9mark').style.opacity = m9;
-    $('s9mark').style.transform = 'scale(' + (0.9 + 0.1 * m9) + ')';
-    $('s9url').style.opacity = out(seg(t, 31.7, 0.7));
-    $('fine').style.opacity = out(seg(t, 31.9, 0.8)) * (1 - seg(t, ${DURATION} - 0.15, 0.15));
+    $('s9mark').style.transform = 'scale(' + (0.86 + 0.14 * back(seg(t, END_FROM + 0.1, 0.7))) + ')';
+    $('s9url').style.opacity = out(seg(t, END_FROM + 0.55, 0.55));
+    $('fine').style.opacity = out(seg(t, END_FROM + 0.75, 0.6)) * (1 - seg(t, DURATION - 0.15, 0.15));
   }
 
   window.seek = seek;
@@ -514,7 +856,7 @@ const PLAYER = `
                 padding:4px 8px; border-radius:6px; }
   #bar button:hover { background:#ffffff14; }
   #bar input { width:280px; accent-color:#f97316; cursor:pointer; }
-  #time { font-variant-numeric:tabular-nums; min-width:74px; text-align:right; }
+  #time { font-variant-numeric:tabular-nums; min-width:78px; text-align:right; }
 </style>
 <div id="bar">
   <button id="play" aria-label="Play or pause">Pause</button>
@@ -524,28 +866,28 @@ const PLAYER = `
   <button id="restart" aria-label="Restart">Restart</button>
 </div>
 <script>
-  const stage = document.querySelector('.stage');
-  const shell = document.createElement('div');
+  var stage = document.querySelector('.stage');
+  var shell = document.createElement('div');
   shell.id = 'shell';
   stage.parentNode.insertBefore(shell, stage);
   shell.appendChild(stage);
   shell.appendChild(document.getElementById('bar'));
 
   // Fit the fixed-size stage to whatever window it is opened in, without distorting it.
-  const fit = () => {
-    const scale = Math.min(window.innerWidth / ${W}, window.innerHeight / ${H});
+  var fit = function () {
+    var scale = Math.min(window.innerWidth / ${W}, window.innerHeight / ${H});
     stage.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
   };
   window.addEventListener('resize', fit);
   fit();
 
-  const play = document.getElementById('play');
-  const scrub = document.getElementById('scrub');
-  const time = document.getElementById('time');
+  var play = document.getElementById('play');
+  var scrub = document.getElementById('scrub');
+  var time = document.getElementById('time');
 
-  let t = 0;
-  let playing = true;
-  let last = performance.now();
+  var t = 0;
+  var playing = true;
+  var last = performance.now();
 
   function frame(now) {
     if (playing) {
@@ -556,7 +898,7 @@ const PLAYER = `
        * a sixty-second delta and teleport the film most of the way through. A capped step
        * resumes where it left off.
        */
-      const step = Math.min((now - last) / 1000, 1 / 15);
+      var step = Math.min((now - last) / 1000, 1 / 15);
       t = (t + step) % ${DURATION};
       scrub.value = t;
     }
@@ -567,22 +909,22 @@ const PLAYER = `
   }
   requestAnimationFrame(frame);
 
-  play.onclick = () => {
+  play.onclick = function () {
     playing = !playing;
     play.textContent = playing ? 'Pause' : 'Play';
   };
-  scrub.oninput = () => {
+  scrub.oninput = function () {
     t = Number(scrub.value);
     playing = false;
     play.textContent = 'Play';
   };
-  document.getElementById('restart').onclick = () => {
+  document.getElementById('restart').onclick = function () {
     t = 0;
     playing = true;
     play.textContent = 'Pause';
   };
   // Space is what everyone presses.
-  window.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', function (e) {
     if (e.code === 'Space') { e.preventDefault(); play.click(); }
   });
 </script>`;
@@ -628,12 +970,31 @@ async function browserSocket() {
   throw new Error('the headless shell never opened its debugging port');
 }
 
+/**
+ * Drive the film to one moment, and refuse to carry on if it threw.
+ *
+ * An exception inside seek() does not blank the page — it leaves every property after the throw
+ * at its previous value, so the render completes and the mistake looks like a design decision.
+ * Surfacing it here is the difference between one confusing still and a thousand.
+ */
+async function seekAt(cdp, sessionId, t) {
+  const res = await cdp.send(
+    'Runtime.evaluate',
+    { expression: `seek(${t});`, returnByValue: true },
+    sessionId,
+  );
+  if (res.exceptionDetails) {
+    const detail = res.exceptionDetails;
+    throw new Error(`seek(${t}) threw: ${detail.exception?.description ?? detail.text}`);
+  }
+}
+
 async function main() {
   const htmlOut = flag('html', null);
   if (htmlOut) {
     mkdirSync(dirname(htmlOut), { recursive: true });
     writeFileSync(htmlOut, html + PLAYER);
-    process.stdout.write(`${htmlOut}\n`);
+    process.stdout.write(`${htmlOut}  (${DURATION}s, ${BEATS.length} features)\n`);
     return;
   }
 
@@ -669,9 +1030,9 @@ async function main() {
   const { frameTree } = await cdp.send('Page.getFrameTree', {}, sessionId);
   await cdp.send('Page.setDocumentContent', { frameId: frameTree.frame.id, html }, sessionId);
 
-  // Fonts and three inlined screenshots have to decode before the first frame, or the opening
+  // Fonts and a dozen inlined screenshots have to decode before the first frame, or the opening
   // seconds render in a fallback face.
-  for (let i = 0; i < 80; i += 1) {
+  for (let i = 0; i < 120; i += 1) {
     const { result } = await cdp.send(
       'Runtime.evaluate',
       {
@@ -690,30 +1051,29 @@ async function main() {
   }
 
   /*
-   * Preview mode exists because a full render is 720 frames and several minutes, and almost
-   * every mistake in a piece like this — a word landing off-screen, two scenes overlapping, a
-   * card cropped wrong — is visible in a single still.
+   * Preview mode exists because a full render is a thousand frames and several minutes, and
+   * almost every mistake in a piece like this — a word landing off-screen, a zoom overshooting
+   * the panel, a cursor pointing at nothing — is visible in a single still.
    */
   const previewDir = flag('preview', null);
   if (previewDir) {
     mkdirSync(previewDir, { recursive: true });
-    // Mid-scene, where everything that animates in has arrived and nothing has left yet.
     const moments = [
-      ['1-mark', 2.2],
-      ['2-headline', 5.2],
-      ['3-problem', 8.4],
-      ['4-answer', 11.6],
-      ['5-pulse-wide', 14.0],
-      ['6-pulse-zoom', 17.4],
-      ['7-sentry-wide', 19.4],
-      ['8-sentry-zoom', 22.8],
-      ['9-connectors-wide', 24.6],
-      ['10-connectors-zoom', 27.8],
-      ['11-promises', 30.2],
-      ['12-end', 32.4],
+      ['01-mark', 1.1],
+      ['02-headline', 3.1],
+      ['03-problem', 5.3],
+      ['04-answer', 7.2],
     ];
+    DEMOS.forEach((d, i) => {
+      const n = String(i + 5).padStart(2, '0');
+      moments.push([`${n}-${d.shot}-click`, d.click + 0.08]);
+      moments.push([`${n}-${d.shot}-end`, d.to - 0.12]);
+    });
+    moments.push(['29-promises', PROMISES_FROM + 1.4]);
+    moments.push(['30-end', END_FROM + 1.5]);
+
     for (const [name, t] of moments) {
-      await cdp.send('Runtime.evaluate', { expression: `seek(${t});` }, sessionId);
+      await seekAt(cdp, sessionId, t);
       await sleep(120);
       const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
       const file = join(previewDir, `${name}.png`);
@@ -730,11 +1090,7 @@ async function main() {
 
   for (let frame = 0; frame < total; frame += 1) {
     const t = frame / FPS;
-    await cdp.send(
-      'Runtime.evaluate',
-      { expression: `seek(${t});`, returnByValue: true },
-      sessionId,
-    );
+    await seekAt(cdp, sessionId, t);
     const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
     writeFileSync(
       join(frameDir, `f${String(frame).padStart(5, '0')}.png`),
