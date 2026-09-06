@@ -118,15 +118,25 @@ const anchorOf = (shotName, anchor) => {
 };
 
 /**
- * Keep the frame inside the picture.
+ * Keep the frame inside the picture, with room to spare.
  *
- * A camera centred near an edge at high zoom shows the page background past the edge of the
+ * A camera centred near an edge at high zoom shows page background past the edge of the
  * screenshot, which reads as a rendering fault rather than as a choice.
+ *
+ * The eight pixels of margin are not cosmetic. The page clamps too, as a guard, and a keyframe
+ * sitting exactly on the boundary puts the whole segment on it: the interpolated path then
+ * crosses in and out by fractions of a pixel, the clamp engages and disengages, and each switch
+ * is a discontinuity in velocity. Invisible on screen, and it dominated the acceleration
+ * measurements — 110k px/s² of it, from an excursion of about a third of a pixel. Keyframes that
+ * sit clear of the edge leave the guard unengaged, which is where a guard belongs.
  */
+const EDGE = 8;
 const inside = ([x, y], z) => {
-  const hw = PORT_W / 2 / z;
-  const hh = PORT_H / 2 / z;
-  return [Math.min(Math.max(x, hw), SHOT_W - hw), Math.min(Math.max(y, hh), SHOT_H - hh)];
+  const hw = PORT_W / 2 / z + EDGE;
+  const hh = PORT_H / 2 / z + EDGE;
+  const span = (v, half, total) =>
+    half * 2 > total ? total / 2 : Math.min(Math.max(v, half), total - half);
+  return [span(x, hw, SHOT_W), span(y, hh, SHOT_H)];
 };
 
 /**
@@ -204,7 +214,7 @@ const BEATS = [
     shot: '05-research',
     label: 'Research Lab',
     target: 'showNumbers',
-    look: 'showNumbers',
+    look: 'summary',
     caption: ['No chart without its numbers', 'One line opens every point it was drawn from.'],
   },
   {
@@ -212,7 +222,7 @@ const BEATS = [
     label: 'Compare',
     target: 'addAsset',
     look: 'showNumbers',
-    caption: ['Line them up on one axis', 'Rebased to a shared start, so the shapes compare.'],
+    caption: ['Line them up on one axis', 'Up to six, each rebased so it starts from itself.'],
   },
   {
     shot: '06-screener',
@@ -255,7 +265,7 @@ const BEATS = [
     callout: 'Stocks Basics',
     label: 'Learn',
     target: 'firstLesson',
-    look: 'glossary',
+    look: 'riskLesson',
     caption: [
       'Start from the beginning',
       'Five paths and a glossary, for someone new to all of it.',
@@ -294,7 +304,7 @@ const BEATS = [
     shot: '12-settings',
     label: 'Settings',
     target: 'saveKey',
-    look: 'keyField',
+    look: 'testConnection',
     caption: [
       'Your keys, your keychain',
       'Held by the OS. Never in the database, logs or exports.',
@@ -341,6 +351,20 @@ const DEMOS = BEATS.map((beat) => {
   const enter = entryFor(hit);
 
   /*
+   * The shot keeps moving while it dissolves out — in the direction it was already going, and
+   * without touching the zoom.
+   *
+   * A frozen outgoing shot makes a cut feel like a slide change. The obvious fix was to let the
+   * zoom keep creeping, and that was wrong: a beat that pulled back to reveal a table would then
+   * fall and rise again inside half a second, and a zoom that reverses direction for no reason
+   * is the single thing an eye picks up as "wrong" without being able to say why. Continuing the
+   * pan costs nothing and reverses nothing.
+   */
+  const span = Math.hypot(endPt[0] - midPt[0], endPt[1] - midPt[1]);
+  const drift =
+    span < 1 ? [0, 0] : [((endPt[0] - midPt[0]) / span) * 26, ((endPt[1] - midPt[1]) / span) * 26];
+
+  /*
    * The one thing this film must not get wrong.
    *
    * Everything else is taste; a cursor pressing a control that is not in the picture is a claim
@@ -380,12 +404,12 @@ const DEMOS = BEATS.map((beat) => {
      * label naming the control has to be readable while it is on screen.
      */
     cam: [
-      [from - CROSS, wide[0], wide[1], Z_FIT * 1.1],
+      [from - CROSS, wide[0], wide[1], Z_FIT],
       [from + 0.12 * dur, wide[0], wide[1], Z_FIT],
       [from + 0.5 * dur, midPt[0], midPt[1], midZoom],
       [from + 0.68 * dur, midPt[0], midPt[1], midZoom],
       [to, endPt[0], endPt[1], endZoom],
-      [to + CROSS, endPt[0], endPt[1], endZoom * 1.02],
+      [to + CROSS, endPt[0] + drift[0], endPt[1] + drift[1], endZoom],
     ],
     // `back` overshoots and settles, the way a hand arrives at a button rather than gliding to
     // a mathematical stop.
@@ -404,6 +428,31 @@ const END_FROM = PROMISES_FROM + 2.2;
 const DURATION = Number((END_FROM + 2.3).toFixed(2));
 
 const IMAGES = BEATS.map((b) => [b.shot.replace(/[^a-z]/g, ''), b.shot]);
+
+/**
+ * The soundtrack, as a list of moments.
+ *
+ * Synthesised in the page rather than shipped as an audio file, for the same reason the film is
+ * source code: a single self-contained HTML file is the deliverable, and a few kilobytes of
+ * oscillator beats several megabytes of base64 mp3 that nobody can edit. It also means every
+ * sound is pinned to the timeline that produced the picture — the click you hear is the frame
+ * the cursor presses, because both read this list.
+ *
+ * Sound exists only in the HTML player. The frame renderer produces images; giving them audio
+ * is ffmpeg's job, and it needs a real one.
+ */
+const CUES = [
+  { t: 0.12, k: 'rise' },
+  { t: 1.95, k: 'sweep' },
+  { t: 4.2, k: 'tone' },
+  { t: 5.97, k: 'confirm' },
+  ...DEMOS.flatMap((d) => [
+    { t: d.from, k: 'cut' },
+    { t: d.click, k: 'click' },
+  ]),
+  { t: PROMISES_FROM, k: 'sweep' },
+  { t: END_FROM, k: 'resolve' },
+].sort((a, b) => a.t - b.t);
 
 /* ------------------------------------------------------------------------------ page */
 
@@ -738,17 +787,38 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
   }
 
   /*
-   * A spline is allowed to overshoot between keys, which for a camera is a feature everywhere
-   * except at the edges of the picture: half a frame of page background past the corner of a
-   * screenshot reads as a rendering fault. Clamping here rather than flattening the spline
-   * keeps the motion and loses only the overshoot that would have shown nothing.
+   * The camera. Zoom travels through log space; pan travels through the image.
+   *
+   * Scale is multiplicative — 1.1x to 1.2x is a far smaller visual step than 2.0x to 2.1x — so
+   * interpolating the raw number makes a push crawl at the wide end and then run away as it goes
+   * deep. What reads as a steady zoom is a constant *rate*, and a constant rate is a straight
+   * line in log space. Measured across the tour, it halves the peak change in zoom rate.
+   *
+   * Pan was tried in window pixels too, on the same reasoning, and it is the better idea right
+   * up until a subject sits near the edge of a shot. Interpolating the subject's screen position
+   * makes its image-space path bulge outward on the way — the framing at both ends is exactly as
+   * authored, but between them the camera swings past the edge of the screenshot and the guard
+   * has to catch it. A guard engaging mid-move is a discontinuity in velocity: it turned a 33k
+   * px/s² peak into 110k, all of it invisible except as a lurch. Image-space pan has no such
+   * excursion, and the perceptual gain it gave up was about ten per cent of the mean. Zoom keeps
+   * the log; pan keeps the edges.
    */
+  function derive(d) {
+    if (!d.lz) {
+      d.x = d.cam.map(function (k) { return [k[0], k[1]]; });
+      d.y = d.cam.map(function (k) { return [k[0], k[2]]; });
+      d.lz = d.cam.map(function (k) { return [k[0], Math.log(k[3])]; });
+    }
+    return d;
+  }
+
   function camAt(d, t) {
-    var z = Math.max(Z_FIT, spline(t, pick(d.cam, 3)));
+    derive(d);
+    var z = Math.max(Z_FIT, Math.exp(spline(t, d.lz)));
     var hw = PORT_W / 2 / z, hh = PORT_H / 2 / z;
     return {
-      x: Math.min(Math.max(spline(t, pick(d.cam, 1)), hw), SHOT_W - hw),
-      y: Math.min(Math.max(spline(t, pick(d.cam, 2)), hh), SHOT_H - hh),
+      x: Math.min(Math.max(spline(t, d.x), hw), SHOT_W - hw),
+      y: Math.min(Math.max(spline(t, d.y), hh), SHOT_H - hh),
       z: z,
     };
   }
@@ -1065,14 +1135,18 @@ const PLAYER = `
   #bar button:hover { background:#ffffff14; }
   #bar input { width:280px; accent-color:#f97316; cursor:pointer; }
   #time { font-variant-numeric:tabular-nums; min-width:78px; text-align:right; }
+  #hint { position:fixed; right:22px; bottom:22px; font-family:system-ui,sans-serif; font-size:12px;
+          color:#79838f; letter-spacing:.04em; z-index:9; transition:opacity .4s; }
 </style>
 <div id="bar">
   <button id="play" aria-label="Play or pause">Pause</button>
   <input id="scrub" type="range" min="0" max="${DURATION}" step="0.01" value="0"
          aria-label="Scrub the timeline">
   <span id="time">0.0 / ${DURATION}s</span>
+  <button id="sound" aria-label="Sound on or off">Sound on</button>
   <button id="restart" aria-label="Restart">Restart</button>
 </div>
+<div id="hint">click anywhere for sound</div>
 <script>
   var stage = document.querySelector('.stage');
   var shell = document.createElement('div');
@@ -1080,6 +1154,160 @@ const PLAYER = `
   stage.parentNode.insertBefore(shell, stage);
   shell.appendChild(stage);
   shell.appendChild(document.getElementById('bar'));
+
+  /* ------------------------------------------------------------------------------- sound
+   *
+   * Synthesised here rather than loaded, because the deliverable is one self-contained file:
+   * a few oscillators and a noise buffer cost a page of code, where the same thirty seconds as
+   * base64 audio would cost several megabytes and could not be edited by anyone.
+   *
+   * Every cue is a moment on the same timeline that drives the picture, so the click you hear
+   * is the frame the cursor presses — they cannot drift, because there is only one list.
+   */
+  var CUES = ${JSON.stringify(CUES)};
+  var snd = { ctx: null, master: null, noise: null, on: true };
+
+  function audioStart() {
+    if (snd.ctx) {
+      if (snd.ctx.state === 'suspended') snd.ctx.resume();
+      return;
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var ctx = new AC();
+    var master = ctx.createGain();
+    master.gain.value = 0.0001;
+    master.connect(ctx.destination);
+
+    // One second of white noise, shared by every percussive voice.
+    var buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+
+    snd.ctx = ctx;
+    snd.master = master;
+    snd.noise = buf;
+
+    // A low fifth under everything, so the gaps between cues are quiet rather than empty.
+    var bed = ctx.createGain();
+    bed.gain.value = 0.05;
+    bed.connect(master);
+    var lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 210;
+    lp.Q.value = 0.7;
+    lp.connect(bed);
+    [55, 82.5].forEach(function (f, i) {
+      var o = ctx.createOscillator();
+      o.type = i ? 'triangle' : 'sine';
+      o.frequency.value = f;
+      var g = ctx.createGain();
+      g.gain.value = i ? 0.32 : 1;
+      o.connect(g);
+      g.connect(lp);
+      o.start();
+    });
+    // A slow wander on the cutoff, so the bed breathes instead of droning.
+    var lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.07;
+    var depth = ctx.createGain();
+    depth.gain.value = 85;
+    lfo.connect(depth);
+    depth.connect(lp.frequency);
+    lfo.start();
+
+    master.gain.setTargetAtTime(snd.on ? 0.5 : 0.0001, ctx.currentTime, 0.4);
+    var hint = document.getElementById('hint');
+    if (hint) hint.style.opacity = 0;
+  }
+
+  function env(node, t0, peak, attack, decay) {
+    var g = snd.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay);
+    node.connect(g);
+    g.connect(snd.master);
+    return g;
+  }
+
+  function osc(type, f0, f1, t0, dur) {
+    var o = snd.ctx.createOscillator();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t0);
+    if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    o.start(t0);
+    o.stop(t0 + dur + 0.06);
+    return o;
+  }
+
+  function noiseThrough(t0, dur, type, f0, f1, q) {
+    var src = snd.ctx.createBufferSource();
+    src.buffer = snd.noise;
+    var filter = snd.ctx.createBiquadFilter();
+    filter.type = type;
+    filter.Q.value = q || 1;
+    filter.frequency.setValueAtTime(f0, t0);
+    filter.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+    src.connect(filter);
+    src.start(t0);
+    src.stop(t0 + dur + 0.06);
+    return filter;
+  }
+
+  /*
+   * Named playCue, not play.
+   *
+   * The player already binds a var named play to the play/pause button, and in a classic script that
+   * assignment overwrites a hoisted function of the same name. Every cue would have tried to
+   * call a DOM element. It threw silently inside the animation frame, which in a film that
+   * still ran perfectly is a bug you would never find by watching it.
+   */
+  function playCue(kind) {
+    if (!snd.ctx || !snd.on) return;
+    var t0 = snd.ctx.currentTime + 0.005;
+    if (kind === 'click') {
+      // A tick with a body and an edge: the sine is what you hear, the noise is what makes it
+      // land on a surface rather than in the air.
+      env(osc('sine', 1750, 900, t0, 0.05), t0, 0.3, 0.003, 0.06);
+      env(noiseThrough(t0, 0.03, 'highpass', 2600, 4200), t0, 0.1, 0.002, 0.03);
+    } else if (kind === 'cut') {
+      env(noiseThrough(t0, 0.28, 'bandpass', 420, 2600, 1.1), t0, 0.085, 0.02, 0.26);
+    } else if (kind === 'rise') {
+      env(osc('sine', 110, 440, t0, 1), t0, 0.16, 0.5, 0.6);
+    } else if (kind === 'sweep') {
+      env(noiseThrough(t0, 0.6, 'bandpass', 300, 1800, 0.9), t0, 0.07, 0.25, 0.4);
+    } else if (kind === 'tone') {
+      env(osc('sine', 330, 330, t0, 0.5), t0, 0.13, 0.06, 0.45);
+    } else if (kind === 'confirm') {
+      env(osc('sine', 660, 660, t0, 0.12), t0, 0.16, 0.01, 0.12);
+      env(osc('sine', 990, 990, t0 + 0.09, 0.24), t0 + 0.09, 0.13, 0.01, 0.25);
+    } else if (kind === 'resolve') {
+      [110, 165, 220].forEach(function (f, i) {
+        env(osc('sine', f, f, t0 + i * 0.06, 1.8), t0 + i * 0.06, 0.11, 0.25, 1.5);
+      });
+    }
+  }
+
+  function fireCues(a, b) {
+    if (b < a) {
+      fireCues(a, ${DURATION} + 0.001);
+      fireCues(-0.001, b);
+      return;
+    }
+    // A scrub, or a tab coming back from the background, hands us a wide interval. Firing every
+    // cue inside it at once is a burst of noise nobody asked for.
+    if (b - a > 0.4) return;
+    for (var i = 0; i < CUES.length; i += 1) {
+      if (CUES[i].t > a && CUES[i].t <= b) playCue(CUES[i].k);
+    }
+  }
+
+  ['pointerdown', 'keydown'].forEach(function (name) {
+    window.addEventListener(name, function () {
+      if (snd.on) audioStart();
+    });
+  });
 
   // Fit the fixed-size stage to whatever window it is opened in, without distorting it.
   var fit = function () {
@@ -1107,8 +1335,10 @@ const PLAYER = `
        * resumes where it left off.
        */
       var step = Math.min((now - last) / 1000, 1 / 15);
+      var was = t;
       t = (t + step) % ${DURATION};
       scrub.value = t;
+      fireCues(was, t);
     }
     last = now;
     seek(t);
@@ -1126,6 +1356,14 @@ const PLAYER = `
     playing = false;
     play.textContent = 'Play';
   };
+  var soundButton = document.getElementById('sound');
+  soundButton.onclick = function () {
+    snd.on = !snd.on;
+    soundButton.textContent = snd.on ? 'Sound on' : 'Sound off';
+    if (snd.on) audioStart();
+    if (snd.ctx) snd.master.gain.setTargetAtTime(snd.on ? 0.5 : 0.0001, snd.ctx.currentTime, 0.15);
+  };
+
   document.getElementById('restart').onclick = function () {
     t = 0;
     playing = true;

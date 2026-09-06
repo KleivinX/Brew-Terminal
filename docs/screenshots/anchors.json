@@ -96,6 +96,11 @@
       "role": "button",
       "name": "Show the underlying numbers"
     },
+    "summary": {
+      "box": [544, 680, 606, 36],
+      "role": "p",
+      "name": "Price chart for BTC over 1M."
+    },
     "ask": {
       "box": [1151, 24, 100, 26],
       "role": "button",

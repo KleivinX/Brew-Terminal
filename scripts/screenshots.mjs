@@ -93,6 +93,7 @@ const ANCHORS = {
     ['rangeButton', 'button', 'One month'],
     ['indicator', 'button', 'EMA 20'],
     ['showNumbers', 'button', 'Show the underlying numbers'],
+    ['summary', '[class*="_summary_"]'],
     ['ask', 'button', 'Ask about this'],
     ['overview', 'section[aria-label]'],
   ],
