@@ -208,38 +208,35 @@ const BEATS = [
     hero: true,
     target: 'cryptoTab',
     look: 'providerBadge',
-    caption: ['Every panel names its source', 'Which provider it came from, and how old it is.'],
+    caption: ['Every panel names its source', 'Which provider, and how old.'],
   },
   {
     shot: '05-research',
     label: 'Research Lab',
     target: 'showNumbers',
     look: 'summary',
-    caption: ['No chart without its numbers', 'One line opens every point it was drawn from.'],
+    caption: ['No chart without its numbers', 'One line opens every point.'],
   },
   {
     shot: '07-compare',
     label: 'Compare',
     target: 'addAsset',
     look: 'showNumbers',
-    caption: ['Line them up on one axis', 'Up to six, each rebased so it starts from itself.'],
+    caption: ['Line them up on one axis', 'Each rebased to its own start.'],
   },
   {
     shot: '06-screener',
     label: 'Screener',
     target: 'sort',
     look: 'exportCsv',
-    caption: ['Filter the whole market', 'Price, cap, change — then sort it, then take it away.'],
+    caption: ['Filter the whole market', 'Then sort it. Then take it away.'],
   },
   {
     shot: '11-portfolio',
     label: 'Portfolio',
     target: 'recordTrade',
     look: 'position',
-    caption: [
-      'What you hold, and what it did',
-      'FIFO cost basis, worked out here, from your entries.',
-    ],
+    caption: ['What you hold, and what it did', 'FIFO, worked out on this machine.'],
   },
   {
     shot: '02-sentry',
@@ -248,17 +245,14 @@ const BEATS = [
     hero: true,
     target: 'watchRow',
     look: 'map',
-    caption: [
-      'A hazard, a place, the distance',
-      'Within 500 km of a shipping chokepoint — and which one.',
-    ],
+    caption: ['A hazard, a place, the distance', 'Within 500 km of a chokepoint.'],
   },
   {
     shot: '03-atlas',
     label: 'Atlas',
     target: 'pause',
     look: 'tickerRow',
-    caption: ['A ticker you can stop', 'A number you cannot finish reading is not information.'],
+    caption: ['A ticker you can stop', 'A number you cannot read is not one.'],
   },
   {
     shot: '08-learn',
@@ -266,10 +260,7 @@ const BEATS = [
     label: 'Learn',
     target: 'firstLesson',
     look: 'riskLesson',
-    caption: [
-      'Start from the beginning',
-      'Five paths and a glossary, for someone new to all of it.',
-    ],
+    caption: ['Start from the beginning', 'Five paths and a glossary.'],
   },
   {
     shot: '10-notes',
@@ -277,20 +268,14 @@ const BEATS = [
     label: 'Notes',
     target: 'noteCard',
     look: 'noteBody',
-    caption: [
-      'Write down why you did it',
-      'Kept on this computer. Never sent anywhere on its own.',
-    ],
+    caption: ['Write down why you did it', 'Kept here. Sent nowhere on its own.'],
   },
   {
     shot: '09-desk',
     label: 'Model Desk',
     target: 'setUp',
     look: 'panel',
-    caption: [
-      'The AI is optional, and off',
-      'Nothing reaches a model until you go and set one up.',
-    ],
+    caption: ['The AI is optional, and off', 'Nothing leaves until you set it up.'],
   },
   {
     shot: '04-connectors',
@@ -305,17 +290,29 @@ const BEATS = [
     label: 'Settings',
     target: 'saveKey',
     look: 'testConnection',
-    caption: [
-      'Your keys, your keychain',
-      'Held by the OS. Never in the database, logs or exports.',
-    ],
+    caption: ['Your keys, your keychain', 'Held by the OS. Never logged.'],
   },
 ];
 
-const TOUR_FROM = 8.0;
-const HERO = 2.9;
-const PLAIN = 1.93;
-const CROSS = 0.3;
+/*
+ * Pacing.
+ *
+ * Under thirty seconds, because that is the length people watch twice.
+ *
+ * The thing that sets the floor is not the camera — a push and a click fit comfortably in a
+ * second and a half. It is the reading. A forty-five character line needs about two seconds to
+ * take in, so a beat can only be as short as its own caption, and the way to a shorter film was
+ * to write shorter captions first and then take the time back. Every sub-line below is around
+ * thirty characters for that reason.
+ */
+const LOGO_TO = 1.15;
+const HEADLINE_FROM = 1.05;
+const PRICE_FROM = 2.35;
+const FLIP = 3.5;
+const TOUR_FROM = 4.5;
+const HERO = 2.2;
+const PLAIN = 1.55;
+const CROSS = 0.26;
 
 /** Beat timings, and the keyframes derived from them. */
 let cursorAt = TOUR_FROM;
@@ -424,8 +421,8 @@ const DEMOS = BEATS.map((beat) => {
 
 const TOUR_TO = cursorAt;
 const PROMISES_FROM = TOUR_TO + 0.2;
-const END_FROM = PROMISES_FROM + 2.2;
-const DURATION = Number((END_FROM + 2.3).toFixed(2));
+const END_FROM = PROMISES_FROM + 1.5;
+const DURATION = Number((END_FROM + 1.75).toFixed(2));
 
 const IMAGES = BEATS.map((b) => [b.shot.replace(/[^a-z]/g, ''), b.shot]);
 
@@ -442,10 +439,10 @@ const IMAGES = BEATS.map((b) => [b.shot.replace(/[^a-z]/g, ''), b.shot]);
  * is ffmpeg's job, and it needs a real one.
  */
 const CUES = [
-  { t: 0.12, k: 'rise' },
-  { t: 1.95, k: 'sweep' },
-  { t: 4.2, k: 'tone' },
-  { t: 5.97, k: 'confirm' },
+  { t: 0.08, k: 'rise' },
+  { t: HEADLINE_FROM + 0.1, k: 'sweep' },
+  { t: PRICE_FROM + 0.12, k: 'tone' },
+  { t: FLIP + 0.1, k: 'confirm' },
   ...DEMOS.flatMap((d) => [
     { t: d.from, k: 'cut' },
     { t: d.click, k: 'click' },
@@ -762,6 +759,8 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
   var SHOT_W = ${SHOT_W}, SHOT_H = ${SHOT_H};
   var DURATION = ${DURATION}, CROSS = ${CROSS};
   var TOUR_FROM = ${TOUR_FROM}, TOUR_TO = ${TOUR_TO};
+  var LOGO_TO = ${LOGO_TO}, HEADLINE_FROM = ${HEADLINE_FROM};
+  var PRICE_FROM = ${PRICE_FROM}, FLIP = ${FLIP};
   var PROMISES_FROM = ${PROMISES_FROM}, END_FROM = ${END_FROM};
   var DEMOS = ${JSON.stringify(DEMOS)};
 
@@ -849,29 +848,29 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
       'translate(' + (Math.sin(t * 0.22) * 14).toFixed(2) + 'px,' + (-t * 9).toFixed(2) + 'px)';
 
     /* --- opening --- */
-    var a1 = band(t, 0, 1.95, 0.3);
+    var a1 = band(t, 0, LOGO_TO + 0.1, 0.26);
     $('s1').style.opacity = a1;
     $('s1').style.visibility = a1 <= 0.001 ? 'hidden' : 'visible';
     $('s1').style.transform = 'scale(' + (1 + 0.05 * seg(t, 0, 2.2)).toFixed(4) + ')';
-    var m = out(seg(t, 0.1, 0.85));
+    var m = out(seg(t, 0.06, 0.62));
     $('s1mark').style.transform =
       'scale(' + (0.7 + 0.3 * m) + ') rotate(' + ((1 - m) * -9).toFixed(2) + 'deg)';
     $('s1mark').style.opacity = m;
-    var n = out(seg(t, 0.55, 0.7));
+    var n = out(seg(t, 0.4, 0.5));
     $('s1name').style.opacity = n;
     $('s1name').style.transform = 'translateY(' + (30 - 30 * n) + 'px)';
 
-    var a2 = band(t, 1.9, 4.05, 0.3);
+    var a2 = band(t, HEADLINE_FROM, PRICE_FROM + 0.1, 0.26);
     $('s2').style.opacity = a2;
     $('s2').style.visibility = a2 <= 0.001 ? 'hidden' : 'visible';
     var words = document.querySelectorAll('#s2 .word');
     for (var i = 0; i < words.length; i += 1) {
-      var p = out(seg(t, 2.05 + i * 0.09, 0.6));
+      var p = out(seg(t, HEADLINE_FROM + 0.12 + i * 0.07, 0.45));
       words[i].style.opacity = p;
       words[i].style.transform =
         'translateY(' + (58 - 58 * p) + 'px) rotate(' + ((1 - p) * -2.4).toFixed(2) + 'deg)';
     }
-    var r = outQuint(seg(t, 2.5, 0.9));
+    var r = outQuint(seg(t, HEADLINE_FROM + 0.5, 0.7));
     $('s2rule').style.width = (r * 340).toFixed(1) + 'px';
     $('s2rule').style.opacity = r;
 
@@ -882,23 +881,22 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
      * throws away the only thing that makes the point: that it is the *same number*. So the
      * price stays put and the things around it are swapped underneath it.
      */
-    var a3 = band(t, 3.95, TOUR_FROM + 0.15, 0.3);
+    var a3 = band(t, PRICE_FROM - 0.1, TOUR_FROM + 0.12, 0.26);
     $('s3').style.opacity = a3;
     $('s3').style.visibility = a3 <= 0.001 ? 'hidden' : 'visible';
-    var flip = 5.85;
-    $('eyeA').style.opacity = out(seg(t, 4.1, 0.45)) * (1 - seg(t, flip - 0.25, 0.25));
-    $('eyeB').style.opacity = out(seg(t, flip + 0.05, 0.4));
-    var pr = out(seg(t, 4.25, 0.6));
-    var bump = Math.exp(-Math.pow((t - flip) / 0.2, 2));
+    $('eyeA').style.opacity = out(seg(t, PRICE_FROM + 0.05, 0.35)) * (1 - seg(t, FLIP - 0.22, 0.22));
+    $('eyeB').style.opacity = out(seg(t, FLIP + 0.05, 0.4));
+    var pr = out(seg(t, PRICE_FROM + 0.15, 0.45));
+    var bump = Math.exp(-Math.pow((t - FLIP) / 0.2, 2));
     $('price').style.opacity = pr;
     $('price').style.transform = 'scale(' + (0.94 + 0.06 * pr + 0.045 * bump).toFixed(4) + ')';
-    var q = out(seg(t, 4.7, 0.6)) * (1 - seg(t, flip - 0.3, 0.3));
+    var q = out(seg(t, PRICE_FROM + 0.4, 0.42)) * (1 - seg(t, FLIP - 0.26, 0.26));
     $('qmark').style.opacity = q;
     $('qmark').style.transform = 'translateY(' + (24 - 24 * clamp(q)) + 'px)';
-    var bd = out(seg(t, flip + 0.12, 0.55));
+    var bd = out(seg(t, FLIP + 0.12, 0.55));
     $('badgeWrap').style.opacity = bd;
     $('badgeWrap').style.transform =
-      'translateY(' + (34 - 34 * bd) + 'px) scale(' + (0.9 + 0.1 * back(seg(t, flip + 0.12, 0.55))).toFixed(4) + ')';
+      'translateY(' + (34 - 34 * bd) + 'px) scale(' + (0.9 + 0.1 * back(seg(t, FLIP + 0.12, 0.55))).toFixed(4) + ')';
 
     /* --- the tour --- */
     var demo = $('demo');
@@ -1081,7 +1079,7 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
     $('s8').style.visibility = a8 <= 0.001 ? 'hidden' : 'visible';
     var ps = ['p1', 'p2', 'p3', 'p4'];
     for (var u = 0; u < ps.length; u += 1) {
-      var pp = out(seg(t, PROMISES_FROM + u * 0.28, 0.5));
+      var pp = out(seg(t, PROMISES_FROM + u * 0.19, 0.4));
       $(ps[u]).style.opacity = pp;
       $(ps[u]).style.transform =
         'translateY(' + (34 - 34 * pp) + 'px) scale(' + (0.97 + 0.03 * pp).toFixed(3) + ')';
@@ -1090,11 +1088,11 @@ ${IMAGES.map(([id, file]) => `      <img id="im_${id}" src="${shot(file)}" alt="
     var a9 = band(t, END_FROM, DURATION + 0.2, 0.3);
     $('s9').style.opacity = a9;
     $('s9').style.visibility = a9 <= 0.001 ? 'hidden' : 'visible';
-    var m9 = out(seg(t, END_FROM + 0.1, 0.7));
+    var m9 = out(seg(t, END_FROM + 0.06, 0.55));
     $('s9mark').style.opacity = m9;
-    $('s9mark').style.transform = 'scale(' + (0.86 + 0.14 * back(seg(t, END_FROM + 0.1, 0.7))) + ')';
-    $('s9url').style.opacity = out(seg(t, END_FROM + 0.55, 0.55));
-    $('fine').style.opacity = out(seg(t, END_FROM + 0.75, 0.6)) * (1 - seg(t, DURATION - 0.15, 0.15));
+    $('s9mark').style.transform = 'scale(' + (0.86 + 0.14 * back(seg(t, END_FROM + 0.06, 0.55))) + ')';
+    $('s9url').style.opacity = out(seg(t, END_FROM + 0.42, 0.42));
+    $('fine').style.opacity = out(seg(t, END_FROM + 0.6, 0.45)) * (1 - seg(t, DURATION - 0.15, 0.15));
   }
 
   window.seek = seek;
@@ -1504,11 +1502,14 @@ async function main() {
   const previewDir = flag('preview', null);
   if (previewDir) {
     mkdirSync(previewDir, { recursive: true });
+    // Derived, not typed. These were literals once, and re-pacing the film left two of them
+    // pointing into the middle of the tour — a preview that quietly stops previewing what it
+    // says it does is worse than no preview.
     const moments = [
-      ['01-mark', 1.1],
-      ['02-headline', 3.1],
-      ['03-problem', 5.3],
-      ['04-answer', 7.2],
+      ['01-mark', LOGO_TO * 0.6],
+      ['02-headline', HEADLINE_FROM + 0.8],
+      ['03-problem', FLIP - 0.35],
+      ['04-answer', TOUR_FROM - 0.35],
     ];
     DEMOS.forEach((d, i) => {
       const n = String(i + 5).padStart(2, '0');
