@@ -286,11 +286,11 @@ The code is licensed under **AGPL-3.0-or-later** — see [LICENSE](LICENSE).
 
 The **Brew Terminal name, logo and artwork are not covered by that licence**. You may fork the
 code, but a fork must use a different name and must not present itself as official. See
-[TRADEMARK.md](TRADEMARK.md).
+[TRADEMARK.md](docs/TRADEMARK.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md). Security issues: [SECURITY.md](.github/SECURITY.md).
 
 ## Credits
 
