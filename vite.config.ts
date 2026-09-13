@@ -5,7 +5,26 @@ import { fileURLToPath, URL } from 'node:url';
 // Tauri sets this when developing against a device on the local network.
 const host = process.env.TAURI_DEV_HOST;
 
+/*
+ * The demo build.
+ *
+ * `BREW_DEMO_BASE` is set only by the GitHub Pages workflow. A project site is served from a
+ * subpath, so the asset URLs have to know about it; the desktop build loads from the filesystem
+ * root and must not. Routing needs no such care, because the router uses hash history
+ * (ADR-009) and a hash never reaches a server.
+ *
+ * It doubles as the flag that compiles the demo notice in. Gating on a build-time variable
+ * rather than on `isBrowserHarness()` is deliberate: the harness also runs `npm run dev` and
+ * every jsdom test, and a banner explaining that this is a public demo has no business in
+ * either. The desktop bundle never contains the string at all.
+ */
+const demoBase = process.env.BREW_DEMO_BASE;
+
 export default defineConfig({
+  base: demoBase ?? '/',
+  define: {
+    'import.meta.env.VITE_DEMO': JSON.stringify(demoBase !== undefined),
+  },
   plugins: [react()],
   resolve: {
     alias: {

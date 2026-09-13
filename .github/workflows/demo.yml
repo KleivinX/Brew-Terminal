@@ -1,0 +1,69 @@
+# Builds the browser demo and publishes it to GitHub Pages.
+#
+# The app is a desktop binary, so a hosted demo sounds like it needs a port of the whole thing.
+# It does not. All network I/O lives in Rust behind typed IPC (ADR-002), and the frontend has
+# always had a second implementation of that IPC surface backed by fixtures — the browser
+# harness, which is how `npm run dev` works and where a good deal of the UI test coverage runs
+# (ADR-023). Point Vite at it and the result is a static site with no server behind it.
+#
+# Two details make it work without any other change:
+#
+#   * the router uses hash history (ADR-009), so every route is reachable from one index.html
+#     and GitHub Pages never needs a rewrite rule;
+#   * `BREW_DEMO_BASE` tells Vite the site is served from a subpath, and doubles as the flag
+#     that compiles in the notice explaining that none of the prices are real.
+#
+# What the demo cannot do is anything that lives in Rust: real providers, the OS keychain, the
+# encrypted profile export, local models. The harness answers those calls with fixtures, and the
+# status bar says "Mock data" on every route, permanently.
+
+name: Demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read the repository, and mint the token that deploy-pages exchanges for a deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and let a newer commit supersede an older one that is still
+# building. `cancel-in-progress: false` on the deploy itself would queue instead, which for a
+# demo is slower for no benefit.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build the demo
+        # The trailing slash matters: Vite joins asset URLs onto this verbatim.
+        env:
+          BREW_DEMO_BASE: /Brew-Terminal/
+        run: npx vite build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

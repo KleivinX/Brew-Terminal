@@ -15,7 +15,7 @@ No account, no server, no telemetry — and every number on screen tells you whe
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](#-download)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB.svg)](https://tauri.app)
 
-[**Download**](#-download) · [**How it works**](#the-one-idea) · [**Plain-language tour**](docs/WHAT_IS_BREW_TERMINAL.md) · [**Data sources**](#-where-the-data-comes-from)
+[**Try the demo**](https://kleivinx.github.io/Brew-Terminal/) · [**Download**](#-download) · [**How it works**](#the-one-idea) · [**Plain-language tour**](docs/WHAT_IS_BREW_TERMINAL.md) · [**Data sources**](#-where-the-data-comes-from)
 
 </div>
 
@@ -26,6 +26,13 @@ No account, no server, no telemetry — and every number on screen tells you whe
 <img src="docs/graphics/hero.png" alt="Brew Terminal — markets, minus the gatekeeping. A local-first research terminal for crypto and stocks." width="100%">
 
 </div>
+
+> ### [Click around the real interface →](https://kleivinx.github.io/Brew-Terminal/)
+>
+> The demo is the actual frontend, running the fixtures the test suite runs against. Every route
+> works and nothing is a mock-up. **No price in it is real**, which the app says on every screen,
+> because a browser cannot reach a provider: all network I/O lives in the Rust core, and the
+> desktop build is the only one that has it.
 
 ## The one idea
 

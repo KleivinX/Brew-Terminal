@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavRail } from './NavRail';
 import { StatusBar } from './StatusBar';
+import { DemoNotice } from '@/components/status/DemoNotice';
 import styles from './AppShell.module.css';
 
 /**
@@ -15,6 +16,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <NavRail />
       <div className={styles.main}>
+        {/*
+          Only ever rendered by the GitHub Pages build. `import.meta.env.VITE_DEMO` is a literal
+          substituted at build time, so the desktop bundle drops this branch and the component
+          with it rather than shipping a banner it can never show.
+        */}
+        {import.meta.env.VITE_DEMO ? <DemoNotice /> : null}
         <main id="workspace" className={styles.workspace} tabIndex={-1}>
           {children}
         </main>
