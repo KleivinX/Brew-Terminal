@@ -150,5 +150,5 @@ time,
 /* The user may force motion on even when the OS asks for reduce. */
 [data-motion='always'] {
   --motion-fast: 90ms;
-  --motion-base: 150ms;
+  --motion-base: 180ms;
 }

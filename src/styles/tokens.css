@@ -29,9 +29,9 @@
   --space-8: 48px;
 
   /* ---- Scale: radius ---- */
-  --radius-sm: 3px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 999px;
 
   /* ---- Typography ---- */
@@ -67,8 +67,9 @@
 
   /* ---- Motion (overridden to 0 under reduced motion, see global.css) ---- */
   --motion-fast: 90ms;
-  --motion-base: 150ms;
-  --motion-ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --motion-base: 180ms;
+  /* Quick out, long settle: movement reads as arriving rather than stopping. */
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* ---- Z-index ---- */
   --z-sticky: 10;
@@ -148,8 +149,10 @@
   --status-error: #f85149;
   --status-offline: #79838f;
 
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / 50%);
+  /* The inset hairline lights a surface's top edge, which is what separates stacked dark
+     panels without a heavier border. Neither shadow carries text, so contrast is unaffected. */
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / 4%), 0 1px 3px rgb(0 0 0 / 35%);
+  --shadow-2: 0 16px 40px -12px rgb(0 0 0 / 65%), 0 2px 6px rgb(0 0 0 / 35%);
 
   --skeleton-base: #1c2129;
   --skeleton-shine: #262d36;
@@ -195,8 +198,8 @@
   --status-error: #b3261e;
   --status-offline: #63696f;
 
-  --shadow-1: 0 1px 2px rgb(11 13 16 / 8%);
-  --shadow-2: 0 8px 24px rgb(11 13 16 / 12%);
+  --shadow-1: 0 1px 2px rgb(11 13 16 / 6%), 0 1px 1px rgb(11 13 16 / 4%);
+  --shadow-2: 0 16px 40px -12px rgb(11 13 16 / 22%), 0 2px 6px rgb(11 13 16 / 6%);
 
   --skeleton-base: #eae5dc;
   --skeleton-shine: #f4f1ea;
@@ -271,8 +274,8 @@
   --status-error: #e8b3ab;
   --status-offline: #8a867d;
 
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 25%);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / 32%);
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / 3%), 0 1px 3px rgb(0 0 0 / 22%);
+  --shadow-2: 0 16px 40px -12px rgb(0 0 0 / 45%), 0 2px 6px rgb(0 0 0 / 22%);
 
   --skeleton-base: #2a2f35;
   --skeleton-shine: #333940;

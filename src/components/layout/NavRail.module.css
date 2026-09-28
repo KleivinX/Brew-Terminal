@@ -93,6 +93,7 @@
 .active {
   color: var(--accent);
   background: var(--accent-muted);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .active:hover {
