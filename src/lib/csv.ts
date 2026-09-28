@@ -88,3 +88,51 @@ export function csvFilename(subject: string, at: Date = new Date()): string {
   const date = at.toISOString().slice(0, 10);
   return `brew-${subject}-${date}.csv`;
 }
+
+/**
+ * The inverse of `toCsv`: RFC 4180 fields, quoted or not, CRLF or LF, with a leading BOM
+ * dropped (Excel writes one). Rows with no content are skipped, so a trailing newline or a
+ * blank separator line does not become an empty record.
+ */
+export function parseCsv(text: string): string[][] {
+  const src = text.replace(/^\uFEFF/, '');
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let quoted = false;
+
+  const endRow = (): void => {
+    row.push(field);
+    if (row.some((value) => value !== '')) rows.push(row);
+    row = [];
+    field = '';
+  };
+
+  for (let i = 0; i < src.length; i++) {
+    const ch = src.charAt(i);
+    const next = src.charAt(i + 1);
+
+    if (quoted) {
+      if (ch === '"' && next === '"') {
+        field += '"';
+        i++;
+      } else if (ch === '"') {
+        quoted = false;
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"') {
+      quoted = true;
+    } else if (ch === ',') {
+      row.push(field);
+      field = '';
+    } else if (ch === '\r' || ch === '\n') {
+      if (ch === '\r' && next === '\n') i++;
+      endRow();
+    } else {
+      field += ch;
+    }
+  }
+  endRow();
+  return rows;
+}

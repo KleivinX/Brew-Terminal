@@ -18,7 +18,7 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function errorMessage(error: unknown): string {
+export function errorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message: unknown }).message);
   }

@@ -13,6 +13,7 @@ import { ipc } from '@/lib/ipc';
 import { formatPrice, formatPercent, formatQuantity } from '@/lib/format';
 import type { Position } from '@/types/domain';
 import { TransactionDialog } from './TransactionDialog';
+import { ImportTransactions } from './ImportTransactions';
 import { PositionsTable } from './PositionsTable';
 import { Allocation } from './Allocation';
 import styles from './PortfolioRoute.module.css';
@@ -58,6 +59,7 @@ export function PortfolioRoute() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolio'],
@@ -105,6 +107,9 @@ export function PortfolioRoute() {
               rows={() => data?.positions ?? []}
               disabled={!data || data.positions.length === 0}
             />
+            <Button variant="secondary" size="sm" onClick={() => setImporting(true)}>
+              Import CSV
+            </Button>
             <Button variant="primary" size="sm" onClick={() => setAdding(true)}>
               Record a trade
             </Button>
@@ -241,6 +246,10 @@ export function PortfolioRoute() {
             refresh();
           }}
         />
+      ) : null}
+
+      {importing ? (
+        <ImportTransactions onClose={() => setImporting(false)} onImported={refresh} />
       ) : null}
 
       {editingTransaction ? (
