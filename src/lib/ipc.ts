@@ -149,6 +149,8 @@ export interface IpcContract {
    * row is gone, so there is nothing left to read it back from.
    */
   restore_note: { args: { note: Note }; result: Note };
+  /** Every note, as one Markdown file the user chose. Uncapped, unlike `list_all_notes`. */
+  export_notes_markdown: { args: { path: string }; result: CsvExportResult };
 
   // --- tables ---
   /** Writes a table the user is looking at to a .csv file they chose. */

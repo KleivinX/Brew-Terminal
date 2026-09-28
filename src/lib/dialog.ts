@@ -42,6 +42,14 @@ export async function pickCsvLocation(defaultName: string): Promise<string | nul
   return save({ defaultPath: defaultName, filters: [CSV_FILTER] });
 }
 
+/** Where to write the notes export. Returns the chosen path, or `null` if cancelled. */
+export async function pickMarkdownLocation(defaultName: string): Promise<string | null> {
+  if (!isTauri()) return '/harness/brew-notes.md';
+
+  const { save } = await import('@tauri-apps/plugin-dialog');
+  return save({ defaultPath: defaultName, filters: [{ name: 'Markdown', extensions: ['md'] }] });
+}
+
 /** Returns the chosen path, or `null` if the user cancelled. */
 export async function pickProfileFile(): Promise<string | null> {
   if (!isTauri()) return HARNESS_PATH;

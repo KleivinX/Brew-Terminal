@@ -2,7 +2,7 @@ use tauri::State;
 
 use crate::error::AppResult;
 use crate::models::Note;
-use crate::services;
+use crate::services::{self, csv_export::CsvExportResult};
 use crate::state::AppState;
 
 /// Every note, newest first — the notes workspace.
@@ -48,4 +48,13 @@ pub async fn search_notes(
     limit: usize,
 ) -> AppResult<Vec<Note>> {
     services::notes::search_notes(&state, query, limit).await
+}
+
+/// Every note, as one Markdown file the user chose.
+#[tauri::command]
+pub async fn export_notes_markdown(
+    state: State<'_, AppState>,
+    path: String,
+) -> AppResult<CsvExportResult> {
+    services::notes::export_markdown(&state, path).await
 }

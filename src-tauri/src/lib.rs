@@ -122,6 +122,7 @@ pub fn run() {
             commands::learn::reset_progress,
             // notes
             commands::notes::list_all_notes,
+            commands::notes::export_notes_markdown,
             commands::notes::list_notes,
             commands::notes::upsert_note,
             commands::notes::delete_note,

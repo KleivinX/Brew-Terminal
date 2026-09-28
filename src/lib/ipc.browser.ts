@@ -2099,6 +2099,10 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       saveState(state);
       return null;
 
+    case 'export_notes_markdown':
+      // No filesystem here; the .md guard and the rendering are asserted in Rust.
+      return { path: String(args.path ?? ''), bytes: 0, rows: state.notes.length };
+
     case 'export_csv': {
       // No filesystem here. Reports what the real command would have written so the button's
       // success path is exercised in the fast loop; the .csv guard is asserted in Rust.

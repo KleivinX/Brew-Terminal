@@ -16,6 +16,8 @@ import {
   useRestoreNote,
   useUpsertNote,
 } from '@/lib/market';
+import { ipc } from '@/lib/ipc';
+import { pickMarkdownLocation } from '@/lib/dialog';
 import { toast } from '@/stores/toastStore';
 import { MAX_NOTE_BODY, MAX_NOTE_TITLE, noteSymbol, snippetOf } from './noteText';
 import type { Note } from '@/types/domain';
@@ -170,15 +172,43 @@ export function NotesRoute() {
 
   const editing = creating || selected !== undefined;
 
+  // Plain files the user owns, rather than notes that only leave inside an encrypted profile.
+  const exportMarkdown = async (): Promise<void> => {
+    try {
+      const path = await pickMarkdownLocation(
+        `brew-notes-${new Date().toISOString().slice(0, 10)}.md`,
+      );
+      if (!path) return;
+      const result = await ipc('export_notes_markdown', { path });
+      toast.success(`Exported ${result.rows} ${result.rows === 1 ? 'note' : 'notes'}`, {
+        detail: result.path,
+      });
+    } catch {
+      toast.error('Could not write that file', {
+        detail: 'Check there is room on the disk and that the folder is writable.',
+      });
+    }
+  };
+
   return (
     <>
       <WorkspaceHeader
         title="Notes"
         subtitle="Your own record of what you looked at and what you thought"
         actions={
-          <Button size="sm" variant="primary" onClick={startNew}>
-            New note
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void exportMarkdown()}
+              disabled={!notes || notes.length === 0}
+            >
+              Export Markdown
+            </Button>
+            <Button size="sm" variant="primary" onClick={startNew}>
+              New note
+            </Button>
+          </>
         }
       />
 

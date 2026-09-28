@@ -38,28 +38,29 @@ pub struct CsvExportResult {
 /// disk is not the right way to find out.
 const MAX_CSV_BYTES: usize = 25 * 1024 * 1024;
 
-/// Refuses anything that is not a `.csv`.
+/// Refuses a destination without the expected extension.
 ///
-/// The path comes from the native save dialog, so in normal use it already is one. The check
-/// is here for the case it is not: writing CSV over a path the user picked for something else
-/// is a data-loss bug, and an extension check is the cheapest way to not have it.
-fn check_destination(path: &str) -> AppResult<()> {
-    let is_csv = std::path::Path::new(path)
+/// The path comes from the native save dialog, so in normal use it already has one. The check
+/// is here for the case it does not: writing text over a path the user picked for something
+/// else is a data-loss bug, and an extension check is the cheapest way to not have it. Shared
+/// with the notes Markdown export, which has the same failure mode.
+pub(crate) fn check_destination(path: &str, extension: &str, detail: &str) -> AppResult<()> {
+    let matches = std::path::Path::new(path)
         .extension()
         .and_then(|ext| ext.to_str())
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv"));
+        .is_some_and(|ext| ext.eq_ignore_ascii_case(extension));
 
-    if !is_csv {
+    if !matches {
         return Err(AppError::Validation {
             field: "path".into(),
-            detail: "a table can only be exported to a .csv file".into(),
+            detail: detail.into(),
         });
     }
     Ok(())
 }
 
 pub fn write_csv(path: String, csv: String) -> AppResult<CsvExportResult> {
-    check_destination(&path)?;
+    check_destination(&path, "csv", "a table can only be exported to a .csv file")?;
 
     if csv.len() > MAX_CSV_BYTES {
         return Err(AppError::Validation {
