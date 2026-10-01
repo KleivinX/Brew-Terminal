@@ -87,6 +87,11 @@ pub fn run() {
             commands::local_models::delete_local_model,
             commands::local_models::start_local_model,
             commands::local_models::stop_local_model,
+            // kronos
+            commands::kronos::get_kronos_status,
+            commands::kronos::download_kronos,
+            commands::kronos::delete_kronos,
+            commands::kronos::run_kronos_projection,
             // alerts
             commands::alerts::list_alerts,
             commands::alerts::create_alert,

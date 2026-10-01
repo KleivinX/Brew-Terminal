@@ -179,6 +179,51 @@ pub const MODELS: &[ModelEntry] = &[
     },
 ];
 
+/// One file of pinned weights that is not a chat model.
+#[derive(Debug, Clone, Copy)]
+pub struct WeightFile {
+    /// What the download progress is reported under.
+    pub item_id: &'static str,
+    pub url: &'static str,
+    pub sha256: &'static str,
+    pub size_bytes: u64,
+    pub file_name: &'static str,
+}
+
+pub const KRONOS_NAME: &str = "Kronos-small";
+pub const KRONOS_PARAMETERS: &str = "24.7M";
+pub const KRONOS_PUBLISHER: &str = "NeoQuasar";
+pub const KRONOS_LICENCE: &str = "MIT";
+pub const KRONOS_SOURCE_URL: &str = "https://github.com/shiyu-coder/Kronos";
+pub const KRONOS_PAPER_URL: &str = "https://arxiv.org/abs/2508.02739";
+
+/// Kronos-small and the tokenizer it was trained with.
+///
+/// Pinned to a commit rather than to `main`, and to the same two revisions upstream's own
+/// regression test pins — which is what lets `tests/kronos_parity.rs` compare this app's
+/// output against the reference implementation's, number for number. Checksums are Hugging
+/// Face's LFS `oid` for each file, read on 2026-10-01.
+///
+/// Small rather than base (409 MB) because it is the one the fixture covers and the one the
+/// reference machine runs in seconds; rather than mini because mini has no published
+/// reference output to check a port against.
+pub const KRONOS_FILES: [WeightFile; 2] = [
+    WeightFile {
+        item_id: "kronos-tokenizer",
+        url: "https://huggingface.co/NeoQuasar/Kronos-Tokenizer-base/resolve/0e0117387f39004a9016484a186a908917e22426/model.safetensors",
+        sha256: "59d85f6af76a2c3b8240ea06cb21db4213b4eeca053f246b23e29cf832fc6bee",
+        size_bytes: 15_842_368,
+        file_name: "kronos-tokenizer-base.safetensors",
+    },
+    WeightFile {
+        item_id: "kronos-model",
+        url: "https://huggingface.co/NeoQuasar/Kronos-small/resolve/901c26c1332695a2a8f243eb2f37243a37bea320/model.safetensors",
+        sha256: "b082dfcbd8e8c142a725c8bbb99781802f38fec81210e13479effb32b3c3e020",
+        size_bytes: 98_980_656,
+        file_name: "kronos-small.safetensors",
+    },
+];
+
 pub fn model_by_id(id: &str) -> Option<&'static ModelEntry> {
     MODELS.iter().find(|model| model.id == id)
 }
@@ -204,6 +249,31 @@ mod tests {
         for model in MODELS {
             assert!(model.url.starts_with("https://"), "{}", model.url);
             assert!(model.source_url.starts_with("https://"), "{}", model.id);
+        }
+        for file in KRONOS_FILES {
+            assert!(file.url.starts_with("https://"), "{}", file.url);
+        }
+    }
+
+    /// `resolve/main/` would follow whatever the publisher uploads next. A 40-character commit
+    /// in the path cannot move, and the checksum would catch it if it somehow did.
+    #[test]
+    fn the_kronos_files_are_pinned_to_a_commit_and_a_checksum() {
+        for file in KRONOS_FILES {
+            let revision = file
+                .url
+                .split("/resolve/")
+                .nth(1)
+                .unwrap()
+                .split('/')
+                .next();
+            assert!(
+                revision.is_some_and(|r| r.len() == 40 && r.chars().all(|c| c.is_ascii_hexdigit())),
+                "{} is not pinned to a commit",
+                file.url
+            );
+            assert!(is_sha256_hex(file.sha256), "{}", file.item_id);
+            assert!(file.size_bytes > 0, "{}", file.item_id);
         }
     }
 

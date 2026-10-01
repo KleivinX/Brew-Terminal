@@ -19,4 +19,5 @@ pub mod archive;
 pub mod catalogue;
 pub mod download;
 pub mod engine;
+pub mod kronos;
 pub mod store;

@@ -42,6 +42,7 @@ pub fn get_all(conn: &Connection) -> AppResult<Preferences> {
             "aiEnabled" => assign_bool(&mut prefs.ai_enabled, value),
             "navRailExpanded" => assign_bool(&mut prefs.nav_rail_expanded, value),
             "onboardingCompleted" => assign_bool(&mut prefs.onboarding_completed, value),
+            "kronosAcknowledged" => assign_bool(&mut prefs.kronos_acknowledged, value),
             unknown => tracing::warn!(key = unknown, "ignoring unknown preference row"),
         }
     }

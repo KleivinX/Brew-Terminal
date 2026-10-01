@@ -15,6 +15,7 @@ pub mod community;
 pub mod connectors;
 pub mod csv_export;
 pub mod feed_discovery;
+pub mod kronos;
 pub mod learn;
 pub mod local_models;
 pub mod macro_data;

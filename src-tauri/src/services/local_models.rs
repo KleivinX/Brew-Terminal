@@ -84,7 +84,7 @@ pub fn cancel_download(state: &AppState) {
 }
 
 /// Registers a download, refusing if one is already running.
-fn begin(state: &AppState, id: &str) -> AppResult<Arc<download::DownloadHandle>> {
+pub(crate) fn begin(state: &AppState, id: &str) -> AppResult<Arc<download::DownloadHandle>> {
     let mut guard = state
         .downloads
         .lock()
@@ -108,7 +108,7 @@ fn begin(state: &AppState, id: &str) -> AppResult<Arc<download::DownloadHandle>>
     Ok(handle)
 }
 
-fn finish(state: &AppState) {
+pub(crate) fn finish(state: &AppState) {
     if let Ok(mut guard) = state.downloads.lock() {
         *guard = None;
     }

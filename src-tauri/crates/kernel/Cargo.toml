@@ -1,0 +1,10 @@
+[package]
+name = "brew-kernel"
+version = "0.1.0"
+description = "The two inner loops of local model inference, compiled for speed"
+license = "AGPL-3.0-or-later"
+edition = "2021"
+rust-version = "1.77.2"
+publish = false
+
+[dependencies]

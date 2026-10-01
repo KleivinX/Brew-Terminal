@@ -105,6 +105,10 @@ flate2 = "1.1"
 tar = "0.4"
 zip = { version = "4", default-features = false, features = ["deflate"] }
 
+# The inner loops of the Kronos port, as their own crate so they can be compiled for speed
+# while everything else stays compiled for size. See `crates/kernel/src/lib.rs`.
+brew-kernel = { path = "crates/kernel" }
+
 [dev-dependencies]
 tempfile = "3"
 ts-rs = "10.1.0"
@@ -113,6 +117,20 @@ ts-rs = "10.1.0"
 # Nothing here yet. Live provider adapters (Phase 2) and the AI adapters (Phase 5) will be
 # additive; the mock provider is always compiled so tests never depend on the network.
 default = []
+
+# `cargo test`, clippy and `cargo fmt` should cover the kernel crate without anyone having to
+# remember `--workspace`.
+[workspace]
+members = [".", "crates/kernel"]
+default-members = [".", "crates/kernel"]
+
+# Speed for the two loops that need it, in both profiles: a debug build that runs a
+# transformer through unoptimised float loops takes minutes per projection.
+[profile.release.package.brew-kernel]
+opt-level = 3
+
+[profile.dev.package.brew-kernel]
+opt-level = 3
 
 [profile.release]
 # The 2016 Intel MacBook is the target: smaller binary, less to page in at launch.

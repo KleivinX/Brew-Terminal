@@ -399,11 +399,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "brew-kernel"
+version = "0.1.0"
+
+[[package]]
 name = "brew-terminal"
 version = "0.4.0"
 dependencies = [
  "argon2",
  "async-trait",
+ "brew-kernel",
  "chacha20poly1305",
  "chrono",
  "feed-rs",

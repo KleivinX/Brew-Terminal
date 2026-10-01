@@ -109,7 +109,11 @@ file says so.
 - **`openssl`/`native-tls`** — rustls avoids a platform build dependency and three TLS behaviours.
 - **`tauri-plugin-fs`** — dialog-scoped paths only; no general filesystem capability for the frontend.
 - **`tauri-plugin-http`** — all HTTP is in Rust by design. ADR-002.
-- **Any local inference crate / bundled weights** — out of v0.1 scope; local AI is an HTTP endpoint the user runs.
+- **Any local inference crate / bundled weights** — still true, and worth restating now that the app runs a model in-process. The Kronos projection (ADR-042) is a hand-written forward pass in `localai/kronos.rs`, not `candle`, `ort`, `tch` or `burn`: the model is a few hundred lines of linear algebra, and a tensor framework would have added more code than it replaced, a slower build, and in `ort`'s case a native runtime to download. The weights are fetched by the user, pinned by checksum, and never bundled. `safetensors` is read with `serde_json`, which was already here.
+
+### One internal crate
+
+`src-tauri/crates/kernel` (`brew-kernel`) is not a third-party dependency — it is two functions of this project's own, a dot product and a linear layer, split out so a per-package profile override can compile them with `opt-level = 3` while the rest of the app stays at `"s"`. Measured on the development machine, that is the difference between 2.5 and 10.5 GFLOP/s. It has no dependencies of its own.
 
 ## 4. Licence posture
 
@@ -117,6 +121,10 @@ Every dependency listed is MIT, Apache-2.0, or BSD-3 — all compatible with dis
 project under AGPL-3.0. CI runs `cargo deny check licenses` with an explicit allowlist, and a
 frontend licence check does the same for npm. A new dependency under a copyleft or
 source-available licence requires an explicit decision, not a merge.
+
+Code that was ported into the repository rather than depended on carries its own notice in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Today that is one thing: the Kronos inference
+path, MIT.
 
 Attribution for runtime data providers is separate from software licensing and is rendered in
 Settings → About and in each panel's provider badge.

@@ -28,6 +28,12 @@ pub fn model_path(data_dir: &Path, model: &ModelEntry) -> PathBuf {
     models_dir(data_dir).join(model.file_name)
 }
 
+/// Kronos weights sit in their own folder under `models/`, so `disk_usage` counts them and
+/// deleting them is deleting one directory.
+pub fn kronos_dir(data_dir: &Path) -> PathBuf {
+    models_dir(data_dir).join("kronos")
+}
+
 /// The `llama-server` executable inside an unpacked engine, wherever the archive put it.
 ///
 /// The layout has moved between llama.cpp builds — sometimes `build/bin/`, sometimes the

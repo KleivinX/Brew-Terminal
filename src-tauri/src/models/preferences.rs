@@ -34,6 +34,10 @@ pub struct Preferences {
     pub alerts_enabled: bool,
     pub nav_rail_expanded: bool,
     pub onboarding_completed: bool,
+    /// Set once, when the user has read and accepted what the Kronos projection is and is not.
+    /// `services::kronos` refuses to run the model without it, so the dialog is not merely a
+    /// thing the UI happens to show first.
+    pub kronos_acknowledged: bool,
 }
 
 impl Default for Preferences {
@@ -56,6 +60,7 @@ impl Default for Preferences {
             alerts_enabled: false,
             nav_rail_expanded: false,
             onboarding_completed: false,
+            kronos_acknowledged: false,
         }
     }
 }
@@ -76,6 +81,7 @@ pub const KNOWN_PREFERENCE_KEYS: &[&str] = &[
     "alertsEnabled",
     "navRailExpanded",
     "onboardingCompleted",
+    "kronosAcknowledged",
 ];
 
 pub const VALID_THEMES: &[&str] = &["dark", "light", "soft"];
@@ -105,6 +111,10 @@ pub fn validate_preference(key: &str, value: &serde_json::Value) -> Result<(), S
         "alertsEnabled" => match value.as_bool() {
             Some(_) => Ok(()),
             None => Err("alertsEnabled must be true or false".into()),
+        },
+        "kronosAcknowledged" => match value.as_bool() {
+            Some(_) => Ok(()),
+            None => Err("kronosAcknowledged must be true or false".into()),
         },
         "reducedMotion" => match value.as_str() {
             Some(v) if VALID_MOTION.contains(&v) => Ok(()),
