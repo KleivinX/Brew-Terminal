@@ -23,4 +23,10 @@ costBasisMethod: "fifo" | "average",
  * default, and the settings copy says exactly what turning it on changes. See
  * `services::alerts`.
  */
-alertsEnabled: boolean, navRailExpanded: boolean, onboardingCompleted: boolean, };
+alertsEnabled: boolean, navRailExpanded: boolean, onboardingCompleted: boolean, 
+/**
+ * Set once, when the user has read and accepted what the Kronos projection is and is not.
+ * `services::kronos` refuses to run the model without it, so the dialog is not merely a
+ * thing the UI happens to show first.
+ */
+kronosAcknowledged: boolean, };

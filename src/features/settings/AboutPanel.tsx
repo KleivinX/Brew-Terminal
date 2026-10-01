@@ -258,6 +258,12 @@ export function AboutPanel() {
             its name and the time the data was retrieved. Figures may be delayed, incomplete or
             wrong. Verify anything that matters against a primary source.
           </p>
+          <p>
+            The optional Kronos projection runs a model published by NeoQuasar under the MIT
+            licence. The code that runs it here is a port of their reference implementation,
+            Copyright © 2025 ShiYu, used under the same licence. Brew Terminal is not affiliated
+            with its authors, and the model&rsquo;s output is theirs, not this app&rsquo;s view.
+          </p>
           <p className={styles.mock}>
             This build is running on development fixtures. Every number you see is synthetic.
           </p>

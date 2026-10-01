@@ -26,6 +26,7 @@ import { NotesPanel } from './NotesPanel';
 import { ContextPanel } from './ContextPanel';
 import { RiskChecklist } from './RiskChecklist';
 import { CommunityPanel } from './CommunityPanel';
+import { KronosPanel } from './KronosPanel';
 import type { ChartRange } from '@/types/domain';
 import styles from './ResearchRoute.module.css';
 
@@ -258,6 +259,14 @@ export function ResearchRoute() {
             />
           </Suspense>
         ) : null}
+
+        {/* Keyed by asset, so a projection for one asset is never left on screen for another. */}
+        <KronosPanel
+          key={asset.id}
+          assetId={asset.id}
+          symbol={asset.symbol}
+          currency={quote?.currency ?? 'USD'}
+        />
 
         <ContextPanel assetType={asset.assetType} symbol={asset.symbol} />
 

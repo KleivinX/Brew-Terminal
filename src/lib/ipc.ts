@@ -28,6 +28,8 @@ import type {
   CommunityPost,
   FeedPreview,
   LearningProgress,
+  KronosProjection,
+  KronosStatus,
   LocalModelOverview,
   MacroSeries,
   MultiSeries,
@@ -270,6 +272,17 @@ export interface IpcContract {
   delete_local_model: { args: { modelId: string }; result: LocalModelOverview };
   start_local_model: { args: { modelId: string }; result: LocalModelOverview };
   stop_local_model: { args: undefined; result: LocalModelOverview };
+
+  // --- kronos ---
+  get_kronos_status: { args: undefined; result: KronosStatus };
+  /** Fetches the pinned weights. Progress and cancel go through the two commands above. */
+  download_kronos: { args: undefined; result: KronosStatus };
+  delete_kronos: { args: undefined; result: KronosStatus };
+  /**
+   * Runs the third-party Kronos model on an asset's recent candles. Rejected until the
+   * `kronosAcknowledged` preference is set. `data` is null when there is too little history.
+   */
+  run_kronos_projection: { args: { assetId: string }; result: Envelope<KronosProjection | null> };
 
   // --- model desk ---
   get_ai_status: { args: undefined; result: AiStatus };

@@ -18,6 +18,8 @@ import type {
   ChartRange,
   Alert,
   CommunityPost,
+  KronosProjection,
+  KronosStatus,
   LocalModelOverview,
   PortfolioSummary,
   Position,
@@ -668,6 +670,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   alertsEnabled: false,
   navRailExpanded: false,
   onboardingCompleted: false,
+  kronosAcknowledged: false,
 };
 
 function defaultState(): HarnessState {
@@ -801,6 +804,57 @@ function defaultLocalModels(): LocalModelOverview {
  * model, start it, stop it — so the UI can be built and tested without a gigabyte of traffic.
  */
 let localModels: LocalModelOverview = defaultLocalModels();
+
+/**
+ * Kronos in the harness: the same state machine as the real thing — acknowledge, download, run
+ * — with no model behind it. The "projection" is a fixed shape drawn from the fixture closes,
+ * and it leaves here inside a `source: 'mock'` envelope like every other fixture figure.
+ */
+let kronosInstalled = false;
+
+function kronosStatus(): KronosStatus {
+  return {
+    installed: kronosInstalled,
+    downloadBytes: 114_823_024,
+    model: 'Kronos-small',
+    parameters: '24.7M',
+    publisher: 'NeoQuasar',
+    licence: 'MIT',
+    sourceUrl: 'https://github.com/shiyu-coder/Kronos',
+    paperUrl: 'https://arxiv.org/abs/2508.02739',
+  };
+}
+
+function harnessProjection(assetId: string): KronosProjection | null {
+  const series = (chartFixture as Record<string, ChartPoint[]>)[assetId];
+  const last = series?.[series.length - 1];
+  if (!series || !last || series.length < 64) return null;
+
+  const DAY = 86_400;
+  const points = Array.from({ length: 10 }, (_, i) => {
+    // A flat centre with a spread that widens with distance. Deliberately not a trend: a
+    // fixture that pointed up or down would be the harness inventing a view.
+    const spread = last.close * 0.012 * Math.sqrt(i + 1);
+    return {
+      time: last.time + (i + 1) * DAY,
+      mean: last.close,
+      low: last.close - spread,
+      high: last.close + spread,
+    };
+  });
+
+  return {
+    assetId,
+    model: 'Kronos-small',
+    intervalSecs: DAY,
+    contextCandles: Math.min(series.length, 502),
+    hasVolume: false,
+    paths: 20,
+    history: series.slice(-60),
+    points,
+    elapsedMs: 0,
+  };
+}
 
 /**
  * Portfolio state for the harness.
@@ -1753,6 +1807,27 @@ export async function browserInvoke(command: string, args?: any): Promise<unknow
       return null;
     }
 
+    case 'get_kronos_status':
+      return kronosStatus();
+
+    case 'download_kronos':
+      kronosInstalled = true;
+      return kronosStatus();
+
+    case 'delete_kronos':
+      kronosInstalled = false;
+      return kronosStatus();
+
+    case 'run_kronos_projection':
+      // The same two refusals the Rust service makes, in the same order.
+      if (!state.preferences.kronosAcknowledged) {
+        throw { kind: 'validation', message: 'Kronos has not been switched on.' };
+      }
+      if (!kronosInstalled) {
+        throw { kind: 'validation', message: 'The Kronos model has not been downloaded.' };
+      }
+      return envelope<KronosProjection | null>(harnessProjection(String(args.assetId)), null);
+
     case 'get_local_models':
       return structuredClone(localModels);
 
@@ -2375,6 +2450,7 @@ export function __resetHarness(): void {
   newsFeeds = defaultFeeds();
   feedSeq = 0;
   localModels = defaultLocalModels();
+  kronosInstalled = false;
   portfolioTx = [];
   txSeq = 0;
   harnessAlerts = [];
