@@ -98,6 +98,17 @@ There is a risk checklist — but with no checkboxes and no score. Ticking boxes
 a number feels like a verdict, and a verdict is exactly what this app has no business giving. The
 questions are there to make you think, not to be answered by software.
 
+There is also one panel that looks forward, and it is the only place in the app that does.
+**Kronos** is an AI model built by a research group — not by this project — that has read an
+enormous number of price candles and learned to continue them, the way a text model continues a
+sentence. Switch it on and the app runs it on your own computer and draws what it came up with.
+
+It is off until you read and accept a plain statement of what it is: an AI model that is often
+wrong, made by someone else, whose output is not advice. It is run twenty times rather than
+once, and you are shown the spread of those runs, because one confident-looking line would claim
+a certainty the model does not have. It has never seen a headline, an earnings report or an
+interest rate. It continues patterns in past prices, and that is all.
+
 ### Screener — filter the market
 
 Filter by price, change, market cap, volume. Facts only.
@@ -159,7 +170,7 @@ operating system's own password store, never into the app's database or any expo
 - **Local-first.** One file on your computer holds everything. No account, no cloud.
 - **No telemetry.** The app makes no request you did not cause. One exception, stated plainly: price alerts poll in the background, and they are off until you switch them on.
 - **No hidden sources.** Only documented public APIs whose terms have been read. No scraping. No reverse-engineered endpoints — including ones that would work.
-- **No verdicts.** No buy/sell/hold, no scam scores, no "trending." Where the app computes something itself, it shows the inputs and the arithmetic.
+- **No verdicts.** No buy/sell/hold, no scam scores, no "trending." Where the app computes something itself, it shows the inputs and the arithmetic. The one forward-looking thing in it, the Kronos projection, is another group's model, labelled as theirs and off until you accept what it is.
 - **Portable.** Export everything to an encrypted file and move it to another machine. The file contains no API keys.
 - **Free and open.** AGPL-3.0. Read every line.
 

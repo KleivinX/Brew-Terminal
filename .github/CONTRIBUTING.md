@@ -25,6 +25,12 @@ These are product decisions, not gaps:
 
 If you think one of these should change, open an issue and argue the case. Do not open a PR.
 
+One thing on this list has a carve-out, and it is narrow. The Research Lab's **Kronos
+projection** shows a third-party forecasting model's output (ADR-042). That is the app running
+someone else's model and labelling it as such, behind a one-time acknowledgement — it is not a
+precedent for the app stating a view of its own, ranking assets by a model, alerting on one, or
+presenting a single projected number. PRs that do any of those are still on the list above.
+
 ## Setup
 
 ```bash

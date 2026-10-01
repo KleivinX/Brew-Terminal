@@ -208,6 +208,14 @@ both configurations, and separates saving an endpoint from switching the desk on
 is deliberately three steps — pick a file, open it, then choose merge or replace — so the choice
 is made while looking at real counts from the real file.
 
+**Research Lab** gains a **Kronos projection** panel under the contribution backtest (ADR-042).
+It has three states and shows exactly one at a time: _off_ (an explanation and "Switch on
+Kronos", which opens the one-time acknowledgement), _no model_ (a 115 MB download with progress
+and cancel), and _ready_ ("Run Kronos on BTC", and "Remove the model from this computer"). A
+result is a drawing, then a sentence stating the same thing in words, then a table — the drawing
+is `aria-hidden` because the other two carry everything in it. The projected line is dashed as
+well as coloured, so it cannot be read as recorded data by anyone.
+
 **Research Lab** gains **Community temperature**, off by default with the opt-in inline in the
 panel. Every post carries an "Unverified" chip, its source, its timestamp and the platform's own
 engagement numbers labelled "as reported". Ordering is newest-first, never by engagement.

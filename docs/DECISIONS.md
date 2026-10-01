@@ -1014,3 +1014,96 @@ entire problem). Ship only the eleven reviewed connectors and no candidate list 
 list is useful precisely as a work queue, and hiding it would not make the other ninety sources
 stop existing). Let the catalogue write provider settings directly (rejected — Settings already
 holds the one credential path, and a second one is a second place for a key to be mishandled).
+
+## ADR-042 — The app will run someone else's forecasting model; it still has no view of its own
+
+**Status:** accepted. Moves a line that every earlier version of this project held.
+
+Research Lab gains a **Kronos projection**: the output of
+[Kronos](https://github.com/shiyu-coder/Kronos), an open-source foundation model for candlestick
+data (AAAI 2026, MIT), run on the user's machine against an asset's recent candles.
+
+### What changed, said plainly
+
+Until now the app showed nothing about the future. The non-goals list ruled out price targets and
+"language implying certainty about future prices", and the Model Desk's system prompt still
+forbids the chat model from predicting prices. This feature draws a line that extends past the
+last candle. That is a change to the product's promise, made deliberately by the project's owner,
+and it is recorded here rather than argued away as something else.
+
+What did **not** change is who is speaking. The app still forms no view. It does not train the
+model, tune it, filter its output, rank assets by it, alert on it, or feed it into anything else.
+It runs a named third party's published weights and reports what came out, labelled as that at
+every step. The distinction this ADR rests on is the one ADR-037 drew for sentiment: showing a
+labelled measurement or a labelled third-party output is not the same act as the app issuing a
+verdict. Whether that distinction is enough is a judgement call, and a reasonable person could
+have kept the old line.
+
+### What makes it defensible
+
+- **Off, and gated by consent that the backend enforces.** Nothing runs until the user has read a
+  dialog saying the model errs, is not ours, is not advice, and that decisions made with it are
+  theirs. The acknowledgement is a preference (`kronosAcknowledged`), asked once.
+  `services::kronos::project` refuses without it, so the dialog is a gate and not a decoration in
+  front of one.
+- **Never one number.** The model is a sampler, so a single line would manufacture a certainty it
+  does not have. Twenty paths are drawn; the picture is their average plus the lowest and highest
+  path at each step, and the copy says in words that the band is the spread of one model's own
+  draws — not a probability, a confidence interval or a target.
+- **Provenance on both halves.** The input candles arrive in an `Envelope`, so the result carries
+  their provider and age like every other figure. The model's name, publisher and licence are on
+  the panel before anything is switched on.
+- **Repeatable.** The sampling seed is fixed. The same candles give the same picture, so a reader
+  can see nothing is being nudged between runs.
+- **Whole candles or nothing.** Kronos was trained on open/high/low/close. The app only stored
+  closes, and feeding a model flat candles built from closes would be asking it about data unlike
+  anything it has seen. So candles are fetched as candles — CoinGecko's documented `/ohlc`
+  endpoint, Alpha Vantage's daily bars — and where a provider reports no volume the model is told
+  there is none rather than given a zero that looks like a reading.
+
+### Why it is a port
+
+The reference implementation is Python on PyTorch. Shipping that means downloading and executing
+an interpreter, a multi-hundred-megabyte tensor library and an unpinned dependency tree on the
+user's machine — precisely what `localai` exists to avoid — and most of this app's users have no
+Python at all.
+
+The inference path is linear layers, RMSNorm, rotary attention and embedding lookups.
+`localai/kronos.rs` implements it in a few hundred lines of Rust with **no new third-party
+dependency**: `safetensors` is an eight-byte length and a JSON header, which `serde_json` already
+parses. The weights are downloaded on request through the existing verified, resumable path,
+pinned to a commit and a SHA-256.
+
+**It is checked against the original.** Upstream publishes a deterministic regression fixture —
+greedy decoding, pinned model revisions, expected output committed — and its own test accepts a
+relative error of 1e-5. `tests/kronos_parity.rs` runs this port on the same input at the same
+revisions and requires the same tolerance. Measured, in the shipping release profile: 1.6e-6 on
+the cached path the app uses, 1.2e-6 on the sliding-window path. That test needs 115 MB of
+weights, so it is `#[ignore]`d and run by hand when the port changes; the pieces that need no
+weights are ordinary unit tests.
+
+### What it costs
+
+- **Speed is bought with a second crate.** The app is compiled with `opt-level = "s"`, which
+  leaves the inner dot product unvectorised: 2.5 GFLOP/s against 10.5 at `opt-level = 3` on the
+  development machine. Rather than give up the size budget for the whole app, the two hot loops
+  live in `crates/kernel`, compiled for speed by a per-package profile override.
+- **It is still not instant.** A run the size the app makes — 180 candles in, 24 out, 20 paths —
+  takes 7.8 s on the development machine (a 2017 dual-core i5) in the shipping profile. Stepping
+  all twenty paths through each layer together, rather than one path at a time, took that down
+  from 11.8 s; `paths_stepped_together_each_match_the_path_stepped_alone` checks that doing so
+  changes no output. Threads are the next lever and are not pulled yet.
+- **Stock projections spend the Alpha Vantage budget.** One run is one request against a free
+  tier of 25 a day, the same as opening the chart.
+- **Weekends are skipped; holidays are not.** A projected trading day can land on an exchange
+  holiday. Marked in the code as a known ceiling.
+- **One model.** Kronos-small, because it is the one upstream's fixture covers. The larger model
+  is 409 MB and the smaller has no published reference output to check a port against.
+
+**Alternatives:** bundle Python and run the original (rejected — see above). Feed the model the
+closes the app already had (rejected — out of distribution, and nobody would know). Show the
+average path alone (rejected — it is the most persuasive presentation and the least honest).
+Offer it inside the Model Desk as another "model" (rejected — the desk is a chat with a system
+prompt that forbids exactly this, and putting a forecaster behind the same door would make that
+prompt a lie). Not build it (the position every earlier ADR would have taken; overruled by the
+owner, which is theirs to do).

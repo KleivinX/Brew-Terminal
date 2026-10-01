@@ -196,6 +196,28 @@ asks for. A dialog on every one-line question trains people to dismiss it.
 
 ---
 
+## 6b. Kronos is not the Model Desk
+
+Everything above governs the Model Desk: a chat model, a system prompt, a per-send consent
+dialog. The **Kronos projection** in Research Lab (ADR-042) is a different thing and none of it
+applies in the usual way, so the differences are stated rather than left to inference.
+
+- **It is not a language model and has no prompt.** It takes candles and returns candles. Nothing
+  the user typed, and nothing about the user, is an input. There is no system prompt to
+  constrain it and no text output to filter.
+- **It sends nothing.** It runs on the machine. The one request a run makes is for the candles,
+  to the provider that already draws the chart.
+- **§3 still binds the chat model.** The Model Desk is still instructed not to predict prices. A
+  forecaster was deliberately not put behind the same door, so that instruction stays true.
+- **Its consent is one-time, not per-use,** because what is being consented to does not vary: it
+  is a statement about what the model is, not about what a particular request will transmit.
+  The Rust service refuses to run without it.
+- **Its safeguards are in the presentation.** Twenty sampled paths shown as a spread, never a
+  single line; the publisher named before anything is switched on; the words "not what will
+  happen" in the sentence under every result.
+
+---
+
 ## 7. Testing
 
 Each item below names the test that satisfies it, so a deletion is visible rather than silent.

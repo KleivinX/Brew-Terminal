@@ -55,15 +55,16 @@ rather than quietly used.
 
 ## ☕ What you get
 
-|                                 |                                                                                                                                                                |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Local-first**                 | No sign-up, no server, no cloud sync. Watchlists, notes and preferences live in one SQLite file on your computer.                                              |
-| **No telemetry**                | The app makes no request you did not cause — with one exception, stated plainly: price alerts poll in the background, and they are off until you enable them.  |
-| **Honest about data**           | Every number carries its provider and its age. Nothing is presented as fresher, or more certain, than it is.                                                   |
-| **Optional AI, off by default** | Bring a local model or your own API key, or use none. Before anything is sent you get an itemised list of what goes with it, and every send is logged locally. |
-| **Learn works offline**         | A 50-term glossary and five learning paths ship with the app. Reading any of it makes no request.                                                              |
-| **Portable**                    | An encrypted `.brewprofile` moves your watchlists, notes, progress and settings to another machine. It contains no API keys.                                   |
-| **Cross-platform**              | macOS, Windows and Linux, built to stay responsive on a 2016 Intel MacBook.                                                                                    |
+|                                           |                                                                                                                                                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Local-first**                           | No sign-up, no server, no cloud sync. Watchlists, notes and preferences live in one SQLite file on your computer.                                                                              |
+| **No telemetry**                          | The app makes no request you did not cause — with one exception, stated plainly: price alerts poll in the background, and they are off until you enable them.                                  |
+| **Honest about data**                     | Every number carries its provider and its age. Nothing is presented as fresher, or more certain, than it is.                                                                                   |
+| **Optional AI, off by default**           | Bring a local model or your own API key, or use none. Before anything is sent you get an itemised list of what goes with it, and every send is logged locally.                                 |
+| **A forecasting model, clearly not ours** | Research Lab can run Kronos, a third party's open-source model, on your machine and show what it generated — off until you accept what it is, and drawn as a spread of runs, never one number. |
+| **Learn works offline**                   | A 50-term glossary and five learning paths ship with the app. Reading any of it makes no request.                                                                                              |
+| **Portable**                              | An encrypted `.brewprofile` moves your watchlists, notes, progress and settings to another machine. It contains no API keys.                                                                   |
+| **Cross-platform**                        | macOS, Windows and Linux, built to stay responsive on a 2016 Intel MacBook.                                                                                                                    |
 
 ## 🖥 The twelve screens
 
@@ -98,7 +99,7 @@ rather than quietly used.
 | ![Atlas — a live ticker over rotating free tiers](docs/screenshots/03-atlas.png) | ![Connectors — every data source, and how much is known about it](docs/screenshots/04-connectors.png) |
 | **Atlas.** A ticker over free provider tiers, refreshing every 90 seconds. Real-time market data is licensed, so no free tier carries a continuous feed — Atlas says "at most 90 seconds old" rather than "live", and shows which tier is answering and how much of its allowance is left. | **Connectors.** Every source this project has wired, declined, or merely written down. Roughly ninety rows are visibly empty, because nobody has read those providers' terms — and a plausible-looking rate limit beside a name would be a claim this project cannot make. |
 | ![Research Lab — one asset in depth](docs/screenshots/05-research.png) | ![Screener — filter the market on facts](docs/screenshots/06-screener.png) |
-| **Research Lab.** One asset in depth: chart, indicators, news and your own notes on it, with a risk checklist that has no checkboxes and no tally — [by design](docs/DECISIONS.md). | **Screener.** Filters on reported facts — price, change, market cap, volume. No score, no ranking, no "opportunities". |
+| **Research Lab.** One asset in depth: chart, indicators, news and your own notes on it, with a risk checklist that has no checkboxes and no tally — [by design](docs/DECISIONS.md). An optional panel runs Kronos, a third-party forecasting model, locally and labels its output as someone else's. | **Screener.** Filters on reported facts — price, change, market cap, volume. No score, no ranking, no "opportunities". |
 | ![Compare — several assets and macro series side by side](docs/screenshots/07-compare.png) | ![Learn — glossary and paths, offline](docs/screenshots/08-learn.png) |
 | **Compare.** Up to six assets and macro series on one axis, normalised or absolute, with a correlation matrix that says plainly what correlation is not. | **Learn.** A glossary and five paths, written for someone who has never read a balance sheet. Ships with the app; reading it makes no request. |
 | ![Model Desk — optional AI, off by default](docs/screenshots/09-desk.png) | ![Notes — a local research journal](docs/screenshots/10-notes.png) |
@@ -132,9 +133,9 @@ stored data lives on the Rust side of a typed IPC boundary.
 
 |                               |                                                               |
 | ----------------------------- | ------------------------------------------------------------- |
-| Rust tests                    | 684                                                           |
-| Frontend tests                | 599                                                           |
-| Architecture decision records | 41, each with what was rejected and why                       |
+| Rust tests                    | 855                                                           |
+| Frontend tests                | 704                                                           |
+| Architecture decision records | 42, each with what was rejected and why                       |
 | Schema migrations             | 10, forward-only                                              |
 | Initial JS bundle             | 98 KB gzipped, against a 200 KB budget checked on every build |
 | Wired data providers          | 11                                                            |
@@ -192,6 +193,16 @@ measurements, they attach to no individual asset, and the one this app computes 
 component with its source series and arithmetic, so it can be checked rather than believed. Where
 that line falls, and why, is [ADR-037](docs/DECISIONS.md).
 
+One thing in the app does look forward, and it would be dishonest to leave it out of a section
+with this title. Research Lab can run **Kronos**, an open-source forecasting model made by a
+research group that is not this project, and show what it generated. The app's own position has
+not moved: it forms no view about where a price is going, and it does not rank, alert on or
+recommend anything from that output. It runs someone else's model on your machine, tells you
+whose it is before you switch it on, will not run until you have accepted that it is often wrong
+and is not advice, and draws twenty runs as a spread rather than one line as an answer. Whether
+that is the right place for the line is a fair thing to disagree about;
+[ADR-042](docs/DECISIONS.md) sets out the reasoning and the case against.
+
 ## Status
 
 **v0.4.0.** Everything described here is built and covered by tests. What that does not mean is
@@ -200,6 +211,7 @@ that line falls, and why, is [ADR-037](docs/DECISIONS.md).
 - **The app is unsigned.** A locally built bundle opens fine; a downloaded one is blocked until you follow the step below.
 - **No AI request has been made against a live endpoint.** The request path is covered by unit tests, a guardrail suite and a browser harness — not by a real answer from a real model.
 - **No live community provider is wired in.** The pipeline is complete and opt-in, but the only adapter that ships is a fixture one, because no discussion platform's terms have been read.
+- **The Kronos projection is not in the v0.4.0 download.** It is on `main` and ships with the next release. Its engine reproduces the reference implementation's published test output to within that project's own tolerance, and the service has been run end to end on fixture candles — but the installed app running it on live data has not been observed by anyone yet.
 - **Guardrails reduce risk; they do not eliminate it.** You choose the model, and your model may ignore its instructions. The app shows answers unedited and flags advice-shaped language so you can see when that happens, rather than claiming it cannot.
 
 Crypto prices and history come from CoinGecko and need no key. Equities need a free Finnhub key,
@@ -273,19 +285,20 @@ npm run verify
 
 ## 📖 Documentation
 
-| Document                                            | What it covers                                             |
-| --------------------------------------------------- | ---------------------------------------------------------- |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)             | Process model, IPC, caching, performance budget            |
-| [PRODUCT_SCOPE_V0_1.md](docs/PRODUCT_SCOPE_V0_1.md) | Features, non-goals, acceptance criteria                   |
-| [DECISIONS.md](docs/DECISIONS.md)                   | 41 ADRs — what was chosen, and what was rejected           |
-| [CONNECTORS.md](docs/CONNECTORS.md)                 | The connector catalogue, feature mapping and caching rules |
-| [PROVIDERS.md](docs/PROVIDERS.md)                   | Verified terms, rate limits and API quirks, per provider   |
-| [DATA_MODEL.md](docs/DATA_MODEL.md)                 | SQLite schema and migration strategy                       |
-| [THREAT_MODEL.md](docs/THREAT_MODEL.md)             | Keys, local data, exports, cloud AI, untrusted content     |
-| [AI_POLICY.md](docs/AI_POLICY.md)                   | Guardrails and the system prompt                           |
-| [UI_MAP.md](docs/UI_MAP.md)                         | Routes, keyboard map, panel states, design tokens          |
-| [DEPENDENCIES.md](docs/DEPENDENCIES.md)             | Every dependency, with a reason                            |
-| [PERFORMANCE.md](docs/PERFORMANCE.md)               | Measured startup, bundle and memory figures                |
+| Document                                              | What it covers                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)               | Process model, IPC, caching, performance budget            |
+| [PRODUCT_SCOPE_V0_1.md](docs/PRODUCT_SCOPE_V0_1.md)   | Features, non-goals, acceptance criteria                   |
+| [DECISIONS.md](docs/DECISIONS.md)                     | 41 ADRs — what was chosen, and what was rejected           |
+| [CONNECTORS.md](docs/CONNECTORS.md)                   | The connector catalogue, feature mapping and caching rules |
+| [PROVIDERS.md](docs/PROVIDERS.md)                     | Verified terms, rate limits and API quirks, per provider   |
+| [DATA_MODEL.md](docs/DATA_MODEL.md)                   | SQLite schema and migration strategy                       |
+| [THREAT_MODEL.md](docs/THREAT_MODEL.md)               | Keys, local data, exports, cloud AI, untrusted content     |
+| [AI_POLICY.md](docs/AI_POLICY.md)                     | Guardrails and the system prompt                           |
+| [UI_MAP.md](docs/UI_MAP.md)                           | Routes, keyboard map, panel states, design tokens          |
+| [DEPENDENCIES.md](docs/DEPENDENCIES.md)               | Every dependency, with a reason                            |
+| [THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md) | Code ported into the repository, and its licence           |
+| [PERFORMANCE.md](docs/PERFORMANCE.md)                 | Measured startup, bundle and memory figures                |
 
 ## Licence and name
 

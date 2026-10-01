@@ -6,7 +6,7 @@
 
 > **This document describes v0.1. The app is past it.**
 >
-> Four items in the §3 non-goals list have since shipped, each as a deliberate decision rather
+> Five items in the §3 non-goals list have since shipped, each as a deliberate decision rather
 > than by drift:
 >
 > | Was a v0.1 non-goal                          | Now                                                               |
@@ -15,11 +15,17 @@
 > | Price alerts                                 | Shipped — local, polled, no notification-driven prompts           |
 > | Technical indicators beyond price (`no RSI`) | Shipped — RSI and moving averages in the research chart           |
 > | Sentiment classification                     | Shipped — the two Fear & Greed indices, see ADR-037               |
+> | Anything about future prices                 | Shipped — a third-party model's output, labelled, see ADR-042     |
 >
 > The positioning above is unchanged, and so is everything in §3 that has _not_ shipped: no
-> order placement, no accounts or telemetry, no buy/sell/hold recommendations, no price targets,
-> no scam scores or coin-legitimacy verdicts. What moved was the line on what counts as
-> research, not the line on giving advice.
+> order placement, no accounts or telemetry, no buy/sell/hold recommendations, no price targets
+> of the app's own, no scam scores or coin-legitimacy verdicts. What moved was the line on what
+> counts as research, not the line on giving advice.
+>
+> The last row is the one that moved furthest. The app still forms no view about where a price
+> is going. It will now run Kronos, a third party's forecasting model, and show what that model
+> generated — behind a one-time acknowledgement, labelled as someone else's output, and never as
+> a single number. ADR-042 says why, and says plainly that it is a change.
 >
 > This file is kept as the v0.1 record rather than edited in place, so the original scope stays
 > readable next to what was actually built.
