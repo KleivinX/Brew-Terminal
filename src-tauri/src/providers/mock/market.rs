@@ -5,7 +5,8 @@ use async_trait::async_trait;
 use super::MockBehavior;
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    Asset, AssetSearchResult, AssetType, ChartPoint, ChartRange, ProviderHealth, Quote, Region,
+    Asset, AssetSearchResult, AssetType, Candle, ChartPoint, ChartRange, ProviderHealth, Quote,
+    Region,
 };
 use crate::providers::{MarketDataProvider, ProviderCapabilities};
 
@@ -286,6 +287,25 @@ impl MarketDataProvider for MockMarketProvider {
 
         let start = series.len().saturating_sub(days);
         Ok(series[start..].to_vec())
+    }
+
+    /// Candles made from the fixture's daily closes: each opens where the last one closed.
+    ///
+    /// The fixture has no intraday range, so the high and low are just the larger and smaller
+    /// of the two. Synthetic like everything else this provider serves, and badged as such.
+    async fn candles(&self, asset_id: &str) -> AppResult<Vec<Candle>> {
+        let closes = self.chart(asset_id, ChartRange::Year).await?;
+        Ok(closes
+            .windows(2)
+            .map(|pair| Candle {
+                time: pair[1].time,
+                open: pair[0].close,
+                high: pair[0].close.max(pair[1].close),
+                low: pair[0].close.min(pair[1].close),
+                close: pair[1].close,
+                volume: None,
+            })
+            .collect())
     }
 }
 

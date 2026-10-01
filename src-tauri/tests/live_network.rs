@@ -322,3 +322,23 @@ async fn the_computed_index_survives_a_second_run_from_cache() {
     assert_eq!(first.as_of, second.as_of);
     assert_eq!(first.components.len(), second.components.len());
 }
+
+/// The Kronos projection's input. `/ohlc` chooses its own granularity, so what is asserted is
+/// what `providers/live/coingecko.rs` relies on: enough four-hour candles to run a model on.
+#[tokio::test]
+#[ignore = "makes a real network call"]
+async fn coingecko_serves_a_month_of_four_hour_candles() {
+    let candles = provider()
+        .candles("crypto:cg:bitcoin")
+        .await
+        .expect("CoinGecko OHLC failed");
+
+    println!("received {} candles", candles.len());
+    assert!(candles.len() >= 150, "expected about 180 candles");
+    assert!(candles
+        .iter()
+        .all(|c| c.is_plausible() && c.volume.is_none()));
+    assert!(candles
+        .windows(2)
+        .all(|pair| pair[1].time - pair[0].time == 4 * 3600));
+}

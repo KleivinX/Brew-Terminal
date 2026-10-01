@@ -10,8 +10,8 @@ use async_trait::async_trait;
 
 use crate::error::AppResult;
 use crate::models::{
-    Asset, AssetSearchResult, AssetType, ChartPoint, ChartRange, CommunityFilter, CommunityPost,
-    NewsArticle, NewsFilter, ProviderHealth, ProviderInfo, Quote, Region,
+    Asset, AssetSearchResult, AssetType, Candle, ChartPoint, ChartRange, CommunityFilter,
+    CommunityPost, NewsArticle, NewsFilter, ProviderHealth, ProviderInfo, Quote, Region,
 };
 
 /// What a provider can actually do.
@@ -58,6 +58,17 @@ pub trait MarketDataProvider: Send + Sync {
     ) -> AppResult<Vec<Quote>>;
     async fn asset(&self, asset_id: &str) -> AppResult<Option<Asset>>;
     async fn chart(&self, asset_id: &str, range: ChartRange) -> AppResult<Vec<ChartPoint>>;
+
+    /// Recent OHLC candles at the provider's own granularity, oldest first.
+    ///
+    /// One fixed window per provider rather than a range parameter: the only consumer is the
+    /// Kronos projection, which wants "the most recent few hundred candles" and nothing else.
+    /// Not served unless a provider says otherwise.
+    async fn candles(&self, _asset_id: &str) -> AppResult<Vec<Candle>> {
+        Err(crate::error::AppError::NotConfigured {
+            provider_id: self.id().to_string(),
+        })
+    }
 }
 
 #[async_trait]

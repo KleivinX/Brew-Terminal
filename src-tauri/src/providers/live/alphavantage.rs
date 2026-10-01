@@ -20,7 +20,8 @@ use serde::Deserialize;
 
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    Asset, AssetSearchResult, AssetType, ChartPoint, ChartRange, ProviderHealth, Quote, Region,
+    Asset, AssetSearchResult, AssetType, Candle, ChartPoint, ChartRange, ProviderHealth, Quote,
+    Region,
 };
 use crate::providers::{http, MarketDataProvider, ProviderCapabilities};
 use crate::security::secrets;
@@ -56,6 +57,16 @@ struct DailyResponse {
 struct DailyBar {
     #[serde(rename = "4. close")]
     close: String,
+    // The rest of the bar. Optional so that a response missing one still draws its chart,
+    // which only ever needed the close; `to_candles` is the one place that requires them.
+    #[serde(rename = "1. open")]
+    open: Option<String>,
+    #[serde(rename = "2. high")]
+    high: Option<String>,
+    #[serde(rename = "3. low")]
+    low: Option<String>,
+    #[serde(rename = "5. volume")]
+    volume: Option<String>,
 }
 
 pub struct AlphaVantageProvider {
@@ -127,6 +138,78 @@ fn to_points(series: HashMap<String, DailyBar>, range: ChartRange) -> Vec<ChartP
     points
 }
 
+/// Whole daily bars, oldest first. A bar missing any of its four prices is dropped: half a
+/// candle is not something to hand a model as if it were a whole one.
+fn to_candles(series: HashMap<String, DailyBar>) -> Vec<Candle> {
+    let number = |field: &Option<String>| field.as_deref()?.parse::<f64>().ok();
+
+    let mut candles: Vec<Candle> = series
+        .into_iter()
+        .filter_map(|(date, bar)| {
+            let parsed = chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d").ok()?;
+            Some(Candle {
+                // Midday UTC, as `to_points` stamps the same bars.
+                time: parsed.and_hms_opt(12, 0, 0)?.and_utc().timestamp(),
+                open: number(&bar.open)?,
+                high: number(&bar.high)?,
+                low: number(&bar.low)?,
+                close: bar.close.parse().ok()?,
+                volume: number(&bar.volume),
+            })
+        })
+        .filter(Candle::is_plausible)
+        .collect();
+
+    candles.sort_by_key(|c| c.time);
+    candles
+}
+
+impl AlphaVantageProvider {
+    /// One `TIME_SERIES_DAILY` request. The chart and the candles are the same response read
+    /// two ways, so they share the request and every way it can fail.
+    async fn daily(&self, asset_id: &str, size: &str) -> AppResult<HashMap<String, DailyBar>> {
+        let key = self.key()?;
+        let symbol = Self::symbol_of(asset_id)?;
+        let url = format!(
+            "{BASE}?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize={size}&apikey={key}"
+        );
+
+        let response: DailyResponse =
+            http::get_json(&self.client, ALPHAVANTAGE_ID, &url, None).await?;
+
+        // The budget message arrives as a 200 with prose, so it has to be detected here rather
+        // than by status code. Reported as rate-limited so the UI says the true thing.
+        if let Some(note) = response.note.or(response.information) {
+            tracing::warn!(
+                provider = ALPHAVANTAGE_ID,
+                "provider returned a notice instead of data"
+            );
+            if note.to_lowercase().contains("rate limit")
+                || note.to_lowercase().contains("higher api call")
+                || note.to_lowercase().contains("25 requests")
+            {
+                return Err(AppError::RateLimited {
+                    provider_id: ALPHAVANTAGE_ID.to_string(),
+                    retry_after_secs: None,
+                });
+            }
+            return Err(AppError::InvalidResponse {
+                provider_id: ALPHAVANTAGE_ID.to_string(),
+                detail: "the provider returned a notice instead of data".into(),
+            });
+        }
+
+        if response.error.is_some() {
+            return Err(AppError::NotFound);
+        }
+
+        response.series.ok_or_else(|| AppError::InvalidResponse {
+            provider_id: ALPHAVANTAGE_ID.to_string(),
+            detail: "no daily series in the response".into(),
+        })
+    }
+}
+
 #[async_trait]
 impl MarketDataProvider for AlphaVantageProvider {
     fn id(&self) -> &str {
@@ -172,9 +255,6 @@ impl MarketDataProvider for AlphaVantageProvider {
             });
         }
 
-        let key = self.key()?;
-        let symbol = Self::symbol_of(asset_id)?;
-
         // `compact` is 100 trading days and covers everything but MAX, at the same request cost.
         // Asking for `full` by default would pull twenty years to draw one month.
         let size = if range == ChartRange::Max {
@@ -182,51 +262,22 @@ impl MarketDataProvider for AlphaVantageProvider {
         } else {
             "compact"
         };
-        let url = format!(
-            "{BASE}?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize={size}&apikey={key}"
-        );
-
-        let response: DailyResponse =
-            http::get_json(&self.client, ALPHAVANTAGE_ID, &url, None).await?;
-
-        // The budget message arrives as a 200 with prose, so it has to be detected here rather
-        // than by status code. Reported as rate-limited so the UI says the true thing.
-        if let Some(note) = response.note.or(response.information) {
-            tracing::warn!(
-                provider = ALPHAVANTAGE_ID,
-                "provider returned a notice instead of data"
-            );
-            if note.to_lowercase().contains("rate limit")
-                || note.to_lowercase().contains("higher api call")
-                || note.to_lowercase().contains("25 requests")
-            {
-                return Err(AppError::RateLimited {
-                    provider_id: ALPHAVANTAGE_ID.to_string(),
-                    retry_after_secs: None,
-                });
-            }
-            return Err(AppError::InvalidResponse {
-                provider_id: ALPHAVANTAGE_ID.to_string(),
-                detail: "the provider returned a notice instead of data".into(),
-            });
-        }
-
-        if response.error.is_some() {
-            return Err(AppError::NotFound);
-        }
-
-        let Some(series) = response.series else {
-            return Err(AppError::InvalidResponse {
-                provider_id: ALPHAVANTAGE_ID.to_string(),
-                detail: "no daily series in the response".into(),
-            });
-        };
+        let series = self.daily(asset_id, size).await?;
 
         let points = to_points(series, range);
         if points.is_empty() {
             return Err(AppError::NotFound);
         }
         Ok(points)
+    }
+
+    /// The same 100 trading days the chart uses, as whole bars.
+    async fn candles(&self, asset_id: &str) -> AppResult<Vec<Candle>> {
+        let candles = to_candles(self.daily(asset_id, "compact").await?);
+        if candles.is_empty() {
+            return Err(AppError::NotFound);
+        }
+        Ok(candles)
     }
 
     // --- Not served. The capability advertises none of these, and the registry never routes
@@ -270,10 +321,47 @@ mod tests {
                     (*d).to_string(),
                     DailyBar {
                         close: (*c).to_string(),
+                        open: None,
+                        high: None,
+                        low: None,
+                        volume: None,
                     },
                 )
             })
             .collect()
+    }
+
+    /// The documented `TIME_SERIES_DAILY` shape, with the provider's own field names.
+    #[test]
+    fn reads_whole_bars_and_drops_the_ones_it_cannot() {
+        let response: DailyResponse = serde_json::from_str(
+            r#"{ "Time Series (Daily)": {
+                "2026-09-30": { "1. open": "101.0", "2. high": "104.5", "3. low": "100.2",
+                                "4. close": "103.9", "5. volume": "1200300" },
+                "2026-09-29": { "1. open": "99.0", "2. high": "101.5", "3. low": "98.7",
+                                "4. close": "101.0", "5. volume": "980000" },
+                "2026-09-28": { "4. close": "99.0" },
+                "2026-09-25": { "1. open": "99.0", "2. high": "90.0", "3. low": "98.7",
+                                "4. close": "101.0", "5. volume": "1" }
+            } }"#,
+        )
+        .unwrap();
+
+        let candles = to_candles(response.series.unwrap());
+
+        // Oldest first; the close-only bar and the one whose high is below its open are gone.
+        assert_eq!(candles.len(), 2);
+        assert!(candles[0].time < candles[1].time);
+        assert_eq!(
+            (
+                candles[1].open,
+                candles[1].high,
+                candles[1].low,
+                candles[1].close
+            ),
+            (101.0, 104.5, 100.2, 103.9)
+        );
+        assert_eq!(candles[1].volume, Some(1_200_300.0));
     }
 
     #[test]

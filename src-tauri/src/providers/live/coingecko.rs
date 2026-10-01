@@ -10,8 +10,8 @@ use tokio::sync::Mutex;
 
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    downsample, Asset, AssetSearchResult, AssetType, ChartPoint, ChartRange, ProviderHealth, Quote,
-    Region, MAX_SPARKLINE_POINTS,
+    downsample, Asset, AssetSearchResult, AssetType, Candle, ChartPoint, ChartRange,
+    ProviderHealth, Quote, Region, MAX_SPARKLINE_POINTS,
 };
 use crate::providers::governor::{Admission, RateLimitPolicy, RateLimitState};
 use crate::providers::http::{get_json, AuthHeader};
@@ -460,6 +460,55 @@ impl MarketDataProvider for CoinGeckoProvider {
 
         Ok(normalize_chart(result?.prices))
     }
+
+    async fn candles(&self, asset_id: &str) -> AppResult<Vec<Candle>> {
+        let Some(coin_id) = Self::coin_id(asset_id) else {
+            return Err(AppError::NotConfigured {
+                provider_id: COINGECKO_ID.to_string(),
+            });
+        };
+
+        self.admit().await?;
+
+        let url = format!(
+            "{BASE_URL}/coins/{}/ohlc?vs_currency=usd&days={OHLC_DAYS}",
+            urlencode(coin_id)
+        );
+        let result: AppResult<Vec<[f64; 5]>> =
+            get_json(&self.client, COINGECKO_ID, &url, self.auth()).await;
+        self.record(result.is_ok()).await;
+
+        Ok(normalize_candles(result?))
+    }
+}
+
+/// `/coins/{id}/ohlc` picks its own granularity from `days`, and on the public and Demo tiers
+/// that is not negotiable: 30 minutes for 1–2 days, **4 hours for 3–30**, 4 days beyond. Thirty
+/// days is therefore the most history available at a usable resolution — 180 four-hour
+/// candles, verified against the live API on 2026-10-01 (`coingecko_ohlc_30d.json`).
+const OHLC_DAYS: u32 = 30;
+
+/// `[[millis, open, high, low, close], …]` → validated candles in seconds, oldest first.
+///
+/// The endpoint carries no volume, and none is invented.
+fn normalize_candles(raw: Vec<[f64; 5]>) -> Vec<Candle> {
+    let mut candles: Vec<Candle> = raw
+        .into_iter()
+        .filter(|row| row[0].is_finite())
+        .map(|[millis, open, high, low, close]| Candle {
+            time: (millis / 1000.0).round() as i64,
+            open,
+            high,
+            low,
+            close,
+            volume: None,
+        })
+        .filter(Candle::is_plausible)
+        .collect();
+
+    candles.sort_by_key(|c| c.time);
+    candles.dedup_by_key(|c| c.time);
+    candles
 }
 
 /// Minimal percent-encoding for query values.
@@ -601,6 +650,38 @@ mod tests {
         include_str!("../../../../content/fixtures/providers/coingecko_chart_1d.json");
     const CHART_1Y: &str =
         include_str!("../../../../content/fixtures/providers/coingecko_chart_1y.json");
+
+    #[test]
+    fn a_recorded_ohlc_response_becomes_ordered_four_hour_candles() {
+        let raw: Vec<[f64; 5]> = serde_json::from_str(include_str!(
+            "../../../../content/fixtures/providers/coingecko_ohlc_30d.json"
+        ))
+        .unwrap();
+        let candles = normalize_candles(raw);
+
+        assert_eq!(candles.len(), 180);
+        assert!(candles
+            .windows(2)
+            .all(|pair| pair[1].time - pair[0].time == 4 * 3600));
+        assert!(candles
+            .iter()
+            .all(|c| c.volume.is_none() && c.is_plausible()));
+    }
+
+    #[test]
+    fn an_impossible_candle_is_dropped_rather_than_passed_on() {
+        let at = 1_788_235_200_000.0;
+        let candles = normalize_candles(vec![
+            [at, 100.0, 110.0, 90.0, 105.0],
+            // A high below the close, a negative price, a NaN, a duplicate, and the year 33000.
+            [at + 1e6, 100.0, 101.0, 90.0, 105.0],
+            [at + 2e6, 100.0, 110.0, -1.0, 105.0],
+            [at + 3e6, f64::NAN, 110.0, 90.0, 105.0],
+            [at, 100.0, 110.0, 90.0, 105.0],
+            [1e15, 100.0, 110.0, 90.0, 105.0],
+        ]);
+        assert_eq!(candles.len(), 1);
+    }
 
     fn chart_points(fixture: &str) -> Vec<ChartPoint> {
         let parsed: MarketChartResponse =

@@ -58,6 +58,25 @@ Notes that shaped the adapter:
 - `market_cap` and `total_volume` can be `null` for some coins — typed `Option`.
 - One call returns the whole market list _and_ the sparklines, so a dashboard refresh is a single request. This is the main reason CoinGecko is viable on a free tier where Finnhub is not.
 
+### Candle endpoint
+
+`GET /coins/{id}/ohlc?vs_currency=usd&days=30`
+
+Returns `[[unix_millis, open, high, low, close], …]`, oldest first, with **no volume**. Used only
+by the Kronos projection (ADR-042), which needs whole candles rather than closes. Granularity is
+again CoinGecko's choice, and on the public and Demo tiers it cannot be requested:
+
+| `days` | Candle size |
+| ------ | ----------- |
+| 1–2    | 30 minutes  |
+| 3–30   | 4 hours     |
+| 31+    | 4 days      |
+
+So `days=30` is the most history available at a usable resolution: **180 four-hour candles**,
+verified against the live API on 2026-10-01 and recorded as `coingecko_ohlc_30d.json`. A
+`days=90` request returned 23 four-day candles, which is too few to run a model on. One call per
+projection, through the same governor as every other CoinGecko request.
+
 ### Chart endpoint
 
 `GET /coins/{id}/market_chart?vs_currency=usd&days=N`

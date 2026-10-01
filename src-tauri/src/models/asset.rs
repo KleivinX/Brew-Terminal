@@ -106,3 +106,32 @@ pub struct ChartPoint {
     pub time: i64,
     pub close: f64,
 }
+
+/// One period's open, high, low and close.
+///
+/// Charts draw closes and need nothing more. This exists for the Kronos projection, which was
+/// trained on whole candles and is fed nothing less — see `services::kronos`.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Candle {
+    /// Unix epoch seconds, UTC — the start of the period.
+    pub time: i64,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
+    /// `None` where the provider does not report it. Never a zero standing in for "unknown".
+    pub volume: Option<f64>,
+}
+
+impl Candle {
+    /// Finite, positive, and with the high and low actually bounding the open and close.
+    pub fn is_plausible(&self) -> bool {
+        let prices = [self.open, self.high, self.low, self.close];
+        prices.iter().all(|p| p.is_finite() && *p > 0.0)
+            && self.high >= self.open.max(self.close)
+            && self.low <= self.open.min(self.close)
+            && self.volume.map_or(true, |v| v.is_finite() && v >= 0.0)
+            && (946_684_800..=4_102_444_800).contains(&self.time)
+    }
+}
